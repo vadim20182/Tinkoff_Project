@@ -18,7 +18,7 @@
 
 ### Порядок выполнения домашних заданий
 
-* [Делаете форк](https://gitlab.com/android-tfs-mentors/tfs-android-spring-2021/-/forks/new) от главного проекта
+* [Делаете форк](https://gitlab.com/android-tfs-mentors/tfs-android-spring-2022/-/forks/new) от главного проекта
 * В настройках репозитория (settings -> members -> invite group) предоставляете доступ к проекту группе android-tfs-mentors. Роль - developer.
 - Если еще не ставили, то устанавливаете git и [настраиваете ssh](https://docs.gitlab.com/ce/ssh/README.html)
 - Клонируете форкнутый репозиторий к себе на комп (git clone "адрес репозитория"), адрес репозитория можно посмотреть по нажатию на кнопку "Clone" на странице вашего проекта на гитлабе
