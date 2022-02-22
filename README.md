@@ -1,4 +1,4 @@
-# TFS Android Autumn 2021
+# TFS Android Spring 2022
 
 #### Общие требования:
 
