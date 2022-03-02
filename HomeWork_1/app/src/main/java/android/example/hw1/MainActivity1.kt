@@ -16,7 +16,7 @@ class MainActivity1 : AppCompatActivity() {
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
                     val res = result.data?.extras?.get("result")
-                    if (res is Array<*> && res.isArrayOf<String>())
+                    if (res?.isArrayOf<String>() == true)
                         findViewById<ListView>(R.id.listView).adapter = ArrayAdapter(
                             this,
                             R.layout.list_item,
