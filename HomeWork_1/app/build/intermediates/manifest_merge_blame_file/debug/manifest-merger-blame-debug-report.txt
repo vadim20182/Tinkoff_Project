@@ -1,0 +1,100 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="android.example.hw1"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+8-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml
+9        android:targetSdkVersion="31" />
+9-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml
+10
+11    <uses-permission android:name="android.permission.READ_CONTACTS" />
+11-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:5:5-72
+11-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:5:22-69
+12
+13    <application
+13-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:7:5-37:19
+14        android:allowBackup="true"
+14-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:8:9-35
+15        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+15-->[androidx.core:core:1.7.0] C:\Users\user\.gradle\caches\transforms-3\adacc4bbdca3c037c01e5031782c646c\transformed\core-1.7.0\AndroidManifest.xml:24:18-86
+16        android:debuggable="true"
+17        android:extractNativeLibs="false"
+18        android:icon="@mipmap/ic_launcher"
+18-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:9:9-43
+19        android:label="@string/app_name"
+19-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:10:9-41
+20        android:roundIcon="@mipmap/ic_launcher_round"
+20-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:11:9-54
+21        android:supportsRtl="true"
+21-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:12:9-35
+22        android:testOnly="true"
+23        android:theme="@style/Theme.HW1" >
+23-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:13:9-41
+24        <activity
+24-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:14:9-18:72
+25            android:name="android.example.hw1.MainActivity2"
+25-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:15:13-42
+26            android:exported="false"
+26-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:16:13-37
+27            android:screenOrientation="portrait"
+27-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:17:13-49
+28            android:theme="@style/Theme.Material3.Light.NoActionBar" />
+28-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:18:13-69
+29        <activity
+29-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:20:9-30:20
+30            android:name="android.example.hw1.MainActivity1"
+30-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:21:13-42
+31            android:exported="true"
+31-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:22:13-36
+32            android:screenOrientation="portrait"
+32-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:23:13-49
+33            android:theme="@style/Theme.Material3.Dark.NoActionBar" >
+33-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:24:13-68
+34            <intent-filter>
+34-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:25:13-29:29
+35                <action android:name="android.intent.action.MAIN" />
+35-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:26:17-69
+35-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:26:25-66
+36
+37                <category android:name="android.intent.category.LAUNCHER" />
+37-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:28:17-77
+37-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:28:27-74
+38            </intent-filter>
+39        </activity>
+40
+41        <service
+41-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:33:9-36:39
+42            android:name="android.example.hw1.MyService"
+42-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:34:13-38
+43            android:enabled="true"
+43-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:35:13-35
+44            android:exported="true" />
+44-->D:\tfs-android-spring-2022\HomeWork_1\app\src\main\AndroidManifest.xml:36:13-36
+45
+46        <provider
+46-->[androidx.emoji2:emoji2:1.0.0] C:\Users\user\.gradle\caches\transforms-3\0598df94f460c67e853f90789c9d40d1\transformed\emoji2-1.0.0\AndroidManifest.xml:26:9-34:20
+47            android:name="androidx.startup.InitializationProvider"
+47-->[androidx.emoji2:emoji2:1.0.0] C:\Users\user\.gradle\caches\transforms-3\0598df94f460c67e853f90789c9d40d1\transformed\emoji2-1.0.0\AndroidManifest.xml:27:13-67
+48            android:authorities="android.example.hw1.androidx-startup"
+48-->[androidx.emoji2:emoji2:1.0.0] C:\Users\user\.gradle\caches\transforms-3\0598df94f460c67e853f90789c9d40d1\transformed\emoji2-1.0.0\AndroidManifest.xml:28:13-68
+49            android:exported="false" >
+49-->[androidx.emoji2:emoji2:1.0.0] C:\Users\user\.gradle\caches\transforms-3\0598df94f460c67e853f90789c9d40d1\transformed\emoji2-1.0.0\AndroidManifest.xml:29:13-37
+50            <meta-data
+50-->[androidx.emoji2:emoji2:1.0.0] C:\Users\user\.gradle\caches\transforms-3\0598df94f460c67e853f90789c9d40d1\transformed\emoji2-1.0.0\AndroidManifest.xml:31:13-33:52
+51                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+51-->[androidx.emoji2:emoji2:1.0.0] C:\Users\user\.gradle\caches\transforms-3\0598df94f460c67e853f90789c9d40d1\transformed\emoji2-1.0.0\AndroidManifest.xml:32:17-75
+52                android:value="androidx.startup" />
+52-->[androidx.emoji2:emoji2:1.0.0] C:\Users\user\.gradle\caches\transforms-3\0598df94f460c67e853f90789c9d40d1\transformed\emoji2-1.0.0\AndroidManifest.xml:33:17-49
+53            <meta-data
+53-->[androidx.lifecycle:lifecycle-process:2.4.0] C:\Users\user\.gradle\caches\transforms-3\c4217aea2ca3d9a23241dc893df048d3\transformed\lifecycle-process-2.4.0\AndroidManifest.xml:31:13-33:52
+54                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+54-->[androidx.lifecycle:lifecycle-process:2.4.0] C:\Users\user\.gradle\caches\transforms-3\c4217aea2ca3d9a23241dc893df048d3\transformed\lifecycle-process-2.4.0\AndroidManifest.xml:32:17-78
+55                android:value="androidx.startup" />
+55-->[androidx.lifecycle:lifecycle-process:2.4.0] C:\Users\user\.gradle\caches\transforms-3\c4217aea2ca3d9a23241dc893df048d3\transformed\lifecycle-process-2.4.0\AndroidManifest.xml:33:17-49
+56        </provider>
+57    </application>
+58
+59</manifest>

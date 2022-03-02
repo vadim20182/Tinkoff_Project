@@ -15,7 +15,7 @@ class MainActivity1 : AppCompatActivity() {
         val secondActivityResult =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
-                    val res = result.data?.extras?.get("result")
+                    val res = result.data?.extras?.get("result") as? Array<*>
                     if (res?.isArrayOf<String>() == true)
                         findViewById<ListView>(R.id.listView).adapter = ArrayAdapter(
                             this,

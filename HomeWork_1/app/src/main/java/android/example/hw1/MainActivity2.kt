@@ -15,7 +15,12 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class MainActivity2 : AppCompatActivity() {
 
-    private lateinit var broadcastReceiver: BroadcastReceiver
+    private val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            setResult(Activity.RESULT_OK, intent)
+            finish()
+        }
+    }
     private val PERMISSIONS_REQUEST_READ_CONTACTS = 10
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,12 +39,6 @@ class MainActivity2 : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        broadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                setResult(Activity.RESULT_OK, intent)
-                finish()
-            }
-        }
         val localBroadCastManager = LocalBroadcastManager.getInstance(this)
         localBroadCastManager.registerReceiver(
             broadcastReceiver,
