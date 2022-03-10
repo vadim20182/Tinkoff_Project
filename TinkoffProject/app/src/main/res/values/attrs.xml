@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ReactionCustomView">
+        <attr name="reactionCustomTextColor" format="color" />
+        <attr name="reactionCustomTextSize" format="dimension" />
+        <attr name="reactionCustomBackground" format="reference" />
+        <attr name="reactionCustomEmoji" format="string" />
+        <attr name="reactionCustomCount" format="integer" />
+        <attr name="reactionCustomIsButton" format="boolean"/>
+    </declare-styleable>
+    <declare-styleable name="FlexBoxLayout">
+        <attr name="flexBoxInnerPadding" format="dimension" />
+    </declare-styleable>
+    <declare-styleable name="MessageCustomViewGroup">
+        <attr name="messageCustomViewGroupInnerPadding" format="dimension" />
+        <attr name="avatarSize" format="dimension" />
+    </declare-styleable>
+</resources>

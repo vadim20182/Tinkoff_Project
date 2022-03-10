@@ -1,0 +1,13 @@
+*.iml
+.gradle
+/local.properties
+.idea/*
+!.idea/vcs.xml
+.DS_Store
+/build
+/app/build
+/app/proguard-rules.pro
+/captures
+.externalNativeBuild
+.cxx
+local.properties

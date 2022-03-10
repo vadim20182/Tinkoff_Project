@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="John Doe"
+        android:textColor="#309c8c" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eu quam sed diam lobortis lacinia sit amet in tellus. Sed hendrerit nisl in tellus maximus, non sollicitudin tortor scelerisque. Vivamus vel arcu in dui iaculis accumsan vitae sed erat. Mauris viverra arcu ex, id rhoncus libero pulvinar at. Morbi sem libero, tempor nec erat vitae, tincidunt vulputate dolor." />
+
+    <android.example.tinkoffproject.customviews.FlexBoxLayout
+        android:id="@+id/message_emojis"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:flexBoxInnerPadding="@dimen/default_padding">
+
+        <android.example.tinkoffproject.customviews.ReactionCustomView
+            android:id="@+id/custom_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:padding="@dimen/default_padding"
+            app:reactionCustomBackground="@color/bg_reaction_custom_view"
+            app:reactionCustomCount="0"
+            app:reactionCustomEmoji="😁"
+            app:reactionCustomTextSize="@dimen/default_text_size" />
+
+        <android.example.tinkoffproject.customviews.ReactionCustomView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:padding="@dimen/default_padding"
+            app:reactionCustomBackground="@color/bg_reaction_custom_view"
+            app:reactionCustomCount="0"
+            app:reactionCustomEmoji="😁"
+            app:reactionCustomTextSize="@dimen/default_text_size" />
+        <android.example.tinkoffproject.customviews.ReactionCustomView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:padding="@dimen/default_padding"
+            app:reactionCustomBackground="@color/bg_reaction_custom_view"
+            app:reactionCustomCount="0"
+            app:reactionCustomEmoji="😁"
+            app:reactionCustomTextSize="@dimen/default_text_size" />
+
+        <android.example.tinkoffproject.customviews.ReactionCustomView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:padding="@dimen/default_padding"
+            app:reactionCustomBackground="@color/bg_reaction_custom_view"
+            app:reactionCustomCount="0"
+            app:reactionCustomEmoji="😁"
+            app:reactionCustomTextSize="@dimen/default_text_size" />
+
+        <android.example.tinkoffproject.customviews.ReactionCustomView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:padding="@dimen/default_padding"
+            app:reactionCustomBackground="@color/bg_reaction_custom_view"
+            app:reactionCustomCount="0"
+            app:reactionCustomEmoji="😁"
+            app:reactionCustomTextSize="@dimen/default_text_size" />
+
+        <android.example.tinkoffproject.customviews.ReactionCustomView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:padding="@dimen/default_padding"
+            app:reactionCustomBackground="@color/bg_reaction_custom_view"
+            app:reactionCustomCount="0"
+            app:reactionCustomEmoji="😁"
+            app:reactionCustomTextSize="@dimen/default_text_size" />
+
+        <android.example.tinkoffproject.customviews.ReactionCustomView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:padding="@dimen/default_padding"
+            app:reactionCustomBackground="@color/bg_reaction_custom_view"
+            app:reactionCustomCount="0"
+            app:reactionCustomEmoji="😁"
+            app:reactionCustomTextSize="@dimen/default_text_size" />
+
+        <android.example.tinkoffproject.customviews.ReactionCustomView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:padding="@dimen/default_padding"
+            app:reactionCustomBackground="@color/bg_reaction_custom_view"
+            app:reactionCustomCount="0"
+            app:reactionCustomEmoji="😁"
+            app:reactionCustomTextSize="@dimen/default_text_size" />
+        <android.example.tinkoffproject.customviews.ReactionCustomView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:padding="@dimen/default_padding"
+            app:reactionCustomBackground="@color/bg_reaction_custom_view"
+            app:reactionCustomCount="0"
+            app:reactionCustomEmoji="😁"
+            app:reactionCustomTextSize="@dimen/default_text_size"
+            app:reactionCustomIsButton="true"/>
+    </android.example.tinkoffproject.customviews.FlexBoxLayout>
+</merge>
