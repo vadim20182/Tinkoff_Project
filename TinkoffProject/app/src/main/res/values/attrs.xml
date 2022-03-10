@@ -15,7 +15,4 @@
         <attr name="messageCustomViewGroupInnerPadding" format="dimension" />
         <attr name="avatarSize" format="dimension" />
     </declare-styleable>
-    <declare-styleable name="CustomImageView">
-        <attr name="customImageViewSize" format="dimension" />
-    </declare-styleable>
 </resources>
