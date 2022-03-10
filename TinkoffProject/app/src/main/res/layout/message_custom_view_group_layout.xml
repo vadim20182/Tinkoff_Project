@@ -104,10 +104,15 @@
             app:reactionCustomCount="0"
             app:reactionCustomEmoji="😁"
             app:reactionCustomTextSize="@dimen/default_text_size" />
-        <android.example.tinkoffproject.customviews.CustomImageView
+        <android.example.tinkoffproject.customviews.ReactionCustomView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
             android:padding="@dimen/default_padding"
-            app:customImageViewSize="@dimen/default_text_size"/>
+            app:reactionCustomBackground="@color/bg_reaction_custom_view"
+            app:reactionCustomCount="0"
+            app:reactionCustomEmoji="😁"
+            app:reactionCustomTextSize="@dimen/default_text_size"
+            app:reactionCustomIsButton="true"/>
     </android.example.tinkoffproject.customviews.FlexBoxLayout>
 </merge>

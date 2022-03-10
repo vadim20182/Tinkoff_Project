@@ -19,5 +19,4 @@ ext {
     androidXCoreKTXVersion = '1.7.0'
     androidXAppcompatVersion = '1.4.1'
     androidMaterialVersion = '1.5.0'
-    androidXConstraintlayoutVersion = '2.1.3'
 }
