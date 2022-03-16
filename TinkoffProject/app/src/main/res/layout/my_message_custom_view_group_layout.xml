@@ -4,28 +4,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <TextView
-        android:id="@+id/message_user_name"
-        android:layout_width="wrap_content"
-        android:textSize="@dimen/default_text_size_small"
-        android:layout_height="wrap_content"
-        android:text="John Doe"
-        android:textColor="#309c8c" />
-
     <TextView
         android:id="@+id/message_text"
         android:layout_width="wrap_content"
-        android:textSize="@dimen/default_text_size_small"
         android:layout_height="wrap_content"
+        android:textSize="@dimen/default_text_size_small"
         android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eu quam sed diam lobortis lacinia sit amet in tellus. Sed hendrerit nisl in tellus maximus, non sollicitudin tortor scelerisque. Vivamus vel arcu in dui iaculis accumsan vitae sed erat. Mauris viverra arcu ex, id rhoncus libero pulvinar at. Morbi sem libero, tempor nec erat vitae, tincidunt vulputate dolor." />
 
     <android.example.tinkoffproject.customviews.FlexBoxLayout
         android:id="@+id/message_emojis"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:flexBoxInnerPadding="@dimen/default_padding"/>
+        app:flexBoxInnerPadding="@dimen/default_padding"
+        app:flexBoxIsRightAligned="true" />
 </merge>

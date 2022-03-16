@@ -14,13 +14,17 @@ class FlexBoxLayout @JvmOverloads constructor(
     private val nextRowIndexes = mutableListOf<Int>()
     private val innerPadding: Int
     private val lastRect = RectF()
+    private val isRightAligned: Boolean
+    private var resWidth: Int = 0
 
     init {
-        val typedArray: TypedArray =
-            context.obtainStyledAttributes(attrs, R.styleable.FlexBoxLayout)
-        innerPadding =
-            typedArray.getDimension(R.styleable.FlexBoxLayout_flexBoxInnerPadding, 10f).toInt()
-        typedArray.recycle()
+        with(context.obtainStyledAttributes(attrs, R.styleable.FlexBoxLayout))
+        {
+            innerPadding =
+                this.getDimension(R.styleable.FlexBoxLayout_flexBoxInnerPadding, 10f).toInt()
+            isRightAligned = this.getBoolean(R.styleable.FlexBoxLayout_flexBoxIsRightAligned, false)
+            this.recycle()
+        }
     }
 
     override fun dispatchDraw(canvas: Canvas) {
@@ -33,9 +37,11 @@ class FlexBoxLayout @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         nextRowIndexes.clear()
-        var resWidth = 0
-        var currentWidth = 0
         var totalHeight = 0
+        var currentWidth = 0
+        if (isRightAligned) {
+            nextRowIndexes.add(0)
+        }
         for (i in 0 until childCount) {
             val child = getChildAt(i)
             measureChild(child, MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
@@ -73,31 +79,67 @@ class FlexBoxLayout @JvmOverloads constructor(
             resolveSize(resWidth, widthMeasureSpec),
             resolveSize(totalHeight, heightMeasureSpec)
         )
+
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         var currentTop = 0
         var currentWidth = 0
-        for (i in 0 until childCount) {
-            val child = getChildAt(i)
-            if (i in nextRowIndexes) {
-                currentTop += child.measuredHeight + innerPadding
-                currentWidth = 0
-                child.layout(
-                    currentWidth,
-                    currentTop,
-                    currentWidth + child.measuredWidth + innerPadding,
-                    currentTop + child.measuredHeight + innerPadding
-                )
-            } else {
-                child.layout(
-                    currentWidth,
-                    currentTop,
-                    currentWidth + child.measuredWidth + innerPadding,
-                    currentTop + child.measuredHeight + innerPadding
-                )
+        if (!isRightAligned) {
+            for (i in 0 until childCount) {
+                val child = getChildAt(i)
+                if (i in nextRowIndexes) {
+                    currentTop += child.measuredHeight + innerPadding
+                    currentWidth = 0
+                    child.layout(
+                        currentWidth,
+                        currentTop,
+                        currentWidth + child.measuredWidth + innerPadding,
+                        currentTop + child.measuredHeight + innerPadding
+                    )
+                } else {
+                    child.layout(
+                        currentWidth,
+                        currentTop,
+                        currentWidth + child.measuredWidth + innerPadding,
+                        currentTop + child.measuredHeight + innerPadding
+                    )
+                }
+                currentWidth += child.measuredWidth + innerPadding
             }
-            currentWidth += child.measuredWidth + innerPadding
+        } else {
+            var currentIndex = 0
+            var i = 0
+            while (i < childCount) {
+                if (currentIndex + 1 < nextRowIndexes.size) {
+                    for (j in nextRowIndexes[currentIndex + 1] - 1 downTo nextRowIndexes[currentIndex]) {
+                        val child = getChildAt(j)
+                        child.layout(
+                            resWidth - (currentWidth + child.measuredWidth + innerPadding),
+                            currentTop,
+                            resWidth - currentWidth,
+                            currentTop + child.measuredHeight + innerPadding
+                        )
+                        currentWidth += child.measuredWidth + innerPadding
+                    }
+                    currentTop += getChildAt(i).measuredHeight + innerPadding
+                    currentIndex++
+                    i = nextRowIndexes[currentIndex]
+                    currentWidth = 0
+                } else {
+                    i = childCount
+                    for (j in i - 1 downTo nextRowIndexes[currentIndex]) {
+                        val child = getChildAt(j)
+                        child.layout(
+                            resWidth - (currentWidth + child.measuredWidth + innerPadding),
+                            currentTop,
+                            resWidth - currentWidth,
+                            currentTop + child.measuredHeight + innerPadding
+                        )
+                        currentWidth += child.measuredWidth + innerPadding
+                    }
+                }
+            }
         }
     }
 

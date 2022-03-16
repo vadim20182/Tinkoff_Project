@@ -16,6 +16,10 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        dataBinding = true
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -30,4 +34,6 @@ dependencies {
     implementation "androidx.core:core-ktx:${rootProject.androidXCoreKTXVersion}"
     implementation "androidx.appcompat:appcompat:${rootProject.androidXAppcompatVersion}"
     implementation "com.google.android.material:material:${rootProject.androidMaterialVersion}"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:${rootProject.lifecycleViewmodelKTX}"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:${rootProject.lifecycleLivedataKTX}"
 }
