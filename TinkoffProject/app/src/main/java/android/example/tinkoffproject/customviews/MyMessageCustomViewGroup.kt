@@ -26,7 +26,7 @@ class MyMessageCustomViewGroup @JvmOverloads constructor(
                     R.styleable.MyMessageCustomViewGroup_myMessageCustomViewGroupInnerPadding,
                     10f
                 ).toInt()
-            messageInnerPadding = 6 * innerPadding / 5
+            messageInnerPadding = (MESSAGE_PADDING_SCALE_FACTOR * innerPadding).toInt()
             this.recycle()
         }
     }
@@ -121,5 +121,9 @@ class MyMessageCustomViewGroup @JvmOverloads constructor(
 
     override fun generateLayoutParams(p: LayoutParams): LayoutParams {
         return MarginLayoutParams(p)
+    }
+
+    companion object {
+        private const val MESSAGE_PADDING_SCALE_FACTOR = 6 / 5f
     }
 }

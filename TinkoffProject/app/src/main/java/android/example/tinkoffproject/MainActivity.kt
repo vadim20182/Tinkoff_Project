@@ -3,6 +3,7 @@ package android.example.tinkoffproject
 import android.example.tinkoffproject.customviews.FlexBoxLayout
 import android.example.tinkoffproject.customviews.ReactionCustomView
 import android.example.tinkoffproject.data.UserMessage
+import android.example.tinkoffproject.databinding.ActivityMainBinding
 import android.example.tinkoffproject.recyclerview.CustomItemDecoration
 import android.example.tinkoffproject.recyclerview.MessageAsyncAdapter
 import android.os.Bundle
@@ -24,23 +25,27 @@ class MainActivity : AppCompatActivity(), MessageAsyncAdapter.OnItemClickedListe
 
     private lateinit var viewModel: MainActivityViewModel
     private lateinit var myAdapter: MessageAsyncAdapter
+    private var _binding: ActivityMainBinding? = null
+    private val binding
+        get() = _binding!!
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        _binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         viewModel = ViewModelProvider(this)[MainActivityViewModel::class.java]
         myAdapter = MessageAsyncAdapter(this)
-        viewModel.getUsers().observe(this) {
+        viewModel.users.observe(this) {
             myAdapter.data = it
         }
 
-        val recyclerView = findViewById<RecyclerView>(R.id.messages_recycler_view)
+        val recyclerView = binding.messagesRecyclerView
         recyclerView.layoutManager = LinearLayoutManager(this).apply {
             stackFromEnd = true
         }
         recyclerView.adapter = myAdapter
-        recyclerView.addItemDecoration(CustomItemDecoration(this, viewModel.getUsers().value!!))
+        recyclerView.addItemDecoration(CustomItemDecoration(this, viewModel.users.value!!))
 
         findViewById<ImageView>(R.id.message_input_button).setOnClickListener {
             val messageText = findViewById<EditText>(R.id.send_message_text)
@@ -64,7 +69,7 @@ class MainActivity : AppCompatActivity(), MessageAsyncAdapter.OnItemClickedListe
         when (view) {
             is ReactionCustomView -> {
                 if (!view.isButton && !view.isSimpleEmoji) {
-                    viewModel.reactionAdded(position, view.getEmoji())
+                    viewModel.reactionClicked(position, view.getEmoji())
                     myAdapter.notifyItemChanged(position)
                 } else if (view.isButton) {
                     showBottomSheetDialog(position)
@@ -95,7 +100,7 @@ class MainActivity : AppCompatActivity(), MessageAsyncAdapter.OnItemClickedListe
                     for (child in findViewById<FlexBoxLayout>(R.id.bottom_sheet_emojis)?.children!!)
                         child.setOnClickListener {
                             with(child as ReactionCustomView) {
-                                viewModel.reactionClicked(position, this.getEmoji())
+                                viewModel.addReaction(position, this.getEmoji())
                             }
                             myAdapter.notifyItemChanged(position)
                             cancel()

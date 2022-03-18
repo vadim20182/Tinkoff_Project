@@ -8,4 +8,7 @@
     app:avatarSize="40dp"
     app:messageCustomViewGroupInnerPadding="@dimen/default_padding">
 
+    <include
+        layout="@layout/message_custom_view_group_layout" />
+
 </android.example.tinkoffproject.customviews.MessageCustomViewGroup>

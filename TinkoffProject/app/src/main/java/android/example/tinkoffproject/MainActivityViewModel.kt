@@ -2,70 +2,70 @@ package android.example.tinkoffproject
 
 import android.example.tinkoffproject.customviews.ReactionCustomView
 import android.example.tinkoffproject.data.UserMessage
+import android.example.tinkoffproject.data.UserReaction
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 class MainActivityViewModel : ViewModel() {
 
-    private val users: MutableLiveData<MutableList<UserMessage>> =
+    private val _users: MutableLiveData<MutableList<UserMessage>> =
         MutableLiveData<MutableList<UserMessage>>()
+    val users: LiveData<out List<UserMessage>> = _users
+
+    private val currentMessages: MutableList<UserMessage>
+        get() = _users.value ?: mutableListOf()
 
     init {
         loadUsers()
     }
 
     fun addItem(userMessage: UserMessage) {
-        users.value!!.add(userMessage)
-    }
-
-    fun reactionAdded(position: Int, emoji: String) {
-        if (users.value!![position].selectedReactions[emoji] == true) {
-            if (users.value!![position].reactions[emoji]!!.minus(1) != 0) {
-                users.value!![position].reactions[emoji] =
-                    users.value!![position].reactions[emoji]!!.minus(1)
-                users.value!![position].selectedReactions[emoji] = false
-            } else {
-                users.value!![position].reactions.remove(emoji)
-                users.value!![position].selectedReactions.remove(emoji)
-            }
-        } else {
-            users.value!![position].reactions[emoji] =
-                users.value!![position].reactions[emoji]!!.plus(1)
-            users.value!![position].selectedReactions[emoji] = true
-        }
+        currentMessages.add(userMessage)
     }
 
     fun reactionClicked(position: Int, emoji: String) {
-        if (users.value!![position].selectedReactions[emoji] ==
-            false || users.value!![position].selectedReactions[emoji] ==
-            null
-        ) {
-            users.value!![position].selectedReactions[emoji] =
-                true
-            if (users.value!![position].reactions[emoji] == null)
-                users.value!![position].reactions[emoji] = 1
-            else
-                users.value!![position].reactions[emoji] =
-                    users.value!![position].reactions[emoji]!!.plus(
-                        1
-                    )
+        val userReaction = UserReaction(
+            currentMessages[position].reactions,
+            currentMessages[position].selectedReactions
+        )
+
+        if (userReaction.isReactionSelected(emoji) == true) {
+            if (userReaction.canReactionCountBeDecreased(emoji)) {
+                userReaction.decreaseReactionCount(emoji)
+                userReaction.unselectReaction(emoji)
+            } else
+                userReaction.deleteReaction(emoji)
+        } else {
+            userReaction.increaseReactionCount(emoji)
+            userReaction.selectReaction(emoji)
         }
     }
 
-    fun getUsers(): LiveData<MutableList<UserMessage>> {
-        return users
+    fun addReaction(position: Int, emoji: String) {
+        val userReaction = UserReaction(
+            currentMessages[position].reactions,
+            currentMessages[position].selectedReactions
+        )
+
+        if (userReaction.isReactionSelected(emoji) != true) {
+            userReaction.selectReaction(emoji)
+            if (userReaction.isReactionAdded(emoji)) {
+                userReaction.increaseReactionCount(emoji)
+            } else
+                userReaction.addReaction(emoji)
+        }
     }
 
     private fun loadUsers() {
-        users.value = mutableListOf(
+        _users.value = mutableListOf(
             UserMessage(0, "Username1", messageText = "Hi1! There!"),
             UserMessage(0, "Username2", messageText = "Hi2! There!"),
             UserMessage(2, "Username3", messageText = "Hi3! There!"),
             UserMessage(
                 3,
                 "Username4",
-                R.mipmap.send_btn,
+                R.drawable.send_btn,
                 "Hi4! There!Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eu quam sed diam lobortis lacinia sit amet in tellus. Sed hendrerit nisl in tellus maximus, non sollicitudin tortor scelerisque. Vivamus vel arcu in dui iaculis accumsan vitae sed erat. Mauris viverra arcu ex, id rhoncus libero pulvinar at. Morbi sem libero, tempor nec erat vitae, tincidunt vulputate dolor.",
                 mutableMapOf(Pair(ReactionCustomView.EMOJI_LIST[0], 1))
             ),
@@ -90,6 +90,7 @@ class MainActivityViewModel : ViewModel() {
             ),
             UserMessage(8, "Username9", messageText = "Hi9! There!", date = "1 Feb"),
             UserMessage(8, "Username10", messageText = "Hi10! There!", date = "1 Feb"),
-            UserMessage(8, "Username11", messageText = "Hi11! There!", date = "2 Feb"))
+            UserMessage(8, "Username11", messageText = "Hi11! There!", date = "2 Feb")
+        )
     }
 }

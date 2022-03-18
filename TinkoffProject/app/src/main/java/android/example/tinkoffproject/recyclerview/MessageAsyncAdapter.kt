@@ -6,8 +6,10 @@ import android.example.tinkoffproject.data.UserMessage
 import android.example.tinkoffproject.customviews.FlexBoxLayout
 import android.example.tinkoffproject.customviews.MessageCustomViewGroup
 import android.example.tinkoffproject.customviews.ReactionCustomView
-import android.graphics.Rect
-import android.text.TextPaint
+import android.example.tinkoffproject.databinding.MessageCustomViewGroupLayoutBinding
+import android.example.tinkoffproject.databinding.MessageItemBinding
+import android.example.tinkoffproject.databinding.MyMessageCustomViewGroupLayoutBinding
+import android.example.tinkoffproject.databinding.MyMessageItemBinding
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -36,24 +38,18 @@ class MessageAsyncAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
         return when (viewType) {
             TYPE_MESSAGE -> {
-                val layoutInflater = LayoutInflater.from(parent.context)
-                val view =
-                    layoutInflater.inflate(
-                        R.layout.message_item,
-                        parent,
-                        false
-                    )
-                MessageViewHolder(view, onItemClickedListener)
+                val binding = MessageItemBinding.inflate(
+                    LayoutInflater.from(parent.context), parent, false
+                )
+                val mergeLayoutBinding = MessageCustomViewGroupLayoutBinding.bind(binding.root)
+                MessageViewHolder(mergeLayoutBinding, onItemClickedListener)
             }
             else -> {
-                val layoutInflater = LayoutInflater.from(parent.context)
-                val view =
-                    layoutInflater.inflate(
-                        R.layout.my_message_item,
-                        parent,
-                        false
-                    )
-                MyMessageViewHolder(view, onItemClickedListener)
+                val binding = MyMessageItemBinding.inflate(
+                    LayoutInflater.from(parent.context), parent, false
+                )
+                val mergeLayoutBinding = MyMessageCustomViewGroupLayoutBinding.bind(binding.root)
+                MyMessageViewHolder(mergeLayoutBinding, onItemClickedListener)
             }
         }
     }
@@ -75,35 +71,41 @@ class MessageAsyncAdapter(
     }
 
     class MessageViewHolder(
-        itemView: View,
+        private val binding: MessageCustomViewGroupLayoutBinding,
         private val onItemClickedListener: OnItemClickedListener
     ) :
-        BaseViewHolder(itemView) {
-        val name: TextView = itemView.findViewById(R.id.message_user_name)
-        private val messageText: TextView = itemView.findViewById(R.id.message_text)
+        BaseViewHolder(binding.root) {
+        val name: TextView = binding.messageUserName
+        private val messageText: TextView = binding.messageText
         private val reactionsFlexBoxLayout: FlexBoxLayout =
-            itemView.findViewById(R.id.message_emojis)
+            binding.messageEmojis
 
         fun bind(userMessage: UserMessage) {
             name.text = userMessage.name
             messageText.text = userMessage.messageText
             reactionsFlexBoxLayout.removeAllViews()
 
-            for (key in userMessage.reactions.keys) {
-                reactionsFlexBoxLayout.addView((LayoutInflater.from(itemView.context)
-                    .inflate(R.layout.emoji_item, null) as ReactionCustomView).apply {
-                    setEmoji(key)
-                    setReactionCount(userMessage.reactions[key]!!)
-                    isSelected = userMessage.selectedReactions[key] == true
-                    setOnClickListener {
-                        onItemClickedListener.onItemClicked(adapterPosition, it)
-                    }
-                })
-            }
-
             if (userMessage.reactions.isNotEmpty()) {
-                reactionsFlexBoxLayout.addView((LayoutInflater.from(itemView.context)
-                    .inflate(R.layout.emoji_item, null) as ReactionCustomView).apply {
+                for (key in userMessage.reactions.keys) {
+                    reactionsFlexBoxLayout.addView((LayoutInflater.from(binding.root.context)
+                        .inflate(
+                            R.layout.emoji_item,
+                            null
+                        ) as ReactionCustomView).apply {
+                        setEmoji(key)
+                        setReactionCount(userMessage.reactions[key]!!)
+                        isSelected = userMessage.selectedReactions[key] == true
+                        setOnClickListener {
+                            onItemClickedListener.onItemClicked(adapterPosition, it)
+                        }
+                    })
+                }
+
+                reactionsFlexBoxLayout.addView((LayoutInflater.from(binding.root.context)
+                    .inflate(
+                        R.layout.emoji_item,
+                        null
+                    ) as ReactionCustomView).apply {
                     isButton = true
                     setOnClickListener {
                         onItemClickedListener.onItemClicked(adapterPosition, this)
@@ -114,38 +116,44 @@ class MessageAsyncAdapter(
                 onItemClickedListener.onItemClicked(adapterPosition, it)
                 return@setOnLongClickListener true
             }
-            (itemView as MessageCustomViewGroup).setAvatarId(userMessage.avatar)
+            (binding.root as MessageCustomViewGroup).setAvatarId(userMessage.avatar)
         }
     }
 
     class MyMessageViewHolder(
-        itemView: View,
+        private val binding: MyMessageCustomViewGroupLayoutBinding,
         private val onItemClickedListener: OnItemClickedListener
     ) :
-        BaseViewHolder(itemView) {
-        private val messageText: TextView = itemView.findViewById(R.id.message_text)
+        BaseViewHolder(binding.root) {
+        private val messageText: TextView = binding.messageText
         private val reactionsFlexBoxLayout: FlexBoxLayout =
-            itemView.findViewById(R.id.message_emojis)
+            binding.messageEmojis
 
         fun bind(userMessage: UserMessage) {
             messageText.text = userMessage.messageText
             reactionsFlexBoxLayout.removeAllViews()
 
-            for (key in userMessage.reactions.keys) {
-                reactionsFlexBoxLayout.addView((LayoutInflater.from(itemView.context)
-                    .inflate(R.layout.emoji_item, null) as ReactionCustomView).apply {
-                    setEmoji(key)
-                    setReactionCount(userMessage.reactions[key]!!)
-                    isSelected = userMessage.selectedReactions[key] == true
-                    setOnClickListener {
-                        onItemClickedListener.onItemClicked(adapterPosition, it)
-                    }
-                })
-            }
-
             if (userMessage.reactions.isNotEmpty()) {
-                reactionsFlexBoxLayout.addView((LayoutInflater.from(itemView.context)
-                    .inflate(R.layout.emoji_item, null) as ReactionCustomView).apply {
+                for (key in userMessage.reactions.keys) {
+                    reactionsFlexBoxLayout.addView((LayoutInflater.from(binding.root.context)
+                        .inflate(
+                            R.layout.emoji_item,
+                            null
+                        ) as ReactionCustomView).apply {
+                        setEmoji(key)
+                        setReactionCount(userMessage.reactions[key]!!)
+                        isSelected = userMessage.selectedReactions[key] == true
+                        setOnClickListener {
+                            onItemClickedListener.onItemClicked(adapterPosition, it)
+                        }
+                    })
+                }
+
+                reactionsFlexBoxLayout.addView((LayoutInflater.from(binding.root.context)
+                    .inflate(
+                        R.layout.emoji_item,
+                        null
+                    ) as ReactionCustomView).apply {
                     isButton = true
                     setOnClickListener {
                         onItemClickedListener.onItemClicked(adapterPosition, this)
@@ -161,7 +169,7 @@ class MessageAsyncAdapter(
 
     object DiffCallback : DiffUtil.ItemCallback<UserMessage>() {
         override fun areItemsTheSame(oldItem: UserMessage, newItem: UserMessage): Boolean {
-            return oldItem == newItem
+            return oldItem.messageId == newItem.messageId
         }
 
         override fun areContentsTheSame(oldItem: UserMessage, newItem: UserMessage): Boolean {

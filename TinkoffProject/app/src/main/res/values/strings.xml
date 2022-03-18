@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Tinkoff Project</string>
+    <string name="message_input_hint">Написать...</string>
 </resources>

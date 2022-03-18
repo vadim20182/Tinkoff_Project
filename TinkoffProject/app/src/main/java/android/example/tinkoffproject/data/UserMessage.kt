@@ -2,6 +2,7 @@ package android.example.tinkoffproject.data
 
 import android.example.tinkoffproject.R
 import androidx.annotation.DrawableRes
+import kotlin.random.Random
 
 data class UserMessage(
     val userId: Long,
@@ -11,5 +12,6 @@ data class UserMessage(
     val messageText: String,
     val reactions: MutableMap<String, Int> = mutableMapOf(),
     val selectedReactions: MutableMap<String, Boolean> = mutableMapOf(),
-    val date: String = "1 Jan"
+    val date: String = "1 Jan",
+    val messageId: Long = Random.nextLong(10000)
 )

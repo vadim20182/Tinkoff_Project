@@ -71,9 +71,9 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
                     MeasureSpec.getSize(widthMeasureSpec) - innerPadding * 2,
                     MeasureSpec.EXACTLY
                 ),
-                innerPadding * 3,
+                innerPadding * TOTAL_HORIZONTAL_PADDING_COUNT,
                 heightMeasureSpec,
-                innerPadding * 4
+                innerPadding * VERTICAL_INNER_PADDING_COUNT
             )
             sendButtonSize = messageTextInput.measuredHeight + innerPadding
             sendOtherBitmap =
@@ -82,7 +82,7 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
                     Bitmap.createScaledBitmap(
                         BitmapFactory.decodeResource(
                             resources,
-                            R.mipmap.add_btn
+                            R.drawable.add_btn
                         ), sendButtonSize, sendButtonSize, false
                     )
                 ).apply {
@@ -95,7 +95,7 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
                     Bitmap.createScaledBitmap(
                         BitmapFactory.decodeResource(
                             resources,
-                            R.mipmap.send_btn
+                            R.drawable.send_btn
                         ), sendButtonSize, sendButtonSize, false
                     )
                 ).apply {
@@ -106,26 +106,26 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
         measureChildWithMargins(
             messageTextInput,
             MeasureSpec.makeMeasureSpec(
-                MeasureSpec.getSize(widthMeasureSpec) - innerPadding * 2 - sendButtonSize,
+                MeasureSpec.getSize(widthMeasureSpec) - innerPadding * TEXT_INPUT_PADDING_COUNT - sendButtonSize,
                 MeasureSpec.EXACTLY
             ),
-            innerPadding * 3,
+            innerPadding * TOTAL_HORIZONTAL_PADDING_COUNT,
             heightMeasureSpec,
-            innerPadding * 4
+            innerPadding * VERTICAL_INNER_PADDING_COUNT
         )
         measureChildWithMargins(
             sendImageView,
             widthMeasureSpec,
-            innerPadding * 2 + messageTextInput.measuredWidth,
+            innerPadding * TEXT_INPUT_PADDING_COUNT + messageTextInput.measuredWidth,
             heightMeasureSpec,
-            innerPadding * 4
+            innerPadding * VERTICAL_INNER_PADDING_COUNT
         )
 
         contentHeight =
             maxOf(
                 sendButtonSize,
                 messageTextInput.measuredHeight
-            ) + if (messageTextInput.lineCount == 1) innerPadding * 3 else innerPadding * 4
+            ) + if (messageTextInput.lineCount == 1) innerPadding * 3 else innerPadding * VERTICAL_INNER_PADDING_COUNT
 
         backgroundRect.left = innerPadding.toFloat()
         backgroundRect.bottom =
@@ -133,7 +133,7 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
         backgroundRect.top =
             backgroundRect.bottom - innerPadding - messageTextInput.measuredHeight - innerPadding
         backgroundRect.right =
-            backgroundRect.left + messageTextInput.measuredWidth + 2 * innerPadding
+            backgroundRect.left + messageTextInput.measuredWidth + TEXT_INPUT_PADDING_COUNT * innerPadding
 
         setMeasuredDimension(
             resolveSize(MeasureSpec.getSize(widthMeasureSpec), widthMeasureSpec),
@@ -146,15 +146,15 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
         val messageTextInput = getChildAt(1) as EditText
 
         messageTextInput.layout(
-            innerPadding * 2,
-            contentHeight - 2 * innerPadding - messageTextInput.measuredHeight,
-            innerPadding * 2 + messageTextInput.measuredWidth,
-            contentHeight - 2 * innerPadding
+            innerPadding * TEXT_INPUT_PADDING_COUNT,
+            contentHeight - TEXT_INPUT_PADDING_COUNT * innerPadding - messageTextInput.measuredHeight,
+            innerPadding * TEXT_INPUT_PADDING_COUNT + messageTextInput.measuredWidth,
+            contentHeight - TEXT_INPUT_PADDING_COUNT * innerPadding
         )
         sendImageView.layout(
-            innerPadding * 2 + messageTextInput.measuredWidth + 2 * innerPadding,
+            innerPadding * TEXT_INPUT_PADDING_COUNT + messageTextInput.measuredWidth + 2 * innerPadding,
             contentHeight - innerPadding - innerPadding / 2 - sendButtonSize,
-            innerPadding * 2 + messageTextInput.measuredWidth + innerPadding + sendButtonSize + innerPadding,
+            innerPadding * TEXT_INPUT_PADDING_COUNT + messageTextInput.measuredWidth + innerPadding + sendButtonSize + innerPadding,
             contentHeight - innerPadding - innerPadding / 2
         )
     }
@@ -182,5 +182,11 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
 
     override fun generateLayoutParams(p: LayoutParams): LayoutParams {
         return MarginLayoutParams(p)
+    }
+
+    companion object {
+        private const val TOTAL_HORIZONTAL_PADDING_COUNT = 3
+        private const val VERTICAL_INNER_PADDING_COUNT = 4
+        private const val TEXT_INPUT_PADDING_COUNT = 2
     }
 }

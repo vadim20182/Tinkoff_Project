@@ -35,9 +35,12 @@ class MessageCustomViewGroup @JvmOverloads constructor(
                     R.styleable.MessageCustomViewGroup_messageCustomViewGroupInnerPadding,
                     10f
                 ).toInt()
-            messageInnerPadding = 6 * innerPadding / 5
+            messageInnerPadding = (MESSAGE_PADDING_SCALE_FACTOR * innerPadding).toInt()
             avatarSize =
-                this.getDimension(R.styleable.MessageCustomViewGroup_avatarSize, 20f).toInt()
+                this.getDimension(
+                    R.styleable.MessageCustomViewGroup_avatarSize,
+                    DEFAULT_AVATAR_SIZE
+                ).toInt()
             val src = BitmapFactory.decodeResource(resources, userAvatarId)
             avatarBitmap =
                 RoundedBitmapDrawableFactory.create(
@@ -175,5 +178,10 @@ class MessageCustomViewGroup @JvmOverloads constructor(
 
     override fun generateLayoutParams(p: LayoutParams): LayoutParams {
         return MarginLayoutParams(p)
+    }
+
+    companion object {
+        private const val MESSAGE_PADDING_SCALE_FACTOR = 6 / 5f
+        private const val DEFAULT_AVATAR_SIZE = 20f
     }
 }

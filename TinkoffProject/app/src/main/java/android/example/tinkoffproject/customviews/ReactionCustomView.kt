@@ -84,7 +84,7 @@ class ReactionCustomView @JvmOverloads constructor(
             backgroundRectPaint.color = Color.TRANSPARENT
         } else if (isButton && addEmojiBitmap == null) {
             val text = "😁 0"
-            val src = BitmapFactory.decodeResource(resources, R.mipmap.plus_icon)
+            val src = BitmapFactory.decodeResource(resources, R.drawable.plus_icon)
             textPaint.textSize = resources.getDimension(R.dimen.default_text_size)
             textPaint.getTextBounds(text, 0, text.length, tempBounds)
             addEmojiBitmap =

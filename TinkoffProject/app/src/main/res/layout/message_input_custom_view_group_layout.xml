@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
         android:ems="10"
-        android:hint="Написать..."
+        android:hint="@string/message_input_hint"
         android:inputType="textMultiLine"
         android:isScrollContainer="true"
         android:maxLines="6"
