@@ -25,13 +25,14 @@ class MainActivity : AppCompatActivity(), MessageAsyncAdapter.OnItemClickedListe
 
     private lateinit var viewModel: MainActivityViewModel
     private lateinit var myAdapter: MessageAsyncAdapter
-    private var _binding: ActivityMainBinding? = null
+    private val _binding: ActivityMainBinding by lazy(LazyThreadSafetyMode.NONE) {
+        ActivityMainBinding.inflate(layoutInflater)
+    }
     private val binding
-        get() = _binding!!
+        get() = _binding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         viewModel = ViewModelProvider(this)[MainActivityViewModel::class.java]
@@ -87,7 +88,7 @@ class MainActivity : AppCompatActivity(), MessageAsyncAdapter.OnItemClickedListe
             addOnContextAvailableListener {
                 val bottomSheetFlexBoxLayout =
                     findViewById<FlexBoxLayout>(R.id.bottom_sheet_emojis)
-                if (bottomSheetFlexBoxLayout!!.isEmpty()) {
+                if (bottomSheetFlexBoxLayout?.isEmpty() == true) {
                     for (emoji in ReactionCustomView.EMOJI_LIST)
                         bottomSheetFlexBoxLayout.addView((LayoutInflater.from(context)
                             .inflate(
@@ -97,7 +98,7 @@ class MainActivity : AppCompatActivity(), MessageAsyncAdapter.OnItemClickedListe
                             isSimpleEmoji = true
                             setEmoji(emoji)
                         })
-                    for (child in findViewById<FlexBoxLayout>(R.id.bottom_sheet_emojis)?.children!!)
+                    for (child in bottomSheetFlexBoxLayout.children)
                         child.setOnClickListener {
                             with(child as ReactionCustomView) {
                                 viewModel.addReaction(position, this.getEmoji())

@@ -11,17 +11,14 @@ internal class UserReaction(
 
     fun unselectReaction(emoji: String) {
         selectedReactions[emoji] = false
+        reactions[emoji]?.let {
+            reactions.put(emoji, it - 1)
+        }
     }
 
     fun increaseReactionCount(emoji: String) {
         reactions[emoji]?.let {
             reactions.put(emoji, it + 1)
-        }
-    }
-
-    fun decreaseReactionCount(emoji: String) {
-        reactions[emoji]?.let {
-            reactions.put(emoji, it - 1)
         }
     }
 

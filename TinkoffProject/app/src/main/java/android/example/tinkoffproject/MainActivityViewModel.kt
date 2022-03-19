@@ -32,7 +32,6 @@ class MainActivityViewModel : ViewModel() {
 
         if (userReaction.isReactionSelected(emoji) == true) {
             if (userReaction.canReactionCountBeDecreased(emoji)) {
-                userReaction.decreaseReactionCount(emoji)
                 userReaction.unselectReaction(emoji)
             } else
                 userReaction.deleteReaction(emoji)
