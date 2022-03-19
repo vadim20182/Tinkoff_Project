@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.graphics.drawable.RoundedBitmapDrawable
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
+import androidx.recyclerview.widget.RecyclerView
 
 
 class MessageCustomViewGroup @JvmOverloads constructor(
@@ -17,9 +18,9 @@ class MessageCustomViewGroup @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : ViewGroup(context, attrs) {
 
+    private var userAvatarId: Int = R.mipmap.avatar
     private val backgroundRect = RectF()
-    private val avatarSize: Int
-
+    private var avatarSize: Int
     private var avatarBitmap: RoundedBitmapDrawable
     private val innerPadding: Int
     private val messageInnerPadding: Int
@@ -27,17 +28,34 @@ class MessageCustomViewGroup @JvmOverloads constructor(
 
     init {
         inflate(context, R.layout.message_custom_view_group_layout, this)
-        val typedArray: TypedArray =
-            context.obtainStyledAttributes(attrs, R.styleable.MessageCustomViewGroup)
-        innerPadding =
-            typedArray.getDimension(
-                R.styleable.MessageCustomViewGroup_messageCustomViewGroupInnerPadding,
-                10f
-            ).toInt()
-        messageInnerPadding = 6 * innerPadding / 5
-        avatarSize =
-            typedArray.getDimension(R.styleable.MessageCustomViewGroup_avatarSize, 20f).toInt()
-        val src = BitmapFactory.decodeResource(resources, R.mipmap.avatar)
+        with(context.obtainStyledAttributes(attrs, R.styleable.MessageCustomViewGroup))
+        {
+            innerPadding =
+                this.getDimension(
+                    R.styleable.MessageCustomViewGroup_messageCustomViewGroupInnerPadding,
+                    10f
+                ).toInt()
+            messageInnerPadding = (MESSAGE_PADDING_SCALE_FACTOR * innerPadding).toInt()
+            avatarSize =
+                this.getDimension(
+                    R.styleable.MessageCustomViewGroup_avatarSize,
+                    DEFAULT_AVATAR_SIZE
+                ).toInt()
+            val src = BitmapFactory.decodeResource(resources, userAvatarId)
+            avatarBitmap =
+                RoundedBitmapDrawableFactory.create(
+                    resources,
+                    Bitmap.createScaledBitmap(src, avatarSize, avatarSize, false)
+                ).apply {
+                    isCircular = true
+                }
+            this.recycle()
+        }
+    }
+
+    fun setAvatarId(avatarId: Int) {
+        this.userAvatarId = avatarId
+        val src = BitmapFactory.decodeResource(resources, userAvatarId)
         avatarBitmap =
             RoundedBitmapDrawableFactory.create(
                 resources,
@@ -45,7 +63,6 @@ class MessageCustomViewGroup @JvmOverloads constructor(
             ).apply {
                 isCircular = true
             }
-        typedArray.recycle()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -54,6 +71,7 @@ class MessageCustomViewGroup @JvmOverloads constructor(
         val messageTextView = getChildAt(2) as TextView
         val reactionsLayout = getChildAt(3) as FlexBoxLayout
         val messageOffset = messageInnerPadding * 5
+
         avatarView.setImageDrawable(avatarBitmap)
 
         measureChildWithMargins(
@@ -86,8 +104,8 @@ class MessageCustomViewGroup @JvmOverloads constructor(
             reactionsLayout.measuredWidth
         )
         val contentHeight =
-            messageInnerPadding + nameTextView.measuredHeight + messageTextView.measuredHeight +
-                    reactionsLayout.measuredHeight + 2 * innerPadding + messageInnerPadding
+            messageInnerPadding + nameTextView.measuredHeight + innerPadding + messageTextView.measuredHeight +
+                    messageInnerPadding + innerPadding + reactionsLayout.measuredHeight
 
         backgroundRect.left = avatarSize.toFloat() + innerPadding
         backgroundRect.top = 0f
@@ -145,6 +163,7 @@ class MessageCustomViewGroup @JvmOverloads constructor(
         canvas.drawRoundRect(backgroundRect, 40f, 40f, Paint().apply {
             isAntiAlias = true
             color = Color.parseColor("#2A3136")
+
         })
         super.dispatchDraw(canvas)
     }
@@ -159,5 +178,10 @@ class MessageCustomViewGroup @JvmOverloads constructor(
 
     override fun generateLayoutParams(p: LayoutParams): LayoutParams {
         return MarginLayoutParams(p)
+    }
+
+    companion object {
+        private const val MESSAGE_PADDING_SCALE_FACTOR = 6 / 5f
+        private const val DEFAULT_AVATAR_SIZE = 20f
     }
 }

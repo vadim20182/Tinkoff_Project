@@ -5,18 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <TextView
-        android:id="@+id/message_user_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="John Doe"
-        android:textColor="#309c8c"
-        android:textSize="@dimen/default_text_size_small" />
-
     <TextView
         android:id="@+id/message_text"
         android:layout_width="wrap_content"
@@ -28,5 +16,6 @@
         android:id="@+id/message_emojis"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:flexBoxInnerPadding="@dimen/default_padding" />
+        app:flexBoxInnerPadding="@dimen/default_padding"
+        app:flexBoxIsRightAligned="true" />
 </merge>

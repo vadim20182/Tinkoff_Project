@@ -8,6 +8,7 @@ import android.graphics.*
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.view.View
+import android.widget.Button
 import kotlin.random.Random
 
 class ReactionCustomView @JvmOverloads constructor(
@@ -27,8 +28,9 @@ class ReactionCustomView @JvmOverloads constructor(
     private var tempBounds = Rect()
     private val backgroundRect = RectF()
     private val startPoint = PointF()
-    private val colorStateList: ColorStateList
-    private val isButton: Boolean
+    private val colorStateList: ColorStateList?
+    var isButton: Boolean = false
+    var isSimpleEmoji: Boolean = false
     private var addEmojiBitmap: Bitmap? = null
 
     init {
@@ -51,26 +53,20 @@ class ReactionCustomView @JvmOverloads constructor(
             )
             colorStateList = this.getColorStateList(
                 R.styleable.ReactionCustomView_reactionCustomBackground
-            )!!
+            )
             isButton = this.getBoolean(R.styleable.ReactionCustomView_reactionCustomIsButton, false)
             this.recycle()
         }
 
         text = "$emoji $reactionCount"
-
-        if (isButton) {
-            val text = "😁 0"
-            val src = BitmapFactory.decodeResource(resources, R.mipmap.plus_icon)
-            textPaint.getTextBounds(text, 0, text.length, tempBounds)
-            addEmojiBitmap =
-                Bitmap.createScaledBitmap(src, tempBounds.height(), tempBounds.height(), false)
-            backgroundRectPaint.color = Color.parseColor("#2A3136")
-        }
-
     }
 
     fun setEmoji(emoji: String) {
         this.emoji = emoji
+    }
+
+    fun getEmoji(): String {
+        return emoji
     }
 
     fun setReactionCount(reactionCount: Int) {
@@ -78,9 +74,22 @@ class ReactionCustomView @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        if (!isButton) {
+        if (!isButton && !isSimpleEmoji) {
             text = "$emoji $reactionCount"
+            textPaint.textSize = resources.getDimension(R.dimen.default_text_size)
             textPaint.getTextBounds(text, 0, text.length, tempBounds)
+        } else if (isSimpleEmoji) {
+            text = emoji
+            textPaint.getTextBounds(text, 0, text.length, tempBounds)
+            backgroundRectPaint.color = Color.TRANSPARENT
+        } else if (isButton && addEmojiBitmap == null) {
+            val text = "😁 0"
+            val src = BitmapFactory.decodeResource(resources, R.drawable.plus_icon)
+            textPaint.textSize = resources.getDimension(R.dimen.default_text_size)
+            textPaint.getTextBounds(text, 0, text.length, tempBounds)
+            addEmojiBitmap =
+                Bitmap.createScaledBitmap(src, tempBounds.height(), tempBounds.height(), false)
+            backgroundRectPaint.color = Color.parseColor("#2A3136")
         }
 
         val contentWidth = tempBounds.width()
@@ -96,7 +105,7 @@ class ReactionCustomView @JvmOverloads constructor(
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        if (!isButton) {
+        if (!isButton || isSimpleEmoji) {
             startPoint.x = w / 2f - tempBounds.width() / 2f
             startPoint.y = h / 2f + tempBounds.height() / 2f - textPaint.descent()
             backgroundRect.left = startPoint.x - paddingLeft
@@ -119,21 +128,13 @@ class ReactionCustomView @JvmOverloads constructor(
         }
     }
 
-    override fun setSelected(selected: Boolean) {
-        if (!isButton) {
-            reactionCount = if (!isSelected) Random.nextInt(1000) else 0
-            requestLayout()
-        }
-        super.setSelected(selected)
-    }
-
     override fun onCreateDrawableState(extraSpace: Int): IntArray {
         val drawableState = super.onCreateDrawableState(extraSpace + SUPPORTED_DRAWABLE_STATE.size)
-        if (!isButton) {
+        if (!isButton && !isSimpleEmoji) {
             if (isSelected) {
                 mergeDrawableStates(drawableState, SUPPORTED_DRAWABLE_STATE)
             }
-            backgroundRectPaint.color = colorStateList.getColorForState(drawableState, Color.BLUE)
+            backgroundRectPaint.color = colorStateList!!.getColorForState(drawableState, Color.BLUE)
         }
         return drawableState
     }
@@ -150,5 +151,42 @@ class ReactionCustomView @JvmOverloads constructor(
         private const val NO_REACTION = -1
         private const val DEFAULT_TEXT_SIZE_PX = 10f
         private val SUPPORTED_DRAWABLE_STATE = intArrayOf(android.R.attr.state_selected)
+        val EMOJI_LIST =
+            arrayOf(
+                "😀",
+                "😃",
+                "😄",
+                "😁",
+                "😆",
+                "😅",
+                "🤣",
+                "😂",
+                "🙂",
+                "🙃",
+                "😉",
+                "😊",
+                "😇",
+                "😍",
+                "🤩",
+                "😘",
+                "☺",
+                "😜",
+                "🤪",
+                "😝",
+                "🤭",
+                "🤫",
+                "🤔",
+                "🤨",
+                "😬",
+                "😴",
+                "🤮",
+                "🤯",
+                "🧐",
+                "😳",
+                "😭",
+                "💩",
+                "👺",
+                "👻"
+            )
     }
 }
