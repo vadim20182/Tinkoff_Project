@@ -1,5 +1,6 @@
-package android.example.tinkoffproject
+package android.example.tinkoffproject.screens.chat
 
+import android.example.tinkoffproject.R
 import android.example.tinkoffproject.customviews.ReactionCustomView
 import android.example.tinkoffproject.data.UserMessage
 import android.example.tinkoffproject.data.UserReaction
@@ -7,7 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-class MainActivityViewModel : ViewModel() {
+class ChatViewModel : ViewModel() {
 
     private val _users: MutableLiveData<MutableList<UserMessage>> =
         MutableLiveData<MutableList<UserMessage>>()

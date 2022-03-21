@@ -1,6 +1,5 @@
 package android.example.tinkoffproject.recyclerview
 
-import android.example.tinkoffproject.MainActivity
 import android.example.tinkoffproject.R
 import android.example.tinkoffproject.data.UserMessage
 import android.example.tinkoffproject.customviews.FlexBoxLayout
@@ -10,6 +9,7 @@ import android.example.tinkoffproject.databinding.MessageCustomViewGroupLayoutBi
 import android.example.tinkoffproject.databinding.MessageItemBinding
 import android.example.tinkoffproject.databinding.MyMessageCustomViewGroupLayoutBinding
 import android.example.tinkoffproject.databinding.MyMessageItemBinding
+import android.example.tinkoffproject.screens.chat.ChatFragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -33,7 +33,7 @@ class MessageAsyncAdapter(
         get() = differ.currentList
 
     override fun getItemViewType(position: Int): Int =
-        if (data[position].userId == MainActivity.MY_USER_ID) TYPE_MY_MESSAGE else TYPE_MESSAGE
+        if (data[position].userId == ChatFragment.MY_USER_ID) TYPE_MY_MESSAGE else TYPE_MESSAGE
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
         return when (viewType) {

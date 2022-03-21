@@ -9,7 +9,7 @@ import android.view.View
 import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 
-class CustomItemDecoration(private val context: Context, private val data: List<UserMessage>) :
+class MessageCustomItemDecoration(private val context: Context, private val data: List<UserMessage>) :
     RecyclerView.ItemDecoration() {
 
     private val textPaint = TextPaint().apply {
