@@ -40,5 +40,5 @@ dependencies {
     //Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:${rootProject.navComponent}"
     implementation "androidx.navigation:navigation-ui-ktx:${rootProject.navComponent}"
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation "androidx.legacy:legacy-support-v4:${rootProject.legacySupport}"
 }

@@ -7,17 +7,17 @@
 
     <fragment
         android:id="@+id/channelsFragment"
-        android:name="android.example.tinkoffproject.screens.channels.MainChannelsFragment"
+        android:name="android.example.tinkoffproject.channels.ui.MainChannelsFragment"
         android:label="fragment_channels"
         tools:layout="@layout/fragment_channels_main" />
     <fragment
         android:id="@+id/contactsFragment"
-        android:name="android.example.tinkoffproject.screens.contacts.ContactsFragment"
+        android:name="android.example.tinkoffproject.contacts.ui.ContactsFragment"
         android:label="fragment_contacts"
         tools:layout="@layout/fragment_contacts" />
     <fragment
         android:id="@+id/profileFragment"
-        android:name="android.example.tinkoffproject.screens.ProfileFragment"
+        android:name="android.example.tinkoffproject.profile.ui.ProfileFragment"
         android:label="fragment_profile"
         tools:layout="@layout/fragment_profile" />
 </navigation>

@@ -4,9 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".screens.chat.ChatFragment">
+    tools:context=".chat.ui.ChatFragment">
 
-    <android.example.tinkoffproject.customviews.MessageInputCustomViewGroup
+    <android.example.tinkoffproject.message.customviews.MessageInputCustomViewGroup
         android:id="@+id/messageInputCustomViewGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

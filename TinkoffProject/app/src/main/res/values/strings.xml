@@ -4,11 +4,11 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="topic_name">Topic: #%1$s</string>
     <string name="log_out">Log out</string>
-    <string name="subscribed_tab">Subscribed</string>
-    <string name="all_streams_tab">All streams</string>
     <string name="users_input_hint">Users...</string>
     <string name="search_input_hint">Search...</string>
     <string name="channels_bottom_item">Channels</string>
     <string name="contacts_bottom_item">People</string>
     <string name="profile_bottom_item">Profile</string>
+    <string name="tab_subscribed_channels">Subscribed</string>
+    <string name="tab_all_channels">All streams</string>
 </resources>
