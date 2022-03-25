@@ -6,6 +6,6 @@ import androidx.lifecycle.ViewModelProvider
 
 class AllChannelsFragment : BaseChannelsTabFragment() {
     override val viewModel: BaseChannelsViewModel by lazy {
-        return@lazy ViewModelProvider(this)[AllChannelsViewModel::class.java]
+        ViewModelProvider(this)[AllChannelsViewModel::class.java]
     }
 }
