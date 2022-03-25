@@ -34,6 +34,11 @@ dependencies {
     implementation "androidx.core:core-ktx:${rootProject.androidXCoreKTXVersion}"
     implementation "androidx.appcompat:appcompat:${rootProject.androidXAppcompatVersion}"
     implementation "com.google.android.material:material:${rootProject.androidMaterialVersion}"
+    //LiveData + ViewModel
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:${rootProject.lifecycleViewmodelKTX}"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:${rootProject.lifecycleLivedataKTX}"
+    //Navigation
+    implementation "androidx.navigation:navigation-fragment-ktx:${rootProject.navComponent}"
+    implementation "androidx.navigation:navigation-ui-ktx:${rootProject.navComponent}"
+    implementation "androidx.legacy:legacy-support-v4:${rootProject.legacySupport}"
 }

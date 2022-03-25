@@ -1,15 +1,12 @@
-package android.example.tinkoffproject.customviews
+package android.example.tinkoffproject.message.customviews
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.content.res.TypedArray
 import android.example.tinkoffproject.R
 import android.graphics.*
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.view.View
-import android.widget.Button
-import kotlin.random.Random
 
 class ReactionCustomView @JvmOverloads constructor(
     context: Context,

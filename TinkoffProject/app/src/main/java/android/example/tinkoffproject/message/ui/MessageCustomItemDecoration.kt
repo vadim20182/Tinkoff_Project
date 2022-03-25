@@ -1,15 +1,15 @@
-package android.example.tinkoffproject.recyclerview
+package android.example.tinkoffproject.message.ui
 
 import android.content.Context
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.data.UserMessage
+import android.example.tinkoffproject.message.model.UserMessage
 import android.graphics.*
 import android.text.TextPaint
 import android.view.View
 import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 
-class CustomItemDecoration(private val context: Context, private val data: List<UserMessage>) :
+class MessageCustomItemDecoration(private val context: Context, var data: List<UserMessage>) :
     RecyclerView.ItemDecoration() {
 
     private val textPaint = TextPaint().apply {

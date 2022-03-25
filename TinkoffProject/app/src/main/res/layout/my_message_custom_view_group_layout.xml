@@ -12,7 +12,7 @@
         android:textSize="@dimen/default_text_size_small"
         tools:text="@tools:sample/lorem/random" />
 
-    <android.example.tinkoffproject.customviews.FlexBoxLayout
+    <android.example.tinkoffproject.message.customviews.FlexBoxLayout
         android:id="@+id/message_emojis"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

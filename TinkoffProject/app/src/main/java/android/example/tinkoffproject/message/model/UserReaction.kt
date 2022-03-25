@@ -1,4 +1,4 @@
-package android.example.tinkoffproject.data
+package android.example.tinkoffproject.message.model
 
 internal class UserReaction(
     private val reactions: MutableMap<String, Int>,

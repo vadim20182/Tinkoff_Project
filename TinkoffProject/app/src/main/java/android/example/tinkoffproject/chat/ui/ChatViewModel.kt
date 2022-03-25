@@ -1,33 +1,42 @@
-package android.example.tinkoffproject
+package android.example.tinkoffproject.chat.ui
 
-import android.example.tinkoffproject.customviews.ReactionCustomView
-import android.example.tinkoffproject.data.UserMessage
-import android.example.tinkoffproject.data.UserReaction
+import android.example.tinkoffproject.R
+import android.example.tinkoffproject.channels.model.ChannelItem
+import android.example.tinkoffproject.message.customviews.ReactionCustomView
+import android.example.tinkoffproject.message.model.UserMessage
+import android.example.tinkoffproject.message.model.UserReaction
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-class MainActivityViewModel : ViewModel() {
+class ChatViewModel : ViewModel() {
 
-    private val _users: MutableLiveData<MutableList<UserMessage>> =
-        MutableLiveData<MutableList<UserMessage>>()
+    private val _users: MutableLiveData<List<UserMessage>> =
+        MutableLiveData<List<UserMessage>>()
     val users: LiveData<out List<UserMessage>> = _users
 
-    private val currentMessages: MutableList<UserMessage>
-        get() = _users.value ?: mutableListOf()
+    private val currentMessages: List<UserMessage>
+        get() = _users.value ?: emptyList()
 
     init {
         loadUsers()
     }
 
+    private fun updateData(newList: List<UserMessage>) {
+        _users.value = newList
+    }
+
     fun addItem(userMessage: UserMessage) {
-        currentMessages.add(userMessage)
+        val newList = mutableListOf<UserMessage>().apply { addAll(currentMessages) }
+        newList.add(userMessage)
+        updateData(newList)
     }
 
     fun reactionClicked(position: Int, emoji: String) {
+        val newList = mutableListOf<UserMessage>().apply { addAll(currentMessages) }
         val userReaction = UserReaction(
-            currentMessages[position].reactions,
-            currentMessages[position].selectedReactions
+            newList[position].reactions,
+            newList[position].selectedReactions
         )
 
         if (userReaction.isReactionSelected(emoji) == true) {
@@ -39,12 +48,14 @@ class MainActivityViewModel : ViewModel() {
             userReaction.increaseReactionCount(emoji)
             userReaction.selectReaction(emoji)
         }
+        updateData(newList)
     }
 
     fun addReaction(position: Int, emoji: String) {
+        val newList = mutableListOf<UserMessage>().apply { addAll(currentMessages) }
         val userReaction = UserReaction(
-            currentMessages[position].reactions,
-            currentMessages[position].selectedReactions
+            newList[position].reactions,
+            newList[position].selectedReactions
         )
 
         if (userReaction.isReactionSelected(emoji) != true) {
@@ -54,6 +65,7 @@ class MainActivityViewModel : ViewModel() {
             } else
                 userReaction.addReaction(emoji)
         }
+        updateData(newList)
     }
 
     private fun loadUsers() {

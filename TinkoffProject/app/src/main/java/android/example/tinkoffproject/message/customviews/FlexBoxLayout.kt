@@ -1,7 +1,6 @@
-package android.example.tinkoffproject.customviews
+package android.example.tinkoffproject.message.customviews
 
 import android.content.Context
-import android.content.res.TypedArray
 import android.example.tinkoffproject.R
 import android.graphics.*
 import android.util.AttributeSet

@@ -1,4 +1,4 @@
-package android.example.tinkoffproject.customviews
+package android.example.tinkoffproject.message.customviews
 
 import android.content.Context
 import android.example.tinkoffproject.R

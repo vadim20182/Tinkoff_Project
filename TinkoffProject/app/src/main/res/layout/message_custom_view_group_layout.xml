@@ -13,8 +13,8 @@
         android:id="@+id/message_user_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="John Doe"
-        android:textColor="#309c8c"
+        tools:text="John Doe"
+        android:textColor="@color/default_green_color"
         android:textSize="@dimen/default_text_size_small" />
 
     <TextView
@@ -24,7 +24,7 @@
         android:textSize="@dimen/default_text_size_small"
         tools:text="@tools:sample/lorem/random" />
 
-    <android.example.tinkoffproject.customviews.FlexBoxLayout
+    <android.example.tinkoffproject.message.customviews.FlexBoxLayout
         android:id="@+id/message_emojis"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -1,4 +1,4 @@
-package android.example.tinkoffproject.data
+package android.example.tinkoffproject.message.model
 
 import android.example.tinkoffproject.R
 import androidx.annotation.DrawableRes

@@ -21,4 +21,6 @@ ext {
     androidMaterialVersion = '1.5.0'
     lifecycleViewmodelKTX = '2.4.1'
     lifecycleLivedataKTX = '2.4.1'
+    navComponent = '2.4.1'
+    legacySupport = '1.0.0'
 }
