@@ -51,9 +51,11 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         with(viewModel) {
             this.isAsyncTaskCompleted.observe(viewLifecycleOwner) { isAsyncTaskCompleted ->
                 if (isAsyncTaskCompleted) {
+                    inputButton.visibility = View.VISIBLE
                     shimmer.visibility = View.GONE
                     recyclerView.visibility = View.VISIBLE
                 } else {
+                    inputButton.visibility = View.GONE
                     shimmer.visibility = View.VISIBLE
                     recyclerView.visibility = View.GONE
                 }
