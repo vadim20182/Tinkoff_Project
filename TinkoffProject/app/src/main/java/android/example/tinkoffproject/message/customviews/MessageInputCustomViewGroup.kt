@@ -10,6 +10,7 @@ import android.widget.*
 import androidx.core.graphics.drawable.RoundedBitmapDrawable
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import androidx.core.widget.doAfterTextChanged
+import com.google.android.material.imageview.ShapeableImageView
 
 class MessageInputCustomViewGroup @JvmOverloads constructor(
     context: Context,
@@ -18,8 +19,8 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
 
     private var tempBounds = Rect()
     private val backgroundRect = RectF()
-    private var sendTextBitmap: RoundedBitmapDrawable? = null
-    private var sendOtherBitmap: RoundedBitmapDrawable? = null
+    private var sendTextBitmap: Bitmap? = null
+    private var sendOtherBitmap: Bitmap? = null
     private val innerPadding: Int
     private var sendButtonSize: Int = 0
     private val messageTextInput: EditText
@@ -31,7 +32,7 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
     init {
         inflate(context, R.layout.message_input_custom_view_group_layout, this)
         messageTextInput = getChildAt(1) as EditText
-        sendImageView = getChildAt(0) as ImageView
+        sendImageView = getChildAt(0) as ShapeableImageView
         currentTextHeight = messageTextInput.height
         currentTextIsEmpty = messageTextInput.text.isEmpty()
         messageTextInput.doAfterTextChanged {
@@ -77,30 +78,22 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
             )
             sendButtonSize = messageTextInput.measuredHeight + innerPadding
             sendOtherBitmap =
-                RoundedBitmapDrawableFactory.create(
-                    resources,
-                    Bitmap.createScaledBitmap(
+                Bitmap.createScaledBitmap(
                         BitmapFactory.decodeResource(
                             resources,
                             R.drawable.add_btn
                         ), sendButtonSize, sendButtonSize, false
                     )
-                ).apply {
-                    isCircular = true
-                }
+
 
             sendTextBitmap =
-                RoundedBitmapDrawableFactory.create(
-                    resources,
-                    Bitmap.createScaledBitmap(
+                Bitmap.createScaledBitmap(
                         BitmapFactory.decodeResource(
                             resources,
                             R.drawable.send_btn
                         ), sendButtonSize, sendButtonSize, false
                     )
-                ).apply {
-                    isCircular = true
-                }
+
         }
 
         measureChildWithMargins(
@@ -142,7 +135,7 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        val sendImageView = getChildAt(0) as ImageView
+        val sendImageView = getChildAt(0) as ShapeableImageView
         val messageTextInput = getChildAt(1) as EditText
 
         messageTextInput.layout(
@@ -161,9 +154,9 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
 
     override fun dispatchDraw(canvas: Canvas) {
         if (messageTextInput.text.isEmpty())
-            sendImageView.setImageDrawable(sendOtherBitmap)
+            sendImageView.setImageBitmap(sendOtherBitmap)
         else
-            sendImageView.setImageDrawable(sendTextBitmap)
+            sendImageView.setImageBitmap(sendTextBitmap)
 
         canvas.drawRoundRect(backgroundRect, 60f, 60f, Paint().apply {
             isAntiAlias = true

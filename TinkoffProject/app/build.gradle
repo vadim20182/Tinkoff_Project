@@ -30,15 +30,20 @@ android {
 }
 
 dependencies {
-
     implementation "androidx.core:core-ktx:${rootProject.androidXCoreKTXVersion}"
     implementation "androidx.appcompat:appcompat:${rootProject.androidXAppcompatVersion}"
     implementation "com.google.android.material:material:${rootProject.androidMaterialVersion}"
+    implementation "androidx.legacy:legacy-support-v4:${rootProject.legacySupport}"
     //LiveData + ViewModel
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:${rootProject.lifecycleViewmodelKTX}"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:${rootProject.lifecycleLivedataKTX}"
     //Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:${rootProject.navComponent}"
     implementation "androidx.navigation:navigation-ui-ktx:${rootProject.navComponent}"
-    implementation "androidx.legacy:legacy-support-v4:${rootProject.legacySupport}"
+    //RxJava
+    implementation "io.reactivex.rxjava2:rxjava:${rootProject.rxJava}"
+    implementation "io.reactivex.rxjava2:rxandroid:${rootProject.rxAndroid}"
+    implementation "io.reactivex.rxjava2:rxkotlin:${rootProject.rxKotlin}"
+    //Shimmer
+    implementation "com.facebook.shimmer:shimmer:${rootProject.shimmer}"
 }

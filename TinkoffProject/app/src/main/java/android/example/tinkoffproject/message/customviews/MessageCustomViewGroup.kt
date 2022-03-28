@@ -3,12 +3,14 @@ package android.example.tinkoffproject.message.customviews
 import android.content.Context
 import android.example.tinkoffproject.R
 import android.graphics.*
+import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.graphics.drawable.RoundedBitmapDrawable
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
+import com.google.android.material.imageview.ShapeableImageView
 
 
 class MessageCustomViewGroup @JvmOverloads constructor(
@@ -19,7 +21,7 @@ class MessageCustomViewGroup @JvmOverloads constructor(
     private var userAvatarId: Int = R.mipmap.avatar
     private val backgroundRect = RectF()
     private var avatarSize: Int
-    private var avatarBitmap: RoundedBitmapDrawable
+    private var avatarBitmap: Bitmap
     private val innerPadding: Int
     private val messageInnerPadding: Int
 
@@ -40,13 +42,7 @@ class MessageCustomViewGroup @JvmOverloads constructor(
                     DEFAULT_AVATAR_SIZE
                 ).toInt()
             val src = BitmapFactory.decodeResource(resources, userAvatarId)
-            avatarBitmap =
-                RoundedBitmapDrawableFactory.create(
-                    resources,
-                    Bitmap.createScaledBitmap(src, avatarSize, avatarSize, false)
-                ).apply {
-                    isCircular = true
-                }
+            avatarBitmap = Bitmap.createScaledBitmap(src, avatarSize, avatarSize, false)
             this.recycle()
         }
     }
@@ -54,23 +50,17 @@ class MessageCustomViewGroup @JvmOverloads constructor(
     fun setAvatarId(avatarId: Int) {
         this.userAvatarId = avatarId
         val src = BitmapFactory.decodeResource(resources, userAvatarId)
-        avatarBitmap =
-            RoundedBitmapDrawableFactory.create(
-                resources,
-                Bitmap.createScaledBitmap(src, avatarSize, avatarSize, false)
-            ).apply {
-                isCircular = true
-            }
+        avatarBitmap = Bitmap.createScaledBitmap(src, avatarSize, avatarSize, false)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val avatarView = getChildAt(0) as ImageView
+        val avatarView = getChildAt(0) as ShapeableImageView
         val nameTextView = getChildAt(1) as TextView
         val messageTextView = getChildAt(2) as TextView
         val reactionsLayout = getChildAt(3) as FlexBoxLayout
         val messageOffset = messageInnerPadding * 5
 
-        avatarView.setImageDrawable(avatarBitmap)
+        avatarView.setImageBitmap(avatarBitmap)
 
         measureChildWithMargins(
             nameTextView,
@@ -123,7 +113,7 @@ class MessageCustomViewGroup @JvmOverloads constructor(
 
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        val avatarView = getChildAt(0) as ImageView
+        val avatarView = getChildAt(0) as ShapeableImageView
         val nameTextView = getChildAt(1) as TextView
         val messageTextView = getChildAt(2) as TextView
         val reactionsLayout = getChildAt(3) as FlexBoxLayout

@@ -16,15 +16,15 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <EditText
-            android:id="@+id/search_channels"
+            android:id="@+id/channel_search"
             android:layout_width="0dp"
-            android:layout_marginStart="@dimen/default_padding"
             android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/default_padding"
             android:ems="1"
-            android:textSize="25sp"
             android:hint="@string/search_input_hint"
             android:inputType="text"
             android:maxLines="1"
+            android:textSize="25sp"
             app:layout_constraintEnd_toStartOf="@+id/imageView2"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/default_padding"
             android:src="@android:drawable/ic_menu_search"
-            app:layout_constraintBottom_toBottomOf="@id/search_channels"
+            app:layout_constraintBottom_toBottomOf="@id/channel_search"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -49,11 +49,56 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tab_layout" />
 
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:visibility="gone"
+        android:id="@+id/shimmer_channels_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tab_layout">
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@drawable/shimmer_divider"
+            android:orientation="vertical"
+            android:showDividers="middle|end">
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+            <include layout="@layout/shimmer_channel_item" />
+
+        </LinearLayout>
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
-        android:padding="@dimen/default_padding"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="@dimen/default_padding"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/search_layout">

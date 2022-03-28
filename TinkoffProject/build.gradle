@@ -23,4 +23,8 @@ ext {
     lifecycleLivedataKTX = '2.4.1'
     navComponent = '2.4.1'
     legacySupport = '1.0.0'
+    rxJava = '2.2.21'
+    rxAndroid = '2.1.1'
+    rxKotlin = '2.4.0'
+    shimmer = '0.5.0'
 }
