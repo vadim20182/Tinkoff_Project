@@ -49,28 +49,28 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         val inputButton: ShapeableImageView = view.findViewById(R.id.message_input_button)
 
         with(viewModel) {
-            this.isAsyncTaskCompleted.observe(viewLifecycleOwner) { isAsyncTaskCompleted ->
-                if (isAsyncTaskCompleted) {
-                    inputButton.visibility = View.VISIBLE
-                    shimmer.visibility = View.GONE
-                    recyclerView.visibility = View.VISIBLE
-                } else {
+            isLoading.observe(viewLifecycleOwner) { isLoading ->
+                if (isLoading) {
                     inputButton.visibility = View.GONE
                     shimmer.visibility = View.VISIBLE
                     recyclerView.visibility = View.GONE
+                } else {
+                    inputButton.visibility = View.VISIBLE
+                    shimmer.visibility = View.GONE
+                    recyclerView.visibility = View.VISIBLE
                 }
             }
-            this.topicMessages.observe(viewLifecycleOwner) {
+            topicMessages.observe(viewLifecycleOwner) {
                 itemDecoration.data = it
                 myAdapter.data = it
             }
-            this.itemToUpdate.observe(viewLifecycleOwner) {
+            itemToUpdate.observe(viewLifecycleOwner) {
                 myAdapter.notifyItemChanged(it)
             }
-            this.messagesCount.observe(viewLifecycleOwner) {
+            messagesCount.observe(viewLifecycleOwner) {
                 recyclerView.smoothScrollToPosition(myAdapter.data.size)
             }
-            this.errorMessage.observe(viewLifecycleOwner) {
+            errorMessage.observe(viewLifecycleOwner) {
                 if (it != "") {
                     Snackbar.make(
                         inputViewGroup,
@@ -81,7 +81,7 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
                         setTextColor(Color.WHITE)
                         setBackgroundTint(Color.RED)
                     }.show()
-                    this.resetErrorMessage()
+                    resetErrorMessage()
                 }
             }
         }

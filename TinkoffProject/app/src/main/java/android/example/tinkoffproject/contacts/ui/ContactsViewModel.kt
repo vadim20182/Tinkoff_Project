@@ -32,16 +32,12 @@ class ContactsViewModel : ViewModel() {
         MutableLiveData<List<ContactItem>>()
     val contacts: LiveData<out List<ContactItem>> = _contacts
 
-    private val _isSearchCompleted: MutableLiveData<Boolean> =
+    private val _isLoading: MutableLiveData<Boolean> =
         MutableLiveData<Boolean>()
-    val isSearchCompleted: LiveData<Boolean> = _isSearchCompleted
+    val isLoading: LiveData<Boolean> = _isLoading
 
     private val currentContacts: List<ContactItem>
         get() = _contacts.value ?: emptyList()
-
-    private var _currentSearch = ""
-    val currentSearch
-        get() = _currentSearch
 
     init {
         loadContacts()
@@ -49,15 +45,13 @@ class ContactsViewModel : ViewModel() {
     }
 
     fun searchContact(input: String) {
-        _currentSearch = input
-        _isSearchCompleted.value = false
         querySearch.onNext(input)
+
     }
 
-    fun resetSearch() {
-        _currentSearch = ""
+    private fun resetSearch() {
         searchDisposable.dispose()
-        _isSearchCompleted.value = true
+        _isLoading.value = false
         _contacts.value = allContacts
         subscribe()
     }
@@ -67,6 +61,16 @@ class ContactsViewModel : ViewModel() {
     private fun subscribe() {
         searchDisposable = querySearch
             .map { query -> query.trim() }
+            .scan { previous, current ->
+                if (current.isBlank() && previous.isNotBlank())
+                    resetSearch()
+                current
+            }
+            .filter { it.isNotBlank() }
+            .distinctUntilChanged()
+            .doOnNext {
+                _isLoading.value = true
+            }
             .debounce(1500, TimeUnit.MILLISECONDS)
             .observeOn(Schedulers.io())
             .switchMapSingle { input ->
@@ -76,25 +80,24 @@ class ContactsViewModel : ViewModel() {
             .subscribeBy(
                 onNext = {
                     _contacts.value = it
-                    _isSearchCompleted.value = true
+                    _isLoading.value = false
                 })
     }
 
     private fun loadContacts() {
-        _isSearchCompleted.value = false
+        _isLoading.value = true
         val list = mutableListOf<ContactItem>()
-        Completable.fromCallable {}
+        Completable.fromCallable {
+            for (i in 0..19)
+                list.add(ContactItem(i.toLong(), "Ivan $i", "ivan$i@mail.ru"))
+        }
             .subscribeOn(Schedulers.io())
-            .doOnSubscribe {
-                for (i in 0..19)
-                    list.add(ContactItem(i.toLong(), "Ivan $i", "ivan$i@mail.ru"))
-            }
             .delay(1, TimeUnit.SECONDS)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onComplete = {
                     _contacts.value = list
-                    _isSearchCompleted.value = true
+                    _isLoading.value = false
                 }
             )
             .addTo(compositeDisposable)

@@ -33,57 +33,34 @@ abstract class BaseChannelsTabFragment : Fragment(R.layout.base_fragment_channel
         }
         return@lazy navController
     }
-    val textWatcher = object : TextWatcher {
-        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-
-        override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-
-        override fun afterTextChanged(text: Editable?) {
-            if (text.toString() != viewModel.currentSearch) {
-                val input = text?.toString().orEmpty()
-                if (input.isNotBlank())
-                    viewModel.searchChannels(input)
-                else
-                    viewModel.resetSearch()
-            }
-        }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.setBackgroundColor(Color.TRANSPARENT)
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.recycler_view_channels)
-        val shimmer = requireParentFragment().requireView()
-            .findViewById<ShimmerFrameLayout>(R.id.shimmer_channels_view)
+        val shimmer = (parentFragment as MainChannelsFragment).getShimmerLayout()
 
         with(viewModel) {
-            this.isAsyncTaskCompleted.observe(viewLifecycleOwner) { isAsyncTaskCompleted ->
-                if (isAsyncTaskCompleted) {
-                    shimmer.visibility = View.GONE
-                    view.visibility = View.VISIBLE
-                } else {
+            uiState.observe(viewLifecycleOwner) { state ->
+                channelsAdapter.data = state.channels
+                if (state.isLoading) {
                     shimmer.visibility = View.VISIBLE
                     view.visibility = View.GONE
+                } else {
+                    shimmer.visibility = View.GONE
+                    view.visibility = View.VISIBLE
                 }
             }
-            this.channels.observe(viewLifecycleOwner) {
-                channelsAdapter.data = it
-            }
-            this.itemToUpdate.observe(viewLifecycleOwner) {
+            itemToUpdate.observe(viewLifecycleOwner) {
                 channelsAdapter.notifyItemChanged(it)
             }
         }
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = channelsAdapter
         recyclerView.addItemDecoration(DividerItemDecoration(context, RecyclerView.VERTICAL))
-        (parentFragment as MainChannelsFragment).addTextListener(this)
     }
 
-    override fun onDestroyView() {
-        (parentFragment as MainChannelsFragment).removeTextListener(this)
-        super.onDestroyView()
-    }
 
     override fun onItemClicked(position: Int, item: ChannelItem) {
         if (item.isTopic) {

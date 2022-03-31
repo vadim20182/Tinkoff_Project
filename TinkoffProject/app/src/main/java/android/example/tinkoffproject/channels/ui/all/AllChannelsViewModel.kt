@@ -13,41 +13,40 @@ import java.util.concurrent.TimeUnit
 class AllChannelsViewModel : BaseChannelsViewModel() {
     override val allChannels = mutableListOf<ChannelItem>()
 
-
     init {
         loadChannels()
-        subscribe()
+        searchObservable
+        subscribeToSearch()
+        subscribeChannelClick()
     }
 
     override fun loadChannels() {
-        _isAsyncTaskCompleted.value = false
-        Completable.fromCallable {}
-            .subscribeOn(Schedulers.io())
-            .doOnSubscribe {
-                allChannels.apply {
-                    for (i in 0..19) {
-                        val channel = ChannelItem("#Channel ${i + 1}")
-                        this.add(channel)
-                        if (topics[channel.name] == null)
-                            topics[channel.name] = mutableListOf()
-                        for (j in 0..5) {
-                            topics[channel.name]?.add(
-                                ChannelItem(
-                                    "TOPIC ${j + 1}",
-                                    true,
-                                    parentChannel = channel.name
-                                )
+        _uiState.value = ChannelsUiState(isLoading = true)
+        Completable.fromCallable {
+            allChannels.apply {
+                for (i in 0..19) {
+                    val channel = ChannelItem("#Channel ${i + 1}")
+                    this.add(channel)
+                    if (topics[channel.name] == null)
+                        topics[channel.name] = mutableListOf()
+                    for (j in 0..5) {
+                        topics[channel.name]?.add(
+                            ChannelItem(
+                                "TOPIC ${j + 1}",
+                                true,
+                                parentChannel = channel.name
                             )
-                        }
+                        )
                     }
                 }
             }
+        }
+            .subscribeOn(Schedulers.io())
             .delay(1, TimeUnit.SECONDS)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onComplete = {
-                    _channels.value = allChannels
-                    _isAsyncTaskCompleted.value = true
+                    _uiState.value = _uiState.value?.copy(channels = allChannels, isLoading = false)
                 }
             )
             .addTo(compositeDisposable)

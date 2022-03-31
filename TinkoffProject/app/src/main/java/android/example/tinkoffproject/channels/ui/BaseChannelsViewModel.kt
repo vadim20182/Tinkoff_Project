@@ -4,10 +4,12 @@ import android.example.tinkoffproject.channels.model.ChannelItem
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
@@ -19,38 +21,27 @@ abstract class BaseChannelsViewModel : ViewModel() {
     protected var compositeDisposable = CompositeDisposable()
     protected val topics: MutableMap<String, MutableList<ChannelItem>> = mutableMapOf()
 
-    protected val _channels: MutableLiveData<List<ChannelItem>> =
-        MutableLiveData<List<ChannelItem>>()
-    val channels: LiveData<out List<ChannelItem>> = _channels
-
-    protected val _isAsyncTaskCompleted: MutableLiveData<Boolean> =
-        MutableLiveData<Boolean>()
-    val isAsyncTaskCompleted: LiveData<Boolean> = _isAsyncTaskCompleted
-
-    private val querySearch = PublishSubject.create<String>()
+    protected val searchObservable: Observable<String> by lazy { MainChannelsViewModel.querySearch }
     private val queryChannelClick = PublishSubject.create<Int>()
     private val disposables = mutableMapOf<String, Disposable>()
 
     private val currentChannels: List<ChannelItem>
-        get() = _channels.value ?: emptyList()
+        get() = _uiState.value?.channels ?: emptyList()
 
     private val _itemToUpdate: MutableLiveData<Int> =
         MutableLiveData<Int>()
     val itemToUpdate: LiveData<Int> = _itemToUpdate
 
-    private var _currentSearch = ""
-    val currentSearch
-        get() = _currentSearch
+    protected val _uiState = MutableLiveData<ChannelsUiState>()
+    val uiState: LiveData<ChannelsUiState>
+        get() = _uiState
+
+    data class ChannelsUiState(
+        var channels: List<ChannelItem> = emptyList(),
+        val isLoading: Boolean = false,
+    )
 
     abstract fun loadChannels()
-
-    fun resetSearch() {
-        _currentSearch = ""
-        disposables[KEY_SEARCH_ACTION]?.dispose()
-        _isAsyncTaskCompleted.value = true
-        _channels.value = allChannels
-        subscribeSearch()
-    }
 
     private fun filterChannels(input: String) = allChannels.filter {
         (it.name.contains(input, true) && !it.isTopic) || (it.parentChannel?.contains(
@@ -59,16 +50,19 @@ abstract class BaseChannelsViewModel : ViewModel() {
         ) == true)
     }
 
-    fun searchChannels(input: String) {
-        _currentSearch = input
-        _isAsyncTaskCompleted.value = false
-        querySearch.onNext(input)
-    }
-
-    private fun subscribeSearch() {
-        disposables[KEY_SEARCH_ACTION]?.dispose()
-        disposables[KEY_SEARCH_ACTION] = querySearch
+    protected fun subscribeToSearch() {
+        searchObservable
             .map { query -> query.trim() }
+            .scan { previous, current ->
+                if (current.isBlank() && previous.isNotBlank())
+                    resetSearch()
+                current
+            }
+            .filter { it.isNotBlank() }
+            .distinctUntilChanged()
+            .doOnNext {
+                _uiState.value = _uiState.value?.copy(isLoading = true)
+            }
             .debounce(1500, TimeUnit.MILLISECONDS)
             .observeOn(Schedulers.io())
             .switchMapSingle { input ->
@@ -77,16 +71,23 @@ abstract class BaseChannelsViewModel : ViewModel() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onNext = {
-                    _channels.value = it
-                    _isAsyncTaskCompleted.value = true
+                    _uiState.value = _uiState.value?.copy(channels = it, isLoading = false)
                 })
+            .addTo(compositeDisposable)
     }
+
+    private fun resetSearch() {
+        compositeDisposable.clear()
+        _uiState.value = _uiState.value?.copy(channels = allChannels, isLoading = false)
+        subscribeToSearch()
+    }
+
 
     fun clickChannel(position: Int) {
         queryChannelClick.onNext(position)
     }
 
-    private fun subscribeChannelClick() {
+    fun subscribeChannelClick() {
         disposables[KEY_CLICK_CHANNEL]?.dispose()
         disposables[KEY_CLICK_CHANNEL] = queryChannelClick
             .observeOn(Schedulers.io())
@@ -96,17 +97,12 @@ abstract class BaseChannelsViewModel : ViewModel() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onNext = {
-                    _channels.value = it.second!!
+                    _uiState.value = _uiState.value?.copy(channels = it.second)
                     _itemToUpdate.value = it.first!!
                 })
     }
 
-    fun subscribe() {
-        subscribeChannelClick()
-        subscribeSearch()
-    }
-
-    private fun showOrHideTopics(position: Int): Pair<Int, MutableList<ChannelItem>> {
+    private fun showOrHideTopics(position: Int): Pair<Int, List<ChannelItem>> {
         val newList = mutableListOf<ChannelItem>().apply { addAll(currentChannels) }
         if (currentChannels[position].isExpanded)
             collapseTopics(position, newList)
@@ -141,7 +137,6 @@ abstract class BaseChannelsViewModel : ViewModel() {
     }
 
     companion object {
-        const val KEY_SEARCH_ACTION = "search"
         const val KEY_CLICK_CHANNEL = "channel_click"
     }
 }

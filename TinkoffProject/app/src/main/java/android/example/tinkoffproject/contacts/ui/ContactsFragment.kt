@@ -25,16 +25,16 @@ class ContactsFragment : Fragment(R.layout.fragment_contacts) {
         val shimmer = view.findViewById<ShimmerFrameLayout>(R.id.shimmer_contacts_view)
 
         with(viewModel) {
-            this.isSearchCompleted.observe(viewLifecycleOwner) { isSearchCompleted ->
-                if (isSearchCompleted) {
-                    shimmer.visibility = View.GONE
-                    recyclerView.visibility = View.VISIBLE
-                } else {
+            isLoading.observe(viewLifecycleOwner) { isLoading ->
+                if (isLoading) {
                     shimmer.visibility = View.VISIBLE
                     recyclerView.visibility = View.GONE
+                } else {
+                    shimmer.visibility = View.GONE
+                    recyclerView.visibility = View.VISIBLE
                 }
             }
-            this.contacts.observe(viewLifecycleOwner) {
+            contacts.observe(viewLifecycleOwner) {
                 contactsAdapter.data = it
             }
         }
@@ -44,13 +44,7 @@ class ContactsFragment : Fragment(R.layout.fragment_contacts) {
         recyclerView.adapter = contactsAdapter
 
         searchText.doAfterTextChanged { text ->
-            if (text.toString() != viewModel.currentSearch) {
-                val input = text?.toString().orEmpty()
-                if (input.isNotBlank())
-                    viewModel.searchContact(input)
-                else
-                    viewModel.resetSearch()
-            }
+            viewModel.searchContact(text?.toString().orEmpty())
         }
     }
 }
