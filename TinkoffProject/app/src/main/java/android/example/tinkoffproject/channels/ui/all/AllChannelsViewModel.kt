@@ -24,7 +24,7 @@ class AllChannelsViewModel : BaseChannelsViewModel() {
         _uiState.value = ChannelsUiState(isLoading = true)
         Completable.fromCallable {
             allChannels.apply {
-                for (i in 0..19) {
+                for (i in 0..10000) {
                     val channel = ChannelItem("#Channel ${i + 1}")
                     this.add(channel)
                     if (topics[channel.name] == null)

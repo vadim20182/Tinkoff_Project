@@ -13,52 +13,74 @@ import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.delay
+import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.random.Random
 
 class ContactsViewModel : ViewModel() {
 
     private val querySearch = PublishSubject.create<String>()
+    private val queryReset = PublishSubject.create<String>()
     private lateinit var searchDisposable: Disposable
     private val compositeDisposable = CompositeDisposable()
 
-    private val allContacts = mutableListOf<ContactItem>().apply {
-        for (i in 0..19) {
-            this.add(ContactItem(i.toLong(), "Ivan $i", "ivan$i@mail.ru"))
-        }
-    }
+    private val allContacts = mutableListOf<ContactItem>()
 
-    private val _contacts: MutableLiveData<List<ContactItem>> =
-        MutableLiveData<List<ContactItem>>()
-    val contacts: LiveData<out List<ContactItem>> = _contacts
+    var currentContacts: List<ContactItem> = emptyList()
+        private set
 
     private val _isLoading: MutableLiveData<Boolean> =
         MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val currentContacts: List<ContactItem>
-        get() = _contacts.value ?: emptyList()
-
     init {
         loadContacts()
-        subscribe()
+        subscribeSearch()
     }
 
     fun searchContact(input: String) {
+        if (searchDisposable.isDisposed) {
+            subscribeSearch()
+            compositeDisposable.clear()
+        }
         querySearch.onNext(input)
+    }
 
+    private fun subscribeReset() {
+        queryReset
+            .observeOn(Schedulers.io())
+            .switchMapSingle { input ->
+                Single.fromCallable { filterContacts(input) }
+                    .subscribeOn(Schedulers.io())
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onNext = {
+                    currentContacts = it
+                    _isLoading.value = false
+                    subscribeSearch()
+                    compositeDisposable.clear()
+                })
+            .addTo(compositeDisposable)
     }
 
     private fun resetSearch() {
         searchDisposable.dispose()
-        _isLoading.value = false
-        _contacts.value = allContacts
-        subscribe()
+        subscribeReset()
+        queryReset.onNext(".")
     }
 
-    private fun filterContacts(input: String) = allContacts.filter { it.name.contains(input, true) }
+    private fun filterContacts(input: String) =
+        allContacts.filter {
+            it.name.contains(
+                Regex(
+                    input,
+                    RegexOption.IGNORE_CASE
+                )
+            )
+        }
 
-    private fun subscribe() {
+    private fun subscribeSearch() {
         searchDisposable = querySearch
             .map { query -> query.trim() }
             .scan { previous, current ->
@@ -71,32 +93,32 @@ class ContactsViewModel : ViewModel() {
             .doOnNext {
                 _isLoading.value = true
             }
-            .debounce(1500, TimeUnit.MILLISECONDS)
+            .debounce(1000, TimeUnit.MILLISECONDS)
             .observeOn(Schedulers.io())
             .switchMapSingle { input ->
                 Single.fromCallable { filterContacts(input) }
+                    .subscribeOn(Schedulers.io())
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onNext = {
-                    _contacts.value = it
+                    currentContacts = it
                     _isLoading.value = false
                 })
     }
 
     private fun loadContacts() {
         _isLoading.value = true
-        val list = mutableListOf<ContactItem>()
         Completable.fromCallable {
-            for (i in 0..19)
-                list.add(ContactItem(i.toLong(), "Ivan $i", "ivan$i@mail.ru"))
+            for (i in 0..10000)
+                allContacts.add(ContactItem(i.toLong(), "Ivan $i", "ivan$i@mail.ru"))
         }
             .subscribeOn(Schedulers.io())
             .delay(1, TimeUnit.SECONDS)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onComplete = {
-                    _contacts.value = list
+                    currentContacts = allContacts
                     _isLoading.value = false
                 }
             )

@@ -4,17 +4,14 @@ import android.example.tinkoffproject.contacts.model.ContactItem
 import android.example.tinkoffproject.databinding.ContactItemBinding
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 
 class ContactsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private val differ = AsyncListDiffer(this, DiffCallback)
+    var data: List<ContactItem> = emptyList()
 
-    var data: List<ContactItem>
-        set(value) = differ.submitList(value)
-        get() = differ.currentList
+    fun update(newList: List<ContactItem>) = DiffUtil.calculateDiff(DiffCallback(data, newList))
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val binding = ContactItemBinding.inflate(
@@ -24,21 +21,32 @@ class ContactsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val item = differ.currentList[position]
+        val item = data[position]
         if (holder is ContactViewHolder)
             holder.bind(item)
     }
 
-    override fun getItemCount(): Int = differ.currentList.size
+    override fun getItemCount(): Int = data.size
 
 
-    object DiffCallback : DiffUtil.ItemCallback<ContactItem>() {
-        override fun areItemsTheSame(oldItem: ContactItem, newItem: ContactItem): Boolean {
-            return oldItem.name == newItem.name
+    inner class DiffCallback(
+        private val oldData: List<ContactItem>,
+        private val newData: List<ContactItem>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize(): Int {
+            return oldData.size
         }
 
-        override fun areContentsTheSame(oldItem: ContactItem, newItem: ContactItem): Boolean {
-            return oldItem == newItem
+        override fun getNewListSize(): Int {
+            return newData.size
+        }
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldData[oldItemPosition].name == newData[newItemPosition].name
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldData[oldItemPosition] == newData[newItemPosition]
         }
     }
 }
