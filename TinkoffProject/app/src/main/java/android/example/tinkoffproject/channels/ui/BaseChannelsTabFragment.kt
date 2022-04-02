@@ -6,6 +6,8 @@ import android.example.tinkoffproject.channels.model.ChannelItem
 import android.example.tinkoffproject.chat.ui.ChatFragment
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import androidx.core.os.bundleOf
 import androidx.navigation.NavController
@@ -14,6 +16,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.facebook.shimmer.ShimmerFrameLayout
 
 abstract class BaseChannelsTabFragment : Fragment(R.layout.base_fragment_channels),
     ChannelsAdapter.OnItemClickedListener {
@@ -36,13 +39,28 @@ abstract class BaseChannelsTabFragment : Fragment(R.layout.base_fragment_channel
         view.setBackgroundColor(Color.TRANSPARENT)
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.recycler_view_channels)
-        viewModel.channels.observe(viewLifecycleOwner) {
-            channelsAdapter.data = it
+        val shimmer = (parentFragment as MainChannelsFragment).getShimmerLayout()
+
+        with(viewModel) {
+            uiState.observe(viewLifecycleOwner) { state ->
+                channelsAdapter.data = state.channels
+                if (state.isLoading) {
+                    shimmer.visibility = View.VISIBLE
+                    view.visibility = View.GONE
+                } else {
+                    shimmer.visibility = View.GONE
+                    view.visibility = View.VISIBLE
+                }
+            }
+            itemToUpdate.observe(viewLifecycleOwner) {
+                channelsAdapter.notifyItemChanged(it)
+            }
         }
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = channelsAdapter
         recyclerView.addItemDecoration(DividerItemDecoration(context, RecyclerView.VERTICAL))
     }
+
 
     override fun onItemClicked(position: Int, item: ChannelItem) {
         if (item.isTopic) {
@@ -53,6 +71,6 @@ abstract class BaseChannelsTabFragment : Fragment(R.layout.base_fragment_channel
                 )
             navController.navigate(R.id.action_channelsFragment_to_chatFragment, bundle)
         } else
-            viewModel.showOrHideTopics(position)
+            viewModel.clickChannel(position)
     }
 }

@@ -1,13 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     tools:context=".chat.ui.ChatFragment">
 
+    <TextView
+        android:id="@+id/chat_topic_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/default_dark_color"
+        android:padding="5dp"
+        android:textAlignment="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+
     <android.example.tinkoffproject.message.customviews.MessageInputCustomViewGroup
-        android:id="@+id/messageInputCustomViewGroup"
+        android:id="@+id/message_input_custom_view_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -32,21 +43,22 @@
         android:id="@+id/messages_recycler_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/messageInputCustomViewGroup"
+        app:layout_constraintBottom_toTopOf="@id/message_input_custom_view_group"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/chat_topic_name" />
 
-    <TextView
-        android:id="@+id/chat_topic_name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAlignment="center"
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmer_chat"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:background="@color/default_dark_color"
-        android:padding="5dp"
+        app:layout_constraintBottom_toTopOf="@id/message_input_custom_view_group"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+        app:layout_constraintTop_toBottomOf="@+id/chat_topic_name">
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
