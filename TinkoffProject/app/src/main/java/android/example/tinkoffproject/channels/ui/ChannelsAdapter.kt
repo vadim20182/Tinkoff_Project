@@ -6,7 +6,6 @@ import android.example.tinkoffproject.databinding.TopicItemBinding
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 
@@ -17,15 +16,13 @@ private const val TYPE_ITEM_CHILD = 3
 class ChannelsAdapter(
     private val onItemClickedListener: OnItemClickedListener
 ) :
-    RecyclerView.Adapter<ChannelsBaseViewHolder>() {
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private val differ = AsyncListDiffer(this, DiffCallback)
+    var data: List<ChannelItem> = emptyList()
 
-    var data: List<ChannelItem>
-        set(value) = differ.submitList(value)
-        get() = differ.currentList
+    fun update(newList: List<ChannelItem>) = DiffUtil.calculateDiff(DiffCallback(data, newList))
 
-    override fun getItemCount(): Int = differ.currentList.size
+    override fun getItemCount(): Int = data.size
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -47,8 +44,8 @@ class ChannelsAdapter(
         }
     }
 
-    override fun onBindViewHolder(holder: ChannelsBaseViewHolder, position: Int) {
-        val item = differ.currentList[position]
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        val item = data[position]
         when (holder) {
             is HeaderViewHolder -> holder.bind(item)
             is ChildViewHolder -> holder.bind(item)
@@ -56,7 +53,7 @@ class ChannelsAdapter(
     }
 
     override fun getItemViewType(position: Int): Int =
-        if (differ.currentList[position].isTopic) TYPE_ITEM_CHILD
+        if (data[position].isTopic) TYPE_ITEM_CHILD
         else TYPE_ITEM_HEADER
 
 
@@ -64,14 +61,24 @@ class ChannelsAdapter(
         fun onItemClicked(position: Int, item: ChannelItem)
     }
 
-
-    object DiffCallback : DiffUtil.ItemCallback<ChannelItem>() {
-        override fun areItemsTheSame(oldItem: ChannelItem, newItem: ChannelItem): Boolean {
-            return oldItem.name == newItem.name
+    inner class DiffCallback(
+        private val oldData: List<ChannelItem>,
+        private val newData: List<ChannelItem>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize(): Int {
+            return oldData.size
         }
 
-        override fun areContentsTheSame(oldItem: ChannelItem, newItem: ChannelItem): Boolean {
-            return oldItem == newItem
+        override fun getNewListSize(): Int {
+            return newData.size
+        }
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldData[oldItemPosition].name == newData[newItemPosition].name
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldData[oldItemPosition] == newData[newItemPosition]
         }
     }
 }

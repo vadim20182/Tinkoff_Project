@@ -5,15 +5,14 @@ import android.example.tinkoffproject.R
 import android.example.tinkoffproject.message.customviews.FlexBoxLayout
 import android.example.tinkoffproject.message.customviews.MessageInputCustomViewGroup
 import android.example.tinkoffproject.message.customviews.ReactionCustomView
-import android.example.tinkoffproject.message.model.UserMessage
-import android.example.tinkoffproject.message.ui.MessageCustomItemDecoration
-import android.example.tinkoffproject.message.ui.MessageAsyncAdapter
+import android.example.tinkoffproject.chat.model.UserMessage
+import android.example.tinkoffproject.network.ApiService
+import android.example.tinkoffproject.utils.EMOJI_MAP
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.children
@@ -33,13 +32,19 @@ import kotlin.random.Random
 class ChatFragment : Fragment(R.layout.topic_chat_layout),
     MessageAsyncAdapter.OnItemClickedListener {
 
-    private val viewModel: ChatViewModel by viewModels()
-    private val myAdapter: MessageAsyncAdapter by lazy { MessageAsyncAdapter(this) }
+    private val viewModel: ChatViewModel by viewModels {
+        ChatViewModelFactory(
+            requireArguments().getString(
+                ARG_CHANNEL_NAME
+            )!!, requireArguments().getString(ARG_TOPIC_NAME)!!
+        )
+    }
+    private val messagesAdapter: MessageAsyncAdapter by lazy { MessageAsyncAdapter(this) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val itemDecoration = MessageCustomItemDecoration(
-            requireContext(),
+            view.context,
             mutableListOf()
         )
         val recyclerView = view.findViewById<RecyclerView>(R.id.messages_recycler_view)
@@ -49,8 +54,11 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         val inputButton: ShapeableImageView = view.findViewById(R.id.message_input_button)
 
         with(viewModel) {
-            isLoading.observe(viewLifecycleOwner) { isLoading ->
-                if (isLoading) {
+            uiState.observe(viewLifecycleOwner) { state ->
+                itemDecoration.data = state.topicMessages
+                messagesAdapter.data = state.topicMessages
+
+                if (state.isLoading) {
                     inputButton.visibility = View.GONE
                     shimmer.visibility = View.VISIBLE
                     recyclerView.visibility = View.GONE
@@ -60,49 +68,36 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
                     recyclerView.visibility = View.VISIBLE
                 }
             }
-            topicMessages.observe(viewLifecycleOwner) {
-                itemDecoration.data = it
-                myAdapter.data = it
-            }
             itemToUpdate.observe(viewLifecycleOwner) {
-                myAdapter.notifyItemChanged(it)
+                messagesAdapter.notifyItemChanged(it)
             }
             messagesCount.observe(viewLifecycleOwner) {
-                recyclerView.smoothScrollToPosition(myAdapter.data.size)
+                recyclerView.smoothScrollToPosition(messagesAdapter.data.size)
             }
             errorMessage.observe(viewLifecycleOwner) {
-                if (it != "") {
-                    Snackbar.make(
-                        inputViewGroup,
-                        it,
-                        Snackbar.LENGTH_SHORT
-                    ).apply {
-                        anchorView = inputViewGroup
-                        setTextColor(Color.WHITE)
-                        setBackgroundTint(Color.RED)
-                    }.show()
-                    resetErrorMessage()
-                }
+                Snackbar.make(
+                    inputViewGroup,
+                    it,
+                    Snackbar.LENGTH_SHORT
+                ).apply {
+                    anchorView = inputViewGroup
+                    setTextColor(Color.WHITE)
+                    setBackgroundTint(Color.RED)
+                }.show()
             }
         }
 
+        recyclerView.itemAnimator = null
         recyclerView.layoutManager = LinearLayoutManager(context).apply {
             stackFromEnd = true
         }
-        recyclerView.adapter = myAdapter
+        recyclerView.adapter = messagesAdapter
         recyclerView.addItemDecoration(itemDecoration)
 
         inputButton.setOnClickListener {
             val messageText = view.findViewById<EditText>(R.id.send_message_text)
             if (messageText.text.trim().isNotEmpty()) {
-                viewModel.sendMessage(
-                    UserMessage(
-                        MY_USER_ID,
-                        "Me",
-                        messageText = messageText.text.trim().toString(),
-                        date = "${Random.nextInt(1, 31)} March"
-                    )
-                )
+                viewModel.sendMessage(messageText.text.trim().toString())
                 messageText.text.clear()
             }
         }
@@ -121,7 +116,7 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         when (view) {
             is ReactionCustomView -> {
                 if (!view.isButton && !view.isSimpleEmoji) {
-                    viewModel.reactionClicked(position, view.getEmoji())
+                    viewModel.reactionClicked(position, view.pair.first)
                 } else if (view.isButton) {
                     showBottomSheetDialog(position)
                 }
@@ -139,19 +134,19 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
                 val bottomSheetFlexBoxLayout =
                     findViewById<FlexBoxLayout>(R.id.bottom_sheet_emojis)
                 if (bottomSheetFlexBoxLayout?.isEmpty() == true) {
-                    for (emoji in ReactionCustomView.EMOJI_LIST)
+                    for (key in EMOJI_MAP.keys)
                         bottomSheetFlexBoxLayout.addView((LayoutInflater.from(context)
                             .inflate(
                                 R.layout.emoji_item,
                                 null
                             ) as ReactionCustomView).apply {
                             isSimpleEmoji = true
-                            setEmoji(emoji)
+                            setEmojiNameAndCode(key, EMOJI_MAP[key]!!)
                         })
                     for (child in bottomSheetFlexBoxLayout.children)
                         child.setOnClickListener {
                             with(child as ReactionCustomView) {
-                                viewModel.addReaction(position, this.getEmoji())
+                                viewModel.addReaction(position, this.pair.first)
                             }
                             cancel()
                         }
@@ -163,7 +158,6 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
     }
 
     companion object {
-        const val MY_USER_ID = 8L
         const val ARG_CHANNEL_NAME = "channel_name"
         const val ARG_TOPIC_NAME = "topic_name"
     }

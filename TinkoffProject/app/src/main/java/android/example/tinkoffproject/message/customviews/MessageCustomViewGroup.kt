@@ -4,12 +4,14 @@ import android.content.Context
 import android.example.tinkoffproject.R
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.graphics.drawable.RoundedBitmapDrawable
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
+import androidx.core.graphics.drawable.toBitmap
 import com.google.android.material.imageview.ShapeableImageView
 
 
@@ -21,7 +23,7 @@ class MessageCustomViewGroup @JvmOverloads constructor(
     private var userAvatarId: Int = R.mipmap.avatar
     private val backgroundRect = RectF()
     private var avatarSize: Int
-    private var avatarBitmap: Bitmap
+    private var avatarBitmap: Bitmap? = null
     private val innerPadding: Int
     private val messageInnerPadding: Int
 
@@ -51,6 +53,12 @@ class MessageCustomViewGroup @JvmOverloads constructor(
         this.userAvatarId = avatarId
         val src = BitmapFactory.decodeResource(resources, userAvatarId)
         avatarBitmap = Bitmap.createScaledBitmap(src, avatarSize, avatarSize, false)
+        requestLayout()
+    }
+
+    fun setAvatar(avatar: Drawable) {
+        avatarBitmap = Bitmap.createScaledBitmap(avatar.toBitmap(), avatarSize, avatarSize, false)
+        requestLayout()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/default_padding"
-    android:background="@color/design_default_color_error"
+    android:background="@color/default_green_color"
     android:clickable="true"
     android:focusable="true"
     android:orientation="horizontal">
@@ -16,13 +16,6 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="30dp"
         android:padding="@dimen/default_padding"
-        tools:text="programming"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/topic_message_count"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="40dp"
-        android:text="1424 mes" />
+        android:textStyle="bold"
+        tools:text="programming" />
 </LinearLayout>

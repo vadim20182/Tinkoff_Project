@@ -1,44 +1,38 @@
 package android.example.tinkoffproject.chat.ui
 
 import android.accounts.NetworkErrorException
-import android.example.tinkoffproject.R
-import android.example.tinkoffproject.channels.model.ChannelItem
 import android.example.tinkoffproject.message.customviews.ReactionCustomView
-import android.example.tinkoffproject.message.model.UserMessage
-import android.example.tinkoffproject.message.model.UserReaction
-import android.util.Log
+import android.example.tinkoffproject.chat.model.UserMessage
+import android.example.tinkoffproject.chat.model.UserReaction
+import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.network.NetworkClient.client
+import android.example.tinkoffproject.network.NetworkClient.makeJSONArray
+import android.example.tinkoffproject.utils.EMOJI_MAP
+import android.text.Html
 import androidx.annotation.MainThread
 import androidx.lifecycle.*
-import io.reactivex.Completable
-import io.reactivex.Single
+import androidx.lifecycle.Observer
+import com.bumptech.glide.Glide
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
-import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
-import java.util.concurrent.TimeUnit
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 
-class ChatViewModel : ViewModel() {
+class ChatViewModel(private val stream: String, private val topic: String) : ViewModel() {
 
-    private val _topicMessages: MutableLiveData<List<UserMessage>> =
-        MutableLiveData<List<UserMessage>>()
-    val topicMessages: LiveData<out List<UserMessage>> = _topicMessages
+    private val querySendMessage: PublishSubject<String> by lazy { NetworkClient.makePublishSubject<String>() }
+    private val queryGetMessages: PublishSubject<Unit> by lazy { NetworkClient.makePublishSubject<Unit>() }
+    private val queryAddReaction: PublishSubject<Pair<Int, String>> by lazy { NetworkClient.makePublishSubject<Pair<Int, String>>() }
+    private val queryRemoveReaction: PublishSubject<Pair<Int, String>> by lazy { NetworkClient.makePublishSubject<Pair<Int, String>>() }
 
-    private val compositeDisposable = CompositeDisposable()
     private val disposables = mutableMapOf<String, Disposable>()
-    private var querySend: PublishSubject<UserMessage> = PublishSubject.create()
-
 
     private val currentMessages: List<UserMessage>
-        get() = _topicMessages.value ?: emptyList()
-
-    private val _isLoading: MutableLiveData<Boolean> =
-        MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean> = _isLoading
+        get() = _uiState.value?.topicMessages ?: emptyList()
 
     private val _itemToUpdate: MutableLiveData<Int> =
         MutableLiveData<Int>()
@@ -52,169 +46,197 @@ class ChatViewModel : ViewModel() {
     val errorMessage: LiveData<String>
         get() = _errorMessage
 
+    private val _uiState = MutableLiveData<ChatUiState>()
+    val uiState: LiveData<ChatUiState>
+        get() = _uiState
+
+    data class ChatUiState(
+        var topicMessages: List<UserMessage> = emptyList(),
+        val isLoading: Boolean = false,
+    )
+
     init {
-        loadUsers()
+        _uiState.value = ChatUiState(isLoading = true)
+        subscribeGetMessages()
         subscribeSendMessage()
+        subscribeAddReaction()
+        subscribeRemoveReaction()
+        loadMessages()
     }
 
-    fun resetErrorMessage() {
-        _errorMessage.value = ""
+    fun sendMessage(message: String) {
+        querySendMessage.onNext(message)
     }
 
-    private fun appendMessage(message: UserMessage): List<UserMessage> {
-        val newList = mutableListOf<UserMessage>().apply { addAll(currentMessages) }
-        newList.add(message)
-        return newList
-    }
-
-    fun sendMessage(userMessage: UserMessage) {
-        querySend.onNext(userMessage)
+    private fun subscribeGetMessages() {
+        disposables[KEY_GET_MESSAGE]?.dispose()
+        disposables[KEY_GET_MESSAGE] = queryGetMessages
+            .observeOn(Schedulers.io())
+            .switchMapSingle {
+                client.getMessages(
+                    makeJSONArray(
+                        listOf(
+                            Pair("stream", stream),
+                            Pair("topic", topic)
+                        )
+                    )
+                ).map { messagesResponse ->
+                    for (msg in messagesResponse.messges) {
+                        msg.messageText =
+                            Html.fromHtml(msg.messageText, Html.FROM_HTML_MODE_COMPACT).toString()
+                                .trim()
+                        for (reaction in msg.allReactions) {
+                            if (!msg.reactions.containsKey(reaction.emoji_name))
+                                msg.reactions[reaction.emoji_name] = msg.allReactions.count {
+                                    it.emoji_name == reaction.emoji_name
+                                }
+                            if (!msg.selectedReactions.containsKey(reaction.emoji_name)) {
+                                msg.selectedReactions[reaction.emoji_name] =
+                                    msg.allReactions.filter { it.emoji_name == reaction.emoji_name }
+                                        .find { it.userId == NetworkClient.MY_USER_ID } != null
+                            }
+                        }
+                    }
+                    messagesResponse.messges
+                }
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onNext = {
+                _uiState.value = _uiState.value?.copy(topicMessages = it, isLoading = false)
+            }, onError = {
+                _errorMessage.value = "Ошибка при загрузке сообщений"
+                subscribeGetMessages()
+            })
     }
 
     private fun subscribeSendMessage() {
         disposables[KEY_SEND_MESSAGE]?.dispose()
-        disposables[KEY_SEND_MESSAGE] = querySend
-            .subscribeOn(Schedulers.io())
-            .doOnNext {
-                if (Random.nextInt(4) == 2)
-                    throw NetworkErrorException("Ошибка отправки")
-            }
-            .concatMapSingle { message ->
-                Single.fromCallable { appendMessage(message) }
-            }
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onNext = {
-                    _topicMessages.value = it
+        disposables[KEY_SEND_MESSAGE] =
+            querySendMessage
+                .doOnNext {
+                    val newList = mutableListOf<UserMessage>()
+                    newList.addAll(currentMessages)
+                    newList.add(
+                        UserMessage(
+                            userId = NetworkClient.MY_USER_ID,
+                            name = "Vadim",
+                            messageText = it,
+                            date = Date().time / 1000,
+                            isSent = false
+                        )
+                    )
+                    _uiState.value = _uiState.value?.copy(topicMessages = newList)
                     _messagesCount.value = currentMessages.size
-                    _isLoading.value = false
-                },
-                onError = {
-                    _errorMessage.value = it.message
-                    subscribeSendMessage()
                 }
-            )
-
+                .observeOn(Schedulers.io())
+                .concatMapSingle { message ->
+                    client.sendPublicMessage(message, stream, topic)
+                }
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onNext = {
+                        queryGetMessages.onNext(Unit)
+                    },
+                    onError = {
+                        _errorMessage.value = "Ошибка отправки сообщения"
+                        subscribeSendMessage()
+                    }
+                )
     }
 
-    fun reactionClicked(position: Int, emoji: String) {
-        val newList = mutableListOf<UserMessage>()
-
-        disposables[KEY_CLICK_REACTION]?.dispose()
-        disposables[KEY_CLICK_REACTION] = Completable.fromCallable {
-            newList.addAll(currentMessages)
-            val userReaction = UserReaction(
-                newList[position].reactions,
-                newList[position].selectedReactions
-            )
-            if (userReaction.isReactionSelected(emoji) == true) {
-                if (userReaction.canReactionCountBeDecreased(emoji)) {
-                    userReaction.unselectReaction(emoji)
-                } else
-                    userReaction.deleteReaction(emoji)
-            } else {
-                userReaction.increaseReactionCount(emoji)
-                userReaction.selectReaction(emoji)
-            }
-        }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onComplete = {
-                    _topicMessages.value = newList
-                    _itemToUpdate.value = position
-                }
-            )
-    }
-
-    fun addReaction(position: Int, emoji: String) {
-        val newList = mutableListOf<UserMessage>()
-
+    private fun subscribeAddReaction() {
         disposables[KEY_ADD_REACTION]?.dispose()
-        disposables[KEY_ADD_REACTION] = Completable.fromCallable {
-            newList.addAll(currentMessages)
-            val userReaction = UserReaction(
-                newList[position].reactions,
-                newList[position].selectedReactions
-            )
-            if (userReaction.isReactionSelected(emoji) != true) {
-                userReaction.selectReaction(emoji)
-                if (userReaction.isReactionAdded(emoji)) {
-                    userReaction.increaseReactionCount(emoji)
-                } else
-                    userReaction.addReaction(emoji)
+        disposables[KEY_ADD_REACTION] = queryAddReaction
+            .observeOn(Schedulers.io())
+            .concatMapSingle { (position, emoji_name) ->
+                client.addReaction(
+                    currentMessages[position].messageId,
+                    emoji_name,
+                    EMOJI_MAP[emoji_name]?.toString(16)?.lowercase() ?: "-1"
+                )
             }
-        }
-            .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onComplete = {
-                    _topicMessages.value = newList
-                    _itemToUpdate.value = position
-                }
-            )
+            .subscribeBy(onError = {
+                _errorMessage.value = "Ошибка отправки реакции"
+                subscribeAddReaction()
+            })
+    }
+
+    private fun subscribeRemoveReaction() {
+        disposables[KEY_REMOVE_REACTION]?.dispose()
+        disposables[KEY_REMOVE_REACTION] = queryRemoveReaction
+            .observeOn(Schedulers.io())
+            .concatMapSingle { (position, emoji_name) ->
+                client.removeReaction(
+                    currentMessages[position].messageId,
+                    emoji_name,
+                    EMOJI_MAP[emoji_name]?.toString(16)?.lowercase() ?: "-1"
+                )
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onError = {
+                _errorMessage.value = "Ошибка удаления реакции"
+                subscribeRemoveReaction()
+            })
+    }
+
+    fun reactionClicked(position: Int, emoji_name: String) {
+        val newList = mutableListOf<UserMessage>()
+
+        newList.addAll(currentMessages)
+        val userReaction = UserReaction(
+            newList[position].reactions,
+            newList[position].selectedReactions
+        )
+        if (userReaction.isReactionSelected(emoji_name) == true) {
+            queryRemoveReaction.onNext(Pair(position, emoji_name))
+            if (userReaction.canReactionCountBeDecreased(emoji_name))
+                userReaction.unselectReaction(emoji_name)
+            else
+                userReaction.deleteReaction(emoji_name)
+        } else {
+            queryAddReaction.onNext(Pair(position, emoji_name))
+            userReaction.increaseReactionCount(emoji_name)
+            userReaction.selectReaction(emoji_name)
+        }
+        _uiState.value = _uiState.value?.copy(topicMessages = newList)
+        _itemToUpdate.value = position
+    }
+
+    fun addReaction(position: Int, emoji_name: String) {
+        val newList = mutableListOf<UserMessage>()
+
+        newList.addAll(currentMessages)
+        val userReaction = UserReaction(
+            currentMessages[position].reactions,
+            currentMessages[position].selectedReactions
+        )
+        if (userReaction.isReactionSelected(emoji_name) != true) {
+            userReaction.selectReaction(emoji_name)
+            if (userReaction.isReactionAdded(emoji_name))
+                userReaction.increaseReactionCount(emoji_name)
+            else
+                userReaction.addReaction(emoji_name)
+        }
+        _uiState.value = _uiState.value?.copy(topicMessages = newList)
+        _itemToUpdate.value = position
+        queryAddReaction.onNext(Pair(position, emoji_name))
     }
 
     override fun onCleared() {
         for (key in disposables.keys)
             disposables[key]?.dispose()
-        compositeDisposable.clear()
     }
 
-    private fun loadUsers() {
-        _isLoading.value = true
-        val list = mutableListOf<UserMessage>()
-
-        Completable.fromCallable {
-            list.addAll(listOf(UserMessage(0, "Username1", messageText = "Hi1! There!"),
-                UserMessage(0, "Username2", messageText = "Hi2! There!"),
-                UserMessage(2, "Username3", messageText = "Hi3! There!"),
-                UserMessage(
-                    3,
-                    "Username4",
-                    R.drawable.send_btn,
-                    "Hi4! There!Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eu quam sed diam lobortis lacinia sit amet in tellus. Sed hendrerit nisl in tellus maximus, non sollicitudin tortor scelerisque. Vivamus vel arcu in dui iaculis accumsan vitae sed erat. Mauris viverra arcu ex, id rhoncus libero pulvinar at. Morbi sem libero, tempor nec erat vitae, tincidunt vulputate dolor.",
-                    mutableMapOf(Pair(ReactionCustomView.EMOJI_LIST[0], 1))
-                ),
-                UserMessage(
-                    4, "Username5", messageText = "Hi5! There!", reactions = mutableMapOf(
-                        Pair(ReactionCustomView.EMOJI_LIST[0], 1),
-                        Pair(ReactionCustomView.EMOJI_LIST[1], 1),
-                        Pair(ReactionCustomView.EMOJI_LIST[2], 1),
-                        Pair(ReactionCustomView.EMOJI_LIST[3], 1)
-                    )
-                ),
-                UserMessage(5, "Username6", messageText = "Hi6! There!"),
-                UserMessage(6, "Username7", messageText = "Hi7! There!"),
-                UserMessage(
-                    7,
-                    "Username8",
-                    messageText = "Hi8! There!",
-                    reactions = mutableMapOf<String, Int>().apply {
-                        put(ReactionCustomView.EMOJI_LIST[0], 1)
-                        put(ReactionCustomView.EMOJI_LIST[1], 5)
-                    }
-                ),
-                UserMessage(8, "Username9", messageText = "Hi9! There!", date = "1 Feb"),
-                UserMessage(8, "Username10", messageText = "Hi10! There!", date = "1 Feb"),
-                UserMessage(8, "Username11", messageText = "Hi11! There!", date = "2 Feb")))
-        }
-            .subscribeOn(Schedulers.io())
-            .delay(1, TimeUnit.SECONDS)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onComplete = {
-                    _topicMessages.value = list
-                    _isLoading.value = false
-                }
-            )
-            .addTo(compositeDisposable)
+    private fun loadMessages() {
+        queryGetMessages.onNext(Unit)
     }
 
     companion object {
-        const val KEY_SEND_MESSAGE = "send_message"
-        const val KEY_ADD_REACTION = "add_reaction"
-        const val KEY_CLICK_REACTION = "reaction_clicked"
+        private const val KEY_GET_MESSAGE = "get message"
+        private const val KEY_SEND_MESSAGE = "send message"
+        private const val KEY_ADD_REACTION = "add reaction"
+        private const val KEY_REMOVE_REACTION = "remove reaction"
     }
 }
 
@@ -230,7 +252,7 @@ class ChatViewModel : ViewModel() {
  *
  * Note that only one observer is going to be notified of changes.
  */
-private class SingleLiveEvent<T> : MutableLiveData<T>() {
+class SingleLiveEvent<T> : MutableLiveData<T>() {
     private val mPending: AtomicBoolean = AtomicBoolean(false)
 
     @MainThread
@@ -247,13 +269,5 @@ private class SingleLiveEvent<T> : MutableLiveData<T>() {
     override fun setValue(t: T?) {
         mPending.set(true)
         super.setValue(t)
-    }
-
-    /**
-     * Used for cases where T is Void, to make calls cleaner.
-     */
-    @MainThread
-    fun call() {
-        value = null
     }
 }

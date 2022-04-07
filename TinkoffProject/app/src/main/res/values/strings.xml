@@ -2,7 +2,7 @@
     <string name="app_name">Tinkoff Project</string>
     <string name="message_input_hint">Написать...</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="topic_name">Topic: #%1$s</string>
+    <string name="topic_name">Topic: %1$s</string>
     <string name="log_out">Log out</string>
     <string name="users_input_hint">Users...</string>
     <string name="search_input_hint">Search...</string>
@@ -11,4 +11,8 @@
     <string name="profile_bottom_item">Profile</string>
     <string name="tab_subscribed_channels">Subscribed</string>
     <string name="tab_all_channels">All streams</string>
+    <string name="profile_title">Profile</string>
+    <string name="network_is_available">Network is available</string>
+    <string name="network_is_lost">Network is lost</string>
+    <string name="network_is_unavailable">Network is unavailable</string>
 </resources>

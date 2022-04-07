@@ -3,6 +3,7 @@ package android.example.tinkoffproject.message.customviews
 import android.content.Context
 import android.example.tinkoffproject.R
 import android.graphics.*
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.TextView
@@ -16,6 +17,15 @@ class MyMessageCustomViewGroup @JvmOverloads constructor(
     private val innerPadding: Int
     private val messageInnerPadding: Int
     private var contentWidth: Int = 0
+    private var shader = LinearGradient(
+        0f,
+        0f,
+        0f,
+        height.toFloat(),
+        Color.parseColor("#269688"),
+        Color.parseColor("#127b6d"),
+        Shader.TileMode.MIRROR
+    )
 
     init {
         inflate(context, R.layout.my_message_custom_view_group_layout, this)
@@ -29,6 +39,29 @@ class MyMessageCustomViewGroup @JvmOverloads constructor(
             messageInnerPadding = (MESSAGE_PADDING_SCALE_FACTOR * innerPadding).toInt()
             this.recycle()
         }
+    }
+
+    fun setShader(isFetched: Boolean) {
+        if (isFetched)
+            shader = LinearGradient(
+                0f,
+                0f,
+                0f,
+                height.toFloat(),
+                Color.parseColor("#269688"),
+                Color.parseColor("#127b6d"),
+                Shader.TileMode.MIRROR
+            )
+        else
+            shader = LinearGradient(
+                0f,
+                0f,
+                0f,
+                height.toFloat(),
+                Color.GRAY,
+                Color.GRAY,
+                Shader.TileMode.MIRROR
+            )
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -97,15 +130,7 @@ class MyMessageCustomViewGroup @JvmOverloads constructor(
     override fun dispatchDraw(canvas: Canvas) {
         canvas.drawRoundRect(backgroundRect, 40f, 40f, Paint().apply {
             isAntiAlias = true
-            shader = LinearGradient(
-                0f,
-                0f,
-                0f,
-                height.toFloat(),
-                Color.parseColor("#269688"),
-                Color.parseColor("#127b6d"),
-                Shader.TileMode.MIRROR
-            )
+            shader = this@MyMessageCustomViewGroup.shader
         })
         super.dispatchDraw(canvas)
     }

@@ -1,13 +1,16 @@
-package android.example.tinkoffproject.message.ui
+package android.example.tinkoffproject.chat.ui
 
 import android.content.Context
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.message.model.UserMessage
+import android.example.tinkoffproject.chat.model.UserMessage
 import android.graphics.*
 import android.text.TextPaint
+import android.util.Log
 import android.view.View
 import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MessageCustomItemDecoration(private val context: Context, var data: List<UserMessage>) :
     RecyclerView.ItemDecoration() {
@@ -31,7 +34,14 @@ class MessageCustomItemDecoration(private val context: Context, var data: List<U
         super.getItemOffsets(outRect, view, parent, state)
 
         val position = parent.getChildAdapterPosition(view)
-        textPaint.getTextBounds(data[position].date, 0, data[position].date.length, tempBounds)
+        val textDate =
+            SimpleDateFormat("dd MMM", Locale.US).format(Date(data[position].date * 1000))
+        textPaint.getTextBounds(
+            textDate.toString(),
+            0,
+            textDate.toString().length,
+            tempBounds
+        )
         itemHeight = tempBounds.height()
 
         if (position == 0)
@@ -41,9 +51,16 @@ class MessageCustomItemDecoration(private val context: Context, var data: List<U
             val currentMessage = data[position]
             val previousMessage = data[position - 1]
 
-            if (currentMessage.date != previousMessage.date)
-                outRect.top = itemHeight + textPaint.descent()
-                    .toInt() + innerPadding.toInt() / 3 + 5 * innerPadding.toInt() / 3
+            val currentDate =
+                SimpleDateFormat("dd MMM yyyy", Locale.US).format(Date(currentMessage.date * 1000))
+            val previousDate =
+                SimpleDateFormat("dd MMM yyyy", Locale.US).format(Date(previousMessage.date * 1000))
+
+            if (currentDate != previousDate)
+                if (currentDate != previousDate)
+                    if (currentDate != previousDate)
+                        outRect.top = itemHeight + textPaint.descent()
+                            .toInt() + innerPadding.toInt() / 3 + 5 * innerPadding.toInt() / 3
         }
     }
 
@@ -53,13 +70,22 @@ class MessageCustomItemDecoration(private val context: Context, var data: List<U
         for (child in parent.children) {
             val position = parent.getChildAdapterPosition(child)
             val currentMessage = data[position]
+            val textDate =
+                SimpleDateFormat("dd MMM", Locale.US).format(Date(data[position].date * 1000))
+            val currentDate =
+                SimpleDateFormat("dd MMM yyyy", Locale.US).format(Date(currentMessage.date * 1000))
 
-            if (data.isNotEmpty() && (position == 0 || currentMessage.date != data[position - 1].date)) {
+
+            if (data.isNotEmpty() && (position == 0 || currentDate != SimpleDateFormat(
+                    "dd MMM yyyy",
+                    Locale.US
+                ).format(Date(data[position - 1].date * 1000)))
+            ) {
                 c.drawRoundRect(
-                    (c.width - textPaint.measureText(data[position].date)
+                    (c.width - textPaint.measureText(textDate.toString())
                         .toInt()) / 2f - innerPadding,
                     child.top - itemHeight - textPaint.descent() - 2 * innerPadding / 3 - innerPadding,
-                    (c.width + textPaint.measureText(data[position].date)
+                    (c.width + textPaint.measureText(textDate.toString())
                         .toInt()) / 2f + innerPadding,
                     child.top.toFloat() - innerPadding / 3 - innerPadding,
                     40f,
@@ -69,8 +95,8 @@ class MessageCustomItemDecoration(private val context: Context, var data: List<U
                         color = Color.parseColor("#070707")
                     })
                 c.drawText(
-                    data[position].date,
-                    (c.width - textPaint.measureText(data[position].date).toInt()) / 2f,
+                    textDate.toString(),
+                    (c.width - textPaint.measureText(textDate.toString()).toInt()) / 2f,
                     child.top - textPaint.descent() - innerPadding / 3 - innerPadding,
                     textPaint
                 )

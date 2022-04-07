@@ -13,6 +13,8 @@ class ReactionCustomView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
+    var pair = Pair("", 0)
+        private set
     private var emoji = ""
     private var reactionCount = NO_REACTION
     private var text = ""
@@ -58,12 +60,17 @@ class ReactionCustomView @JvmOverloads constructor(
         text = "$emoji $reactionCount"
     }
 
+    fun setEmojiNameAndCode(emoji_name: String, emoji_code: Int) {
+        this.pair = Pair(emoji_name, emoji_code)
+        emoji = getEmoji()
+    }
+
     fun setEmoji(emoji: String) {
         this.emoji = emoji
     }
 
     fun getEmoji(): String {
-        return emoji
+        return String(Character.toChars(pair.second))
     }
 
     fun setReactionCount(reactionCount: Int) {
@@ -148,42 +155,5 @@ class ReactionCustomView @JvmOverloads constructor(
         private const val NO_REACTION = -1
         private const val DEFAULT_TEXT_SIZE_PX = 10f
         private val SUPPORTED_DRAWABLE_STATE = intArrayOf(android.R.attr.state_selected)
-        val EMOJI_LIST =
-            arrayOf(
-                "😀",
-                "😃",
-                "😄",
-                "😁",
-                "😆",
-                "😅",
-                "🤣",
-                "😂",
-                "🙂",
-                "🙃",
-                "😉",
-                "😊",
-                "😇",
-                "😍",
-                "🤩",
-                "😘",
-                "☺",
-                "😜",
-                "🤪",
-                "😝",
-                "🤭",
-                "🤫",
-                "🤔",
-                "🤨",
-                "😬",
-                "😴",
-                "🤮",
-                "🤯",
-                "🧐",
-                "😳",
-                "😭",
-                "💩",
-                "👺",
-                "👻"
-            )
     }
 }

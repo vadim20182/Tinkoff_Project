@@ -1,7 +1,7 @@
-package android.example.tinkoffproject.message.ui
+package android.example.tinkoffproject.chat.ui
 
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.message.model.UserMessage
+import android.example.tinkoffproject.chat.model.UserMessage
 import android.example.tinkoffproject.message.customviews.FlexBoxLayout
 import android.example.tinkoffproject.message.customviews.MessageCustomViewGroup
 import android.example.tinkoffproject.message.customviews.ReactionCustomView
@@ -9,7 +9,14 @@ import android.example.tinkoffproject.databinding.MessageCustomViewGroupLayoutBi
 import android.example.tinkoffproject.databinding.MessageItemBinding
 import android.example.tinkoffproject.databinding.MyMessageCustomViewGroupLayoutBinding
 import android.example.tinkoffproject.databinding.MyMessageItemBinding
-import android.example.tinkoffproject.chat.ui.ChatFragment
+import android.example.tinkoffproject.message.customviews.MyMessageCustomViewGroup
+import android.example.tinkoffproject.network.ApiService
+import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.utils.EMOJI_MAP
+import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Shader
+import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +24,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 
 private const val TYPE_MY_MESSAGE = 0
 private const val TYPE_MESSAGE = 1
@@ -33,7 +43,7 @@ class MessageAsyncAdapter(
         get() = differ.currentList
 
     override fun getItemViewType(position: Int): Int =
-        if (data[position].userId == ChatFragment.MY_USER_ID) TYPE_MY_MESSAGE else TYPE_MESSAGE
+        if (data[position].userId == NetworkClient.MY_USER_ID) TYPE_MY_MESSAGE else TYPE_MESSAGE
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageBaseViewHolder {
         return when (viewType) {
@@ -104,8 +114,8 @@ private class MessageViewHolder(
                         R.layout.emoji_item,
                         null
                     ) as ReactionCustomView).apply {
-                    setEmoji(key)
-                    setReactionCount(userMessage.reactions[key]!!)
+                    setEmojiNameAndCode(key, EMOJI_MAP[key] ?: 0x1F480)
+                    setReactionCount(userMessage.reactions[key] ?: 0)
                     isSelected = userMessage.selectedReactions[key] == true
                     setOnClickListener {
                         onItemClickedListener.onItemClicked(adapterPosition, it)
@@ -128,7 +138,26 @@ private class MessageViewHolder(
             onItemClickedListener.onItemClicked(adapterPosition, it)
             return@setOnLongClickListener true
         }
-        (binding.root as MessageCustomViewGroup).setAvatarId(userMessage.avatar)
+        if (userMessage.avatarUrl != null) {
+            Glide.with(itemView.context)
+                .asDrawable()
+                .load(userMessage.avatarUrl)
+                .placeholder(R.mipmap.ic_launcher_round)
+                .error(R.mipmap.avatar)
+                .into(object : CustomTarget<Drawable>() {
+                    override fun onResourceReady(
+                        resource: Drawable,
+                        transition: Transition<in Drawable>?
+                    ) {
+                        (binding.root as MessageCustomViewGroup).setAvatar(resource)
+                    }
+
+                    override fun onLoadCleared(placeholder: Drawable?) {
+                    }
+                })
+        } else
+            (binding.root as MessageCustomViewGroup).setAvatarId(R.mipmap.avatar)
+
     }
 }
 
@@ -144,6 +173,7 @@ private class MyMessageViewHolder(
     fun bind(userMessage: UserMessage) {
         messageText.text = userMessage.messageText
         reactionsFlexBoxLayout.removeAllViews()
+        (binding.root as MyMessageCustomViewGroup).setShader(userMessage.isSent)
 
         if (userMessage.reactions.isNotEmpty()) {
             for (key in userMessage.reactions.keys) {
@@ -152,8 +182,8 @@ private class MyMessageViewHolder(
                         R.layout.emoji_item,
                         null
                     ) as ReactionCustomView).apply {
-                    setEmoji(key)
-                    setReactionCount(userMessage.reactions[key]!!)
+                    setEmojiNameAndCode(key, EMOJI_MAP[key] ?: 0x1F480)
+                    setReactionCount(userMessage.reactions[key] ?: 0x1F480)
                     isSelected = userMessage.selectedReactions[key] == true
                     setOnClickListener {
                         onItemClickedListener.onItemClicked(adapterPosition, it)

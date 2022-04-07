@@ -18,5 +18,14 @@
             android:id="@+id/action_channelsFragment_to_chatFragment"
             app:destination="@id/chatFragment"
             app:popExitAnim="@android:anim/slide_out_right" />
+        <action
+            android:id="@+id/action_contactsFragment_to_userProfileFragment"
+            app:destination="@id/userProfileFragment"
+            app:popExitAnim="@android:anim/slide_out_right" />
     </fragment>
+    <fragment
+        android:id="@+id/userProfileFragment"
+        android:name="android.example.tinkoffproject.profile.ui.ProfileFragment"
+        android:label="fragment_profile"
+        tools:layout="@layout/fragment_profile" />
 </navigation>
