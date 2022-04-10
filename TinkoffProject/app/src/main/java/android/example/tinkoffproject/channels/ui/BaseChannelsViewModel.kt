@@ -200,11 +200,8 @@ abstract class BaseChannelsViewModel : ViewModel() {
             expandTopics(position, newList)
         newList[position] =
             newList[position].copy(isExpanded = !currentChannels[position].isExpanded)
-//        newList[position].isExpanded = !currentChannels[position].isExpanded
         allChannels[allChannels.indexOf(currentChannels[position])] =
             allChannels[allChannels.indexOf(currentChannels[position])].copy(isExpanded = newList[position].isExpanded)
-//        allChannels[allChannels.indexOf(currentChannels[position])].isExpanded =
-//            newList[position].isExpanded
         return Pair(position, newList)
     }
 

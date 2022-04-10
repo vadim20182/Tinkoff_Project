@@ -41,7 +41,6 @@ class MyChannelsViewModel : BaseChannelsViewModel() {
                     Pair(channel, it)
                 }
         }
-//        .retry(3)
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeBy(onComplete = {
             currentChannels = allChannels
