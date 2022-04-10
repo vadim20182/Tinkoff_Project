@@ -4,6 +4,7 @@ import android.example.tinkoffproject.chat.ui.SingleLiveEvent
 import android.example.tinkoffproject.contacts.model.ContactItem
 import android.example.tinkoffproject.network.NetworkClient
 import android.example.tinkoffproject.network.NetworkClient.client
+import android.example.tinkoffproject.utils.makePublishSubject
 import android.example.tinkoffproject.utils.makeSearchObservable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -21,8 +22,8 @@ import java.util.concurrent.TimeUnit
 
 class ContactsViewModel : ViewModel() {
 
-    private val queryGetUsers: PublishSubject<Unit> by lazy { NetworkClient.makePublishSubject<Unit>() }
-    private val queryGetUserPresence: PublishSubject<ContactItem> by lazy { NetworkClient.makePublishSubject<ContactItem>() }
+    private val queryGetUsers: PublishSubject<Unit> by lazy { makePublishSubject<Unit>() }
+    private val queryGetUserPresence: PublishSubject<ContactItem> by lazy { makePublishSubject<ContactItem>() }
     private val querySearch = PublishSubject.create<String>()
     private val queryReset = PublishSubject.create<String>()
 
@@ -96,8 +97,9 @@ class ContactsViewModel : ViewModel() {
                 client.getUserPresence(user.email)
                     .map { presenceResponse ->
                         val index = allContacts.indexOf(user)
-                        user.status = presenceResponse.presence.clientType.status
-                        allContacts[index] = user
+                        val userUpdated =
+                            user.copy(status = presenceResponse.presence.clientType.status)
+                        allContacts[index] = userUpdated
                         index
                     }
             }

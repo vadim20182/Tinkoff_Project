@@ -7,11 +7,11 @@ import kotlinx.serialization.Serializable
 data class ChannelItem(
     @SerialName("name")
     val name: String,
-    var isTopic: Boolean = false,
-    var isExpanded: Boolean = false,
-    var parentChannel: String? = null,
+    val isTopic: Boolean = false,
+    val isExpanded: Boolean = false,
+    val parentChannel: String? = null,
     @SerialName("stream_id")
-    var streamID: Int = 0
+    val streamID: Int = 0
 )
 
 

@@ -52,6 +52,7 @@ dependencies {
     implementation "com.squareup.retrofit2:adapter-rxjava2:${rootProject.retrofit}"
     implementation "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:${rootProject.retrofitSerialization}"
     implementation "com.squareup.retrofit2:converter-scalars:${rootProject.retrofit}"
+    implementation "com.squareup.okhttp3:logging-interceptor:${rootProject.httpLoggingInterceptor}"
     //Serialization
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:${rootProject.kotlinXSerialization}"
     //Glide

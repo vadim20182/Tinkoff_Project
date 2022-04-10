@@ -40,7 +40,6 @@ abstract class BaseChannelsTabFragment : Fragment(R.layout.base_fragment_channel
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         val recyclerView = view.findViewById<RecyclerView>(R.id.recycler_view_channels)
         val shimmer = view.findViewById<ShimmerFrameLayout>(R.id.shimmer_channels_view)
         val queryUpdateChannels = PublishSubject.create<Boolean>()

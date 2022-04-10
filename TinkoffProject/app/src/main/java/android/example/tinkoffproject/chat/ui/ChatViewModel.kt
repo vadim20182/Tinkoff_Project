@@ -8,6 +8,7 @@ import android.example.tinkoffproject.network.NetworkClient
 import android.example.tinkoffproject.network.NetworkClient.client
 import android.example.tinkoffproject.network.NetworkClient.makeJSONArray
 import android.example.tinkoffproject.utils.EMOJI_MAP
+import android.example.tinkoffproject.utils.makePublishSubject
 import android.text.Html
 import androidx.annotation.MainThread
 import androidx.lifecycle.*
@@ -24,10 +25,10 @@ import kotlin.random.Random
 
 class ChatViewModel(private val stream: String, private val topic: String) : ViewModel() {
 
-    private val querySendMessage: PublishSubject<String> by lazy { NetworkClient.makePublishSubject<String>() }
-    private val queryGetMessages: PublishSubject<Unit> by lazy { NetworkClient.makePublishSubject<Unit>() }
-    private val queryAddReaction: PublishSubject<Pair<Int, String>> by lazy { NetworkClient.makePublishSubject<Pair<Int, String>>() }
-    private val queryRemoveReaction: PublishSubject<Pair<Int, String>> by lazy { NetworkClient.makePublishSubject<Pair<Int, String>>() }
+    private val querySendMessage: PublishSubject<String> by lazy { makePublishSubject<String>() }
+    private val queryGetMessages: PublishSubject<Unit> by lazy { makePublishSubject<Unit>() }
+    private val queryAddReaction: PublishSubject<Pair<Int, String>> by lazy { makePublishSubject<Pair<Int, String>>() }
+    private val queryRemoveReaction: PublishSubject<Pair<Int, String>> by lazy { makePublishSubject<Pair<Int, String>>() }
 
     private val disposables = mutableMapOf<String, Disposable>()
 
@@ -72,7 +73,7 @@ class ChatViewModel(private val stream: String, private val topic: String) : Vie
         disposables[KEY_GET_MESSAGE]?.dispose()
         disposables[KEY_GET_MESSAGE] = queryGetMessages
             .observeOn(Schedulers.io())
-            .switchMapSingle {
+            .flatMapSingle {
                 client.getMessages(
                     makeJSONArray(
                         listOf(
@@ -81,10 +82,14 @@ class ChatViewModel(private val stream: String, private val topic: String) : Vie
                         )
                     )
                 ).map { messagesResponse ->
-                    for (msg in messagesResponse.messges) {
-                        msg.messageText =
-                            Html.fromHtml(msg.messageText, Html.FROM_HTML_MODE_COMPACT).toString()
+                    val messagesProcessed = messagesResponse.messges.map {
+                        it.copy(
+                            messageText =
+                            Html.fromHtml(it.messageText, Html.FROM_HTML_MODE_COMPACT).toString()
                                 .trim()
+                        )
+                    }
+                    for (msg in messagesProcessed) {
                         for (reaction in msg.allReactions) {
                             if (!msg.reactions.containsKey(reaction.emoji_name))
                                 msg.reactions[reaction.emoji_name] = msg.allReactions.count {
@@ -97,7 +102,7 @@ class ChatViewModel(private val stream: String, private val topic: String) : Vie
                             }
                         }
                     }
-                    messagesResponse.messges
+                    messagesProcessed
                 }
             }
             .observeOn(AndroidSchedulers.mainThread())

@@ -3,6 +3,7 @@ package android.example.tinkoffproject.channels.ui.all
 import android.example.tinkoffproject.channels.model.ChannelItem
 import android.example.tinkoffproject.channels.ui.BaseChannelsViewModel
 import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.utils.makePublishSubject
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
@@ -14,7 +15,7 @@ class AllChannelsViewModel : BaseChannelsViewModel() {
     override val allChannels = mutableListOf<ChannelItem>()
 
     init {
-        queryGetChannels = NetworkClient.makePublishSubject()
+        queryGetChannels = makePublishSubject()
         subscribeGetTopics()
         subscribeGetChannels()
         subscribeToSearch()

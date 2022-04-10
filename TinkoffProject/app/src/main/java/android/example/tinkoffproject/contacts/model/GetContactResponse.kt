@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 class GetUsersResponse {
     @SerialName("members")
-    var users: List<ContactItem> = emptyList()
+    val users: List<ContactItem> = emptyList()
 }
 
 @Serializable

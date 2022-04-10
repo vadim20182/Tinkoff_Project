@@ -3,6 +3,7 @@ package android.example.tinkoffproject.channels.ui.my
 import android.example.tinkoffproject.channels.model.ChannelItem
 import android.example.tinkoffproject.channels.ui.BaseChannelsViewModel
 import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.utils.makePublishSubject
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -21,7 +22,7 @@ class MyChannelsViewModel : BaseChannelsViewModel() {
 
 
     init {
-        queryGetChannels = NetworkClient.makePublishSubject()
+        queryGetChannels = makePublishSubject()
         subscribeToSearch()
         subscribeChannelClick()
         subscribeGetTopics()
@@ -40,7 +41,7 @@ class MyChannelsViewModel : BaseChannelsViewModel() {
                     Pair(channel, it)
                 }
         }
-        .retry(3)
+//        .retry(3)
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeBy(onComplete = {
             currentChannels = allChannels

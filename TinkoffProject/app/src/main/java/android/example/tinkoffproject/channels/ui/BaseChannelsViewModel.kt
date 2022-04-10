@@ -5,6 +5,7 @@ import android.example.tinkoffproject.channels.model.GetTopicsResponse
 import android.example.tinkoffproject.chat.ui.SingleLiveEvent
 import android.example.tinkoffproject.network.NetworkClient
 import android.example.tinkoffproject.network.NetworkClient.client
+import android.example.tinkoffproject.utils.makePublishSubject
 import android.example.tinkoffproject.utils.makeSearchObservable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -26,9 +27,21 @@ abstract class BaseChannelsViewModel : ViewModel() {
     protected abstract val allChannels: MutableList<ChannelItem>
     protected abstract val queryGetChannels: PublishSubject<Unit>
     protected abstract var getChannelsDisposable: Disposable?
-    private val queryGetTopics: PublishSubject<Pair<Int, String>> by lazy { NetworkClient.makePublishSubject<Pair<Int, String>>() }
+    private val searchObservable: Observable<String> by lazy { MainChannelsViewModel.querySearch }
+    private val queryGetTopics: PublishSubject<Pair<Int, String>> by lazy { makePublishSubject<Pair<Int, String>>() }
     private var compositeDisposable = CompositeDisposable()
-    private val disposables = mutableMapOf<String, Disposable>()
+    private val disposables = mutableMapOf<String, Disposable>().apply {
+        this[KEY_INPUT] = searchObservable
+            .map { query -> query.trim() }
+            .distinctUntilChanged()
+            .filter { it.isNotBlank() }
+            .subscribeBy(onNext = {
+                if (this[KEY_SEARCH]?.isDisposed == true) {
+                    subscribeToSearch()
+                    compositeDisposable.clear()
+                }
+            })
+    }
     private val topics: MutableMap<String, List<ChannelItem>> = mutableMapOf()
     private val queryReset = PublishSubject.create<String>()
     private val queryChannelClick = PublishSubject.create<Int>()
@@ -37,7 +50,7 @@ abstract class BaseChannelsViewModel : ViewModel() {
         queryGetChannels
             .doOnNext { allChannels.clear() }
             .observeOn(Schedulers.io())
-            .flatMapSingle {
+            .switchMapSingle {
                 client.getAllStreams()
                     .map { channels ->
                         allChannels.apply { addAll(channels.channelsList) }
@@ -52,21 +65,6 @@ abstract class BaseChannelsViewModel : ViewModel() {
                     }
             }
     }
-
-    private val searchObservable: Observable<String> by lazy { MainChannelsViewModel.querySearch }
-
-    private val inputEvent =
-        searchObservable
-            .map { query -> query.trim() }
-            .distinctUntilChanged()
-            .filter { it.isNotBlank() }
-            .subscribeBy(onNext = {
-                if (disposables[KEY_SEARCH]?.isDisposed == true) {
-                    subscribeToSearch()
-                    compositeDisposable.clear()
-                }
-            })
-
 
     private val _isChannelClicked = SingleLiveEvent<Boolean>()
     val isChannelClicked: LiveData<Boolean>
@@ -106,11 +104,10 @@ abstract class BaseChannelsViewModel : ViewModel() {
             .flatMapSingle { input ->
                 client.getTopicsForStream(input.first)
                     .map { topicsResponse ->
-                        topicsResponse.channelsList.forEach {
-                            it.isTopic = true
-                            it.parentChannel = input.second
+                        val topicsProcessed = topicsResponse.channelsList.map {
+                            it.copy(isTopic = true, parentChannel = input.second)
                         }
-                        topics[input.second] = topicsResponse.channelsList
+                        topics[input.second] = topicsProcessed
                     }
             }
             .observeOn(AndroidSchedulers.mainThread())
@@ -201,9 +198,13 @@ abstract class BaseChannelsViewModel : ViewModel() {
             collapseTopics(position, newList)
         else
             expandTopics(position, newList)
-        newList[position].isExpanded = !currentChannels[position].isExpanded
-        allChannels[allChannels.indexOf(currentChannels[position])].isExpanded =
-            newList[position].isExpanded
+        newList[position] =
+            newList[position].copy(isExpanded = !currentChannels[position].isExpanded)
+//        newList[position].isExpanded = !currentChannels[position].isExpanded
+        allChannels[allChannels.indexOf(currentChannels[position])] =
+            allChannels[allChannels.indexOf(currentChannels[position])].copy(isExpanded = newList[position].isExpanded)
+//        allChannels[allChannels.indexOf(currentChannels[position])].isExpanded =
+//            newList[position].isExpanded
         return Pair(position, newList)
     }
 
@@ -226,7 +227,6 @@ abstract class BaseChannelsViewModel : ViewModel() {
     override fun onCleared() {
         for (key in disposables.keys)
             disposables[key]?.dispose()
-        inputEvent.dispose()
         getChannelsDisposable?.dispose()
         compositeDisposable.clear()
     }
@@ -235,5 +235,6 @@ abstract class BaseChannelsViewModel : ViewModel() {
         private const val KEY_CLICK_CHANNEL = "channel_click"
         private const val KEY_GET_TOPICS = "get topics"
         private const val KEY_SEARCH = "search"
+        private const val KEY_INPUT = "input"
     }
 }

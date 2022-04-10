@@ -10,8 +10,9 @@ import io.reactivex.subjects.PublishSubject
 import kotlinx.serialization.json.Json
 import okhttp3.Credentials
 import okhttp3.Interceptor
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import org.json.JSONArray
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
@@ -25,6 +26,11 @@ object NetworkClient {
 
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(BasicAuthInterceptor(EMAIL, API_KEY))
+        .addInterceptor(
+            HttpLoggingInterceptor()
+                .apply {
+                    setLevel(HttpLoggingInterceptor.Level.BODY)
+                })
         .build()
 
     private val jsonParser = Json { ignoreUnknownKeys = true }
@@ -34,14 +40,12 @@ object NetworkClient {
         .baseUrl(BASE_URL)
         .addCallAdapterFactory(RxJava2CallAdapterFactory.createWithScheduler(Schedulers.io()))
         .addConverterFactory(ScalarsConverterFactory.create())
-        .addConverterFactory(jsonParser.asConverterFactory(MediaType.get("application/json")))
+        .addConverterFactory(jsonParser.asConverterFactory("application/json".toMediaType()))
         .build()
 
     val client: ApiService by lazy {
         retrofit.create(ApiService::class.java)
     }
-
-    fun <T> makePublishSubject() = PublishSubject.create<T>()
 
     fun getUserObservable(publishSubject: PublishSubject<Int>): Observable<UserResponse> =
         publishSubject

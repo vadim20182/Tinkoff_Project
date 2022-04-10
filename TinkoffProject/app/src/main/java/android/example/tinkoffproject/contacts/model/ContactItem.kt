@@ -12,9 +12,9 @@ data class ContactItem(
     @SerialName("email")
     val email: String,
     @SerialName("status")
-    var status: String = "idle",
+    val status: String = "idle",
     @SerialName("is_bot")
-    var isBot: Boolean = false,
+    val isBot: Boolean = false,
     @SerialName("avatar_url")
     val avatarUrl: String? = null
 )

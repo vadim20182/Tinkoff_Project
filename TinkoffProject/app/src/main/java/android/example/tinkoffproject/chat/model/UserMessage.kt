@@ -1,18 +1,6 @@
 package android.example.tinkoffproject.chat.model
 
-import android.example.tinkoffproject.R
-import android.graphics.drawable.Drawable
-import androidx.annotation.DrawableRes
-import com.bumptech.glide.Glide
 import kotlinx.serialization.*
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.listSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encoding.decodeStructure
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.decodeFromStream
 import kotlin.random.Random
 
 @Serializable
@@ -24,7 +12,7 @@ data class UserMessage(
     @SerialName("avatar_url")
     val avatarUrl: String? = null,
     @SerialName("content")
-    var messageText: String,
+    val messageText: String,
     @Transient
     val reactions: MutableMap<String, Int> = mutableMapOf(),
     @SerialName("reactions")

@@ -90,6 +90,7 @@ fun makeSearchObservable(
     .filter { it.isNotBlank() }
     .distinctUntilChanged()
 
+fun <T> makePublishSubject() = PublishSubject.create<T>()
 
 val EMOJI_MAP = mutableMapOf<String, Int>().apply {
     put("grinning", 0x1F600)

@@ -4,6 +4,7 @@ import android.example.tinkoffproject.R
 import android.example.tinkoffproject.chat.ui.ChatFragment
 import android.example.tinkoffproject.contacts.model.ContactItem
 import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.utils.makePublishSubject
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
@@ -30,8 +31,8 @@ import java.util.*
 
 
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
-    private val queryGetUser = NetworkClient.makePublishSubject<Int>()
-    private val queryGetUserPresence = NetworkClient.makePublishSubject<ContactItem>()
+    private val queryGetUser = makePublishSubject<Int>()
+    private val queryGetUserPresence = makePublishSubject<ContactItem>()
     private val getUserObservable =
         NetworkClient.getUserObservable(queryGetUser)
     private val getUserPresenceObservable =
