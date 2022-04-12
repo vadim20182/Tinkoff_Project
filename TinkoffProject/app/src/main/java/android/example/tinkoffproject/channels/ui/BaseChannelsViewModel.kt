@@ -1,9 +1,9 @@
 package android.example.tinkoffproject.channels.ui
 
-import android.example.tinkoffproject.channels.model.ChannelItem
-import android.example.tinkoffproject.channels.model.GetTopicsResponse
+import android.example.tinkoffproject.channels.model.db.ChannelDAO
+import android.example.tinkoffproject.channels.model.db.ChannelEntity
+import android.example.tinkoffproject.channels.model.network.ChannelItem
 import android.example.tinkoffproject.chat.ui.SingleLiveEvent
-import android.example.tinkoffproject.network.NetworkClient
 import android.example.tinkoffproject.network.NetworkClient.client
 import android.example.tinkoffproject.utils.makePublishSubject
 import android.example.tinkoffproject.utils.makeSearchObservable
@@ -22,7 +22,7 @@ import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
 
-abstract class BaseChannelsViewModel : ViewModel() {
+abstract class BaseChannelsViewModel(protected val channelsDAO: ChannelDAO) : ViewModel() {
 
     protected abstract val allChannels: MutableList<ChannelItem>
     protected abstract val queryGetChannels: PublishSubject<Unit>
@@ -42,7 +42,8 @@ abstract class BaseChannelsViewModel : ViewModel() {
                 }
             })
     }
-    private val topics: MutableMap<String, List<ChannelItem>> = mutableMapOf()
+
+    protected val topics: MutableMap<String, List<ChannelItem>> = mutableMapOf()
     private val queryReset = PublishSubject.create<String>()
     private val queryChannelClick = PublishSubject.create<Int>()
 
@@ -54,6 +55,11 @@ abstract class BaseChannelsViewModel : ViewModel() {
                 client.getAllStreams()
                     .map { channels ->
                         allChannels.apply { addAll(channels.channelsList) }
+                        channelsDAO.insertChannels(channels.channelsList.map {
+                            ChannelEntity(
+                                it.streamID, it.name, it.isTopic, it.isExpanded, it.parentChannel
+                            )
+                        }).subscribe()
                         for (channel in channels.channelsList) {
                             queryGetTopics.onNext(
                                 Pair(
@@ -105,9 +111,21 @@ abstract class BaseChannelsViewModel : ViewModel() {
                 client.getTopicsForStream(input.first)
                     .map { topicsResponse ->
                         val topicsProcessed = topicsResponse.channelsList.map {
-                            it.copy(isTopic = true, parentChannel = input.second)
+                            it.copy(
+                                isTopic = true,
+                                parentChannel = input.second
+                            )
                         }
                         topics[input.second] = topicsProcessed
+                        channelsDAO.insertChannels(topicsProcessed.map {
+                            ChannelEntity(
+                                it.streamID,
+                                it.name,
+                                it.isTopic,
+                                it.isExpanded,
+                                it.parentChannel
+                            )
+                        }).subscribe()
                     }
             }
             .observeOn(AndroidSchedulers.mainThread())

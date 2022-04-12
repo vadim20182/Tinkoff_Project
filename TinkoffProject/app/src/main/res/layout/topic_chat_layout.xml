@@ -49,6 +49,7 @@
         app:layout_constraintTop_toBottomOf="@+id/chat_topic_name" />
 
     <com.facebook.shimmer.ShimmerFrameLayout
+        android:visibility="gone"
         android:id="@+id/shimmer_chat"
         android:layout_width="0dp"
         android:layout_height="0dp"

@@ -2,11 +2,12 @@ package android.example.tinkoffproject.chat.ui
 
 import androidx.fragment.app.Fragment
 import android.example.tinkoffproject.R
+import android.example.tinkoffproject.chat.model.db.MessageEntity
+import android.example.tinkoffproject.chat.model.db.MessagesRemoteMediator
+import android.example.tinkoffproject.database.AppDatabase
 import android.example.tinkoffproject.message.customviews.FlexBoxLayout
 import android.example.tinkoffproject.message.customviews.MessageInputCustomViewGroup
 import android.example.tinkoffproject.message.customviews.ReactionCustomView
-import android.example.tinkoffproject.chat.model.UserMessage
-import android.example.tinkoffproject.network.ApiService
 import android.example.tinkoffproject.utils.EMOJI_MAP
 import android.graphics.Color
 import android.os.Bundle
@@ -20,26 +21,47 @@ import androidx.core.view.isEmpty
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
+import androidx.paging.ExperimentalPagingApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.snackbar.Snackbar
-import kotlin.random.Random
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.rxkotlin.addTo
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 
+@ExperimentalCoroutinesApi
+@ExperimentalPagingApi
 class ChatFragment : Fragment(R.layout.topic_chat_layout),
     MessageAsyncAdapter.OnItemClickedListener {
+
+    private val compositeDatabase = CompositeDisposable()
 
     private val viewModel: ChatViewModel by viewModels {
         ChatViewModelFactory(
             requireArguments().getString(
                 ARG_CHANNEL_NAME
-            )!!, requireArguments().getString(ARG_TOPIC_NAME)!!
+            )!!, requireArguments().getString(ARG_TOPIC_NAME)!!, MessagesRxRemoteRepository(
+                AppDatabase.getInstance(requireContext()),
+                MessagesRemoteMediator(
+                    AppDatabase.getInstance(requireContext()), requireArguments().getString(
+                        ARG_CHANNEL_NAME
+                    )!!, requireArguments().getString(ARG_TOPIC_NAME)!!
+                )
+            )
         )
     }
-    private val messagesAdapter: MessageAsyncAdapter by lazy { MessageAsyncAdapter(this) }
+    private val messagesAdapter: MessageAsyncAdapter by lazy {
+        MessageAsyncAdapter(this).apply {
+            withLoadStateHeaderAndFooter(
+                header = MessageLoadStateAdapter(),
+                footer = MessageLoadStateAdapter()
+            )
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -54,25 +76,30 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         val inputButton: ShapeableImageView = view.findViewById(R.id.message_input_button)
 
         with(viewModel) {
-            uiState.observe(viewLifecycleOwner) { state ->
-                itemDecoration.data = state.topicMessages
-                messagesAdapter.data = state.topicMessages
-
-                if (state.isLoading) {
-                    inputButton.visibility = View.GONE
-                    shimmer.visibility = View.VISIBLE
-                    recyclerView.visibility = View.GONE
-                } else {
-                    inputButton.visibility = View.VISIBLE
-                    shimmer.visibility = View.GONE
-                    recyclerView.visibility = View.VISIBLE
-                }
-            }
+//            uiState.observe(viewLifecycleOwner) { state ->
+//                itemDecoration.data = state.topicMessages
+////                messagesAdapter.submitData()
+//                messagesAdapter.data = state.topicMessages
+//
+//                if (state.isLoading) {
+//                    inputButton.visibility = View.GONE
+//                    shimmer.visibility = View.VISIBLE
+//                    recyclerView.visibility = View.GONE
+//                } else {
+//                    inputButton.visibility = View.VISIBLE
+//                    shimmer.visibility = View.GONE
+//                    recyclerView.visibility = View.VISIBLE
+//                }
+//            }
+            getMessages().subscribe {
+                messagesAdapter.submitData(lifecycle, it)
+            }.addTo(compositeDatabase)
             itemToUpdate.observe(viewLifecycleOwner) {
                 messagesAdapter.notifyItemChanged(it)
             }
             messagesCount.observe(viewLifecycleOwner) {
-                recyclerView.smoothScrollToPosition(messagesAdapter.data.size)
+//                recyclerView.smoothScrollToPosition(messagesAdapter.itemCount)
+//                recyclerView.smoothScrollToPosition(messagesAdapter.data.size)
             }
             errorMessage.observe(viewLifecycleOwner) {
                 Snackbar.make(
@@ -86,13 +113,17 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
                 }.show()
             }
         }
-
         recyclerView.itemAnimator = null
         recyclerView.layoutManager = LinearLayoutManager(context).apply {
-            stackFromEnd = true
+            stackFromEnd = false
+            reverseLayout = true
         }
         recyclerView.adapter = messagesAdapter
-        recyclerView.addItemDecoration(itemDecoration)
+//        messagesAdapter.addOnPagesUpdatedListener {
+//            itemDecoration.data = messagesAdapter.snapshot().items
+//            if (recyclerView.itemDecorationCount == 0)
+//                recyclerView.addItemDecoration(itemDecoration)
+//        }
 
         inputButton.setOnClickListener {
             val messageText = view.findViewById<EditText>(R.id.send_message_text)
@@ -155,6 +186,11 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         }.apply {
             setContentView(R.layout.reactions_bottom_sheet_dialog_layout)
         }.show()
+    }
+
+    override fun onDestroyView() {
+        compositeDatabase.clear()
+        super.onDestroyView()
     }
 
     companion object {

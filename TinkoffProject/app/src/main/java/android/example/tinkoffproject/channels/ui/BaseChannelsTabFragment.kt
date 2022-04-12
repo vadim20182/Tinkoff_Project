@@ -2,7 +2,7 @@ package android.example.tinkoffproject.channels.ui
 
 import androidx.fragment.app.Fragment
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.channels.model.ChannelItem
+import android.example.tinkoffproject.channels.model.network.ChannelItem
 import android.example.tinkoffproject.chat.ui.ChatFragment
 import android.example.tinkoffproject.utils.makeSearchDisposable
 import android.graphics.Color
@@ -12,6 +12,7 @@ import androidx.core.os.bundleOf
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import androidx.paging.ExperimentalPagingApi
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,6 +22,7 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.subjects.PublishSubject
 
+@ExperimentalPagingApi
 abstract class BaseChannelsTabFragment : Fragment(R.layout.base_fragment_channels),
     ChannelsAdapter.OnItemClickedListener {
 

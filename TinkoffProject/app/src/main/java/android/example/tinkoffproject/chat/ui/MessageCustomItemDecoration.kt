@@ -2,17 +2,17 @@ package android.example.tinkoffproject.chat.ui
 
 import android.content.Context
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.chat.model.UserMessage
+import android.example.tinkoffproject.chat.model.db.MessageEntity
+import android.example.tinkoffproject.chat.model.network.UserMessage
 import android.graphics.*
 import android.text.TextPaint
-import android.util.Log
 import android.view.View
 import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.*
 
-class MessageCustomItemDecoration(private val context: Context, var data: List<UserMessage>) :
+class MessageCustomItemDecoration(private val context: Context, var data: List<MessageEntity>) :
     RecyclerView.ItemDecoration() {
 
     private val textPaint = TextPaint().apply {

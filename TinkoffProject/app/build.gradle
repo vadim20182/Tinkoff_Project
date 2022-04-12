@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.6.20'
+    id "org.jetbrains.kotlin.kapt"
 }
 
 android {
@@ -57,5 +58,13 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:${rootProject.kotlinXSerialization}"
     //Glide
     implementation "com.github.bumptech.glide:glide:${rootProject.glide}"
+    //Paging3
+    implementation "androidx.paging:paging-runtime:${rootProject.paging}"
+    implementation "androidx.paging:paging-rxjava2:${rootProject.paging}"
+    //Room
+    implementation "androidx.room:room-runtime:${rootProject.room}"
+    kapt "androidx.room:room-compiler:${rootProject.room}"
+    implementation "androidx.room:room-rxjava2:${rootProject.room}"
+    implementation "androidx.room:room-paging:${rootProject.room}"
 
 }

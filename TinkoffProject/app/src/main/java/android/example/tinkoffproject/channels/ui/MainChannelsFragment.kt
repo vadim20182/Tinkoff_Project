@@ -10,12 +10,14 @@ import android.view.View
 import android.widget.EditText
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.ViewModelProvider
+import androidx.paging.ExperimentalPagingApi
 import androidx.viewpager2.widget.ViewPager2
 import com.facebook.shimmer.Shimmer
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 
+@ExperimentalPagingApi
 class MainChannelsFragment : Fragment(R.layout.fragment_channels_main) {
     private lateinit var viewPager: ViewPager2
     private lateinit var searchText: EditText

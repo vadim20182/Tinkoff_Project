@@ -1,17 +1,14 @@
 package android.example.tinkoffproject.network
 
-import android.example.tinkoffproject.channels.model.GetChannelsResponse
-import android.example.tinkoffproject.channels.model.GetTopicsResponse
-import android.example.tinkoffproject.channels.model.SubscriptionStatus
-import android.example.tinkoffproject.chat.model.GetMessagesResponse
-import android.example.tinkoffproject.contacts.model.ContactItem
-import android.example.tinkoffproject.contacts.model.GetPresenceResponse
-import android.example.tinkoffproject.contacts.model.GetUsersResponse
-import android.example.tinkoffproject.contacts.model.UserResponse
-import io.reactivex.Observable
+import android.example.tinkoffproject.channels.model.network.GetChannelsResponse
+import android.example.tinkoffproject.channels.model.network.GetTopicsResponse
+import android.example.tinkoffproject.channels.model.network.SubscriptionStatus
+import android.example.tinkoffproject.chat.model.network.GetMessagesResponse
+import android.example.tinkoffproject.contacts.model.network.GetPresenceResponse
+import android.example.tinkoffproject.contacts.model.network.GetUsersResponse
+import android.example.tinkoffproject.contacts.model.network.UserResponse
 import io.reactivex.Single
 import org.json.JSONArray
-import retrofit2.Call
 import retrofit2.http.*
 
 
@@ -46,9 +43,17 @@ interface ApiService {
     @GET("messages")
     fun getMessages(
         @Query("narrow") filter: JSONArray,
-        @Query("num_before") numBefore: Int = 100,
-        @Query("num_after") numAfter: Int = 100,
-        @Query("anchor") anchor: String = "oldest"
+        @Query("num_before") numBefore: Int = 0,
+        @Query("num_after") numAfter: Int = 0,
+        @Query("anchor") anchor: String = "newest"
+    ): Single<GetMessagesResponse>
+
+    @GET("messages")
+    fun getMessagesWithAnchor(
+        @Query("narrow") filter: JSONArray,
+        @Query("num_before") numBefore: Int = 0,
+        @Query("num_after") numAfter: Int = 0,
+        @Query("anchor") anchor: Int
     ): Single<GetMessagesResponse>
 
     @GET("messages/{msg_id}")

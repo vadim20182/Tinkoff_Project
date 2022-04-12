@@ -1,13 +1,10 @@
 package android.example.tinkoffproject.profile.ui
 
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.chat.ui.ChatFragment
-import android.example.tinkoffproject.contacts.model.ContactItem
+import android.example.tinkoffproject.contacts.model.network.ContactItem
 import android.example.tinkoffproject.network.NetworkClient
 import android.example.tinkoffproject.utils.makePublishSubject
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -15,19 +12,14 @@ import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
-import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
-import java.util.*
 
 
 class ProfileFragment : Fragment(R.layout.fragment_profile) {

@@ -1,4 +1,4 @@
-package android.example.tinkoffproject.channels.model
+package android.example.tinkoffproject.channels.model.network
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

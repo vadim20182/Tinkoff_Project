@@ -1,7 +1,7 @@
 package android.example.tinkoffproject.contacts.ui
 
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.contacts.model.ContactItem
+import android.example.tinkoffproject.contacts.model.network.ContactItem
 import android.example.tinkoffproject.profile.ui.ProfileFragment
 import android.example.tinkoffproject.utils.makeSearchDisposable
 import android.graphics.Color
@@ -19,16 +19,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.snackbar.Snackbar
-import io.reactivex.BackpressureStrategy
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.SingleSubject
-import java.util.concurrent.TimeUnit
 
 
 class ContactsFragment : Fragment(R.layout.fragment_contacts),

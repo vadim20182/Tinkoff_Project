@@ -1,4 +1,4 @@
-package android.example.tinkoffproject.chat.model
+package android.example.tinkoffproject.chat.model.network
 
 import kotlinx.serialization.*
 import kotlin.random.Random
@@ -20,7 +20,7 @@ data class UserMessage(
     @Transient
     val selectedReactions: MutableMap<String, Boolean> = mutableMapOf(),
     @SerialName("timestamp")
-    val date: Long = 100,
+    val date: Long,
     @SerialName("id")
     val messageId: Int = Random.nextInt(10000),
     @Transient

@@ -1,4 +1,4 @@
-package android.example.tinkoffproject.contacts.model
+package android.example.tinkoffproject.contacts.model.network
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

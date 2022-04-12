@@ -1,8 +1,7 @@
 package android.example.tinkoffproject.contacts.ui
 
 import android.example.tinkoffproject.chat.ui.SingleLiveEvent
-import android.example.tinkoffproject.contacts.model.ContactItem
-import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.contacts.model.network.ContactItem
 import android.example.tinkoffproject.network.NetworkClient.client
 import android.example.tinkoffproject.utils.makePublishSubject
 import android.example.tinkoffproject.utils.makeSearchObservable

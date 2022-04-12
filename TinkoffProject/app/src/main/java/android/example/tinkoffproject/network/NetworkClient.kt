@@ -1,8 +1,8 @@
 package android.example.tinkoffproject.network
 
-import android.example.tinkoffproject.contacts.model.ContactItem
-import android.example.tinkoffproject.contacts.model.GetPresenceResponse
-import android.example.tinkoffproject.contacts.model.UserResponse
+import android.example.tinkoffproject.contacts.model.network.ContactItem
+import android.example.tinkoffproject.contacts.model.network.GetPresenceResponse
+import android.example.tinkoffproject.contacts.model.network.UserResponse
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
@@ -33,7 +33,7 @@ object NetworkClient {
                 })
         .build()
 
-    private val jsonParser = Json { ignoreUnknownKeys = true }
+   private val jsonParser = Json { ignoreUnknownKeys = true }
 
     private val retrofit = Retrofit.Builder()
         .client(okHttpClient)

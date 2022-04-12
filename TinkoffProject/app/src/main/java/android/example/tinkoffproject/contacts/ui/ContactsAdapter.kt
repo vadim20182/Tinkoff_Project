@@ -1,9 +1,7 @@
 package android.example.tinkoffproject.contacts.ui
 
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.channels.model.ChannelItem
-import android.example.tinkoffproject.channels.ui.ChannelsAdapter
-import android.example.tinkoffproject.contacts.model.ContactItem
+import android.example.tinkoffproject.contacts.model.network.ContactItem
 import android.example.tinkoffproject.databinding.ContactItemBinding
 import android.view.LayoutInflater
 import android.view.ViewGroup

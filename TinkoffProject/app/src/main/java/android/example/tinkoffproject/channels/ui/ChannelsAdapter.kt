@@ -1,6 +1,6 @@
 package android.example.tinkoffproject.channels.ui
 
-import android.example.tinkoffproject.channels.model.ChannelItem
+import android.example.tinkoffproject.channels.model.network.ChannelItem
 import android.example.tinkoffproject.databinding.ChannelItemBinding
 import android.example.tinkoffproject.databinding.TopicItemBinding
 import android.view.LayoutInflater

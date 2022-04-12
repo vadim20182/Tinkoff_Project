@@ -1,9 +1,8 @@
 package android.example.tinkoffproject.chat.ui
 
-import android.accounts.NetworkErrorException
-import android.example.tinkoffproject.message.customviews.ReactionCustomView
-import android.example.tinkoffproject.chat.model.UserMessage
+import android.example.tinkoffproject.chat.model.network.UserMessage
 import android.example.tinkoffproject.chat.model.UserReaction
+import android.example.tinkoffproject.chat.model.db.MessageEntity
 import android.example.tinkoffproject.network.NetworkClient
 import android.example.tinkoffproject.network.NetworkClient.client
 import android.example.tinkoffproject.network.NetworkClient.makeJSONArray
@@ -13,17 +12,26 @@ import android.text.Html
 import androidx.annotation.MainThread
 import androidx.lifecycle.*
 import androidx.lifecycle.Observer
-import com.bumptech.glide.Glide
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.PagingData
+import androidx.paging.rxjava2.cachedIn
+import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.random.Random
 
-class ChatViewModel(private val stream: String, private val topic: String) : ViewModel() {
+@ExperimentalCoroutinesApi
+@ExperimentalPagingApi
+class ChatViewModel(
+    private val stream: String,
+    private val topic: String,
+    private val repository: MessagesRxRemoteRepository
+) : ViewModel() {
 
     private val querySendMessage: PublishSubject<String> by lazy { makePublishSubject<String>() }
     private val queryGetMessages: PublishSubject<Unit> by lazy { makePublishSubject<Unit>() }
@@ -57,12 +65,18 @@ class ChatViewModel(private val stream: String, private val topic: String) : Vie
     )
 
     init {
-        _uiState.value = ChatUiState(isLoading = true)
+        _uiState.value = ChatUiState(isLoading = false)
         subscribeGetMessages()
         subscribeSendMessage()
         subscribeAddReaction()
         subscribeRemoveReaction()
         loadMessages()
+    }
+
+    fun getMessages(): Flowable<PagingData<MessageEntity>> {
+        return repository
+            .getMessages()
+            .cachedIn(viewModelScope)
     }
 
     fun sendMessage(message: String) {
@@ -74,13 +88,14 @@ class ChatViewModel(private val stream: String, private val topic: String) : Vie
         disposables[KEY_GET_MESSAGE] = queryGetMessages
             .observeOn(Schedulers.io())
             .flatMapSingle {
-                client.getMessages(
+                client.getMessagesWithAnchor(
                     makeJSONArray(
                         listOf(
                             Pair("stream", stream),
                             Pair("topic", topic)
                         )
-                    )
+                    ),
+                    anchor = 278010829
                 ).map { messagesResponse ->
                     val messagesProcessed = messagesResponse.messges.map {
                         it.copy(
