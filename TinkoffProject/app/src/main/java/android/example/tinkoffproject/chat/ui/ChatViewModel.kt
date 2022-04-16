@@ -1,14 +1,13 @@
 package android.example.tinkoffproject.chat.ui
 
+import android.example.tinkoffproject.chat.model.ChatRepository
 import android.example.tinkoffproject.chat.model.network.UserMessage
 import android.example.tinkoffproject.chat.model.UserReaction
 import android.example.tinkoffproject.chat.model.db.MessageEntity
 import android.example.tinkoffproject.network.NetworkClient
 import android.example.tinkoffproject.network.NetworkClient.client
 import android.example.tinkoffproject.network.NetworkClient.makeJSONArray
-import android.example.tinkoffproject.utils.EMOJI_MAP
-import android.example.tinkoffproject.utils.makePublishSubject
-import android.text.Html
+import android.example.tinkoffproject.utils.*
 import androidx.annotation.MainThread
 import androidx.lifecycle.*
 import androidx.lifecycle.Observer
@@ -17,43 +16,45 @@ import androidx.paging.PagingData
 import androidx.paging.rxjava2.cachedIn
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import okhttp3.MultipartBody
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.random.Random
 
 @ExperimentalCoroutinesApi
 @ExperimentalPagingApi
 class ChatViewModel(
     private val stream: String,
     private val topic: String,
-    private val repository: MessagesRxRemoteRepository
+    private val chatRepository: ChatRepository
 ) : ViewModel() {
 
     private val querySendMessage: PublishSubject<String> by lazy { makePublishSubject<String>() }
+    private val queryUploadFile: PublishSubject<MultipartBody.Part> by lazy { makePublishSubject<MultipartBody.Part>() }
     private val queryGetMessages: PublishSubject<Unit> by lazy { makePublishSubject<Unit>() }
     private val queryAddReaction: PublishSubject<Pair<Int, String>> by lazy { makePublishSubject<Pair<Int, String>>() }
     private val queryRemoveReaction: PublishSubject<Pair<Int, String>> by lazy { makePublishSubject<Pair<Int, String>>() }
 
     private val disposables = mutableMapOf<String, Disposable>()
+    private val compositeDisposable = CompositeDisposable()
 
     private val currentMessages: List<UserMessage>
         get() = _uiState.value?.topicMessages ?: emptyList()
 
-    private val _itemToUpdate: MutableLiveData<Int> =
-        MutableLiveData<Int>()
-    val itemToUpdate: LiveData<Int> = _itemToUpdate
-
-    private val _messagesCount: MutableLiveData<Int> =
-        MutableLiveData<Int>()
-    val messagesCount: LiveData<Int> = _messagesCount
-
     private val _errorMessage = SingleLiveEvent<String>()
     val errorMessage: LiveData<String>
         get() = _errorMessage
+
+    val _messageSent = SingleLiveEvent<Boolean?>()
+    val messageSent: LiveData<Boolean?>
+        get() = _messageSent
 
     private val _uiState = MutableLiveData<ChatUiState>()
     val uiState: LiveData<ChatUiState>
@@ -64,17 +65,31 @@ class ChatViewModel(
         val isLoading: Boolean = false,
     )
 
+    private val _reactionUpdateMessageId = MutableLiveData<Int>()
+    val reactionUpdateMessageId: LiveData<Int>
+        get() = _reactionUpdateMessageId
+
+    var messagePlaceholderSent: Boolean? = false
+    private var messageIdToUpdate = 0
+    var posToUpdate = 0
+
+
     init {
-        _uiState.value = ChatUiState(isLoading = false)
         subscribeGetMessages()
         subscribeSendMessage()
         subscribeAddReaction()
         subscribeRemoveReaction()
+        subscribeUploadFile()
         loadMessages()
+        _messageSent.value = false
+    }
+
+    fun setMessageSent(value:Boolean?) {
+        _messageSent.value = value
     }
 
     fun getMessages(): Flowable<PagingData<MessageEntity>> {
-        return repository
+        return chatRepository
             .getMessages()
             .cachedIn(viewModelScope)
     }
@@ -83,49 +98,66 @@ class ChatViewModel(
         querySendMessage.onNext(message)
     }
 
+    fun uploadFile(file: MultipartBody.Part) {
+        queryUploadFile.onNext(file)
+    }
+
+
     private fun subscribeGetMessages() {
         disposables[KEY_GET_MESSAGE]?.dispose()
         disposables[KEY_GET_MESSAGE] = queryGetMessages
             .observeOn(Schedulers.io())
-            .flatMapSingle {
-                client.getMessagesWithAnchor(
+            .switchMapSingle {
+                (if (messageIdToUpdate != 0)
+                    client.getMessagesWithAnchor(
+                        makeJSONArray(
+                            listOf(
+                                Pair("stream", stream),
+                                Pair("topic", topic)
+                            )
+                        ), anchor = messageIdToUpdate
+                    )
+                else client.getMessages(
                     makeJSONArray(
                         listOf(
                             Pair("stream", stream),
                             Pair("topic", topic)
                         )
-                    ),
-                    anchor = 278010829
-                ).map { messagesResponse ->
-                    val messagesProcessed = messagesResponse.messges.map {
-                        it.copy(
-                            messageText =
-                            Html.fromHtml(it.messageText, Html.FROM_HTML_MODE_COMPACT).toString()
-                                .trim()
-                        )
+                    ), numBefore = 1
+                ))
+                    .map { messagesResponse ->
+                        processMessagesFromNetwork(messagesResponse.messges)
                     }
-                    for (msg in messagesProcessed) {
-                        for (reaction in msg.allReactions) {
-                            if (!msg.reactions.containsKey(reaction.emoji_name))
-                                msg.reactions[reaction.emoji_name] = msg.allReactions.count {
-                                    it.emoji_name == reaction.emoji_name
-                                }
-                            if (!msg.selectedReactions.containsKey(reaction.emoji_name)) {
-                                msg.selectedReactions[reaction.emoji_name] =
-                                    msg.allReactions.filter { it.emoji_name == reaction.emoji_name }
-                                        .find { it.userId == NetworkClient.MY_USER_ID } != null
-                            }
-                        }
-                    }
-                    messagesProcessed
-                }
             }
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onNext = {
-                _uiState.value = _uiState.value?.copy(topicMessages = it, isLoading = false)
+            .subscribeBy(onNext = { messages ->
+                chatRepository.clearUnsentMessages(stream, topic)
+                if (messageIdToUpdate != 0) {
+                    chatRepository.updateMessages(messages.filter { it.messageId == messageIdToUpdate }
+                        .map {
+                            convertMessageFromNetworkToDb(
+                                it,
+                                stream,
+                                topic
+                            )
+                        })
+                    posToUpdate = messageIdToUpdate
+                    messageIdToUpdate = 0
+                    _reactionUpdateMessageId.value = 0
+                } else if (_messageSent.value == false) {
+                    chatRepository.insertMessagesReplace(messages.map {
+                        convertMessageFromNetworkToDb(
+                            it,
+                            stream,
+                            topic
+                        )
+                    })
+                    _messageSent.value = null
+                }
+
+                _uiState.value = _uiState.value?.copy(topicMessages = messages, isLoading = false)
             }, onError = {
                 _errorMessage.value = "Ошибка при загрузке сообщений"
-                subscribeGetMessages()
             })
     }
 
@@ -134,19 +166,21 @@ class ChatViewModel(
         disposables[KEY_SEND_MESSAGE] =
             querySendMessage
                 .doOnNext {
-                    val newList = mutableListOf<UserMessage>()
-                    newList.addAll(currentMessages)
-                    newList.add(
-                        UserMessage(
-                            userId = NetworkClient.MY_USER_ID,
-                            name = "Vadim",
-                            messageText = it,
-                            date = Date().time / 1000,
-                            isSent = false
+                    chatRepository.insertMessagesReplace(
+                        listOf(
+                            MessageEntity(
+                                Random.nextInt(-20, -1),
+                                stream,
+                                topic,
+                                NetworkClient.MY_USER_ID,
+                                "Vadim",
+                                messageText = it,
+                                date = Date().time / 1000,
+                                isSent = false
+                            )
                         )
                     )
-                    _uiState.value = _uiState.value?.copy(topicMessages = newList)
-                    _messagesCount.value = currentMessages.size
+                    messagePlaceholderSent = null
                 }
                 .observeOn(Schedulers.io())
                 .concatMapSingle { message ->
@@ -155,11 +189,30 @@ class ChatViewModel(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onNext = {
+                        _messageSent.value = false
                         queryGetMessages.onNext(Unit)
                     },
                     onError = {
                         _errorMessage.value = "Ошибка отправки сообщения"
-                        subscribeSendMessage()
+                    }
+                )
+    }
+
+    private fun subscribeUploadFile() {
+        disposables[KEY_UPLOAD_FILE]?.dispose()
+        disposables[KEY_UPLOAD_FILE] =
+            queryUploadFile
+                .observeOn(Schedulers.io())
+                .concatMapSingle { file ->
+                    client.uploadFile(file)
+                }
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onNext = {
+                        querySendMessage.onNext("This is a link to a new file: ${it.uri}")
+                    },
+                    onError = {
+                        _errorMessage.value = "Ошибка отправки сообщения"
                     }
                 )
     }
@@ -169,6 +222,7 @@ class ChatViewModel(
         disposables[KEY_ADD_REACTION] = queryAddReaction
             .observeOn(Schedulers.io())
             .concatMapSingle { (position, emoji_name) ->
+                messageIdToUpdate = currentMessages[position].messageId
                 client.addReaction(
                     currentMessages[position].messageId,
                     emoji_name,
@@ -176,7 +230,9 @@ class ChatViewModel(
                 )
             }
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onError = {
+            .subscribeBy(onNext = {
+                queryGetMessages.onNext(Unit)
+            }, onError = {
                 _errorMessage.value = "Ошибка отправки реакции"
                 subscribeAddReaction()
             })
@@ -187,6 +243,7 @@ class ChatViewModel(
         disposables[KEY_REMOVE_REACTION] = queryRemoveReaction
             .observeOn(Schedulers.io())
             .concatMapSingle { (position, emoji_name) ->
+                messageIdToUpdate = currentMessages[position].messageId
                 client.removeReaction(
                     currentMessages[position].messageId,
                     emoji_name,
@@ -194,7 +251,9 @@ class ChatViewModel(
                 )
             }
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onError = {
+            .subscribeBy(onNext = {
+                queryGetMessages.onNext(Unit)
+            }, onError = {
                 _errorMessage.value = "Ошибка удаления реакции"
                 subscribeRemoveReaction()
             })
@@ -219,8 +278,6 @@ class ChatViewModel(
             userReaction.increaseReactionCount(emoji_name)
             userReaction.selectReaction(emoji_name)
         }
-        _uiState.value = _uiState.value?.copy(topicMessages = newList)
-        _itemToUpdate.value = position
     }
 
     fun addReaction(position: Int, emoji_name: String) {
@@ -238,18 +295,30 @@ class ChatViewModel(
             else
                 userReaction.addReaction(emoji_name)
         }
-        _uiState.value = _uiState.value?.copy(topicMessages = newList)
-        _itemToUpdate.value = position
         queryAddReaction.onNext(Pair(position, emoji_name))
+    }
+
+    private fun loadMessages() {
+        chatRepository.getAllMessagesFromDb(stream, topic)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onNext = {
+                if (it.isEmpty())
+                    _uiState.value = ChatUiState(isLoading = true)
+                else
+                    _uiState.value =
+                        _uiState.value?.copy(topicMessages = it.map { messageDb ->
+                            convertMessageFromDbToNetwork(
+                                messageDb
+                            )
+                        }, isLoading = false) ?: ChatUiState(isLoading = false)
+            })
+            .addTo(compositeDisposable)
     }
 
     override fun onCleared() {
         for (key in disposables.keys)
             disposables[key]?.dispose()
-    }
-
-    private fun loadMessages() {
-        queryGetMessages.onNext(Unit)
+        chatRepository.clearMessagesOnExit(stream, topic)
     }
 
     companion object {
@@ -257,6 +326,7 @@ class ChatViewModel(
         private const val KEY_SEND_MESSAGE = "send message"
         private const val KEY_ADD_REACTION = "add reaction"
         private const val KEY_REMOVE_REACTION = "remove reaction"
+        private const val KEY_UPLOAD_FILE = "upload file"
     }
 }
 

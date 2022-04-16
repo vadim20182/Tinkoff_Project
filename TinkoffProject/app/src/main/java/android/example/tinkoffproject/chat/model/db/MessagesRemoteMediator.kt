@@ -2,18 +2,14 @@ package android.example.tinkoffproject.chat.model.db
 
 import android.example.tinkoffproject.database.AppDatabase
 import android.example.tinkoffproject.network.NetworkClient
-import android.text.Html
+import android.example.tinkoffproject.utils.convertMessageFromNetworkToDb
+import android.example.tinkoffproject.utils.processMessagesFromNetwork
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
-import androidx.paging.RemoteMediator
 import androidx.paging.rxjava2.RxRemoteMediator
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
-import retrofit2.HttpException
-import java.io.IOException
-import java.lang.Exception
-
 
 @ExperimentalPagingApi
 class MessagesRemoteMediator(
@@ -29,29 +25,32 @@ class MessagesRemoteMediator(
         var remoteKeySingle: Single<Int>? = null;
         when (loadType) {
             LoadType.REFRESH -> {
-                remoteKeySingle = Single.just(NEWEST_MESSAGE)
+                remoteKeySingle = if (MESSAGE_ANCHOR_TO_UPDATE == 0)
+                    Single.just(NEWEST_MESSAGE)
+                else {
+                    Single.just(MESSAGE_ANCHOR_TO_UPDATE)
+                }
             }
             LoadType.PREPEND -> {
                 return Single.just(MediatorResult.Success(true))
             }
             LoadType.APPEND -> {
-                val key =
-                    database.messageRemoteKeysDAO().getRemoteKeys(stream, topic)
-                        .lastOrNull()
+                val nextAnchorMessageId = state.lastItemOrNull()?.messageId
 
-                if (key?.prevKey != null)
-                    remoteKeySingle = Single.just(key.prevKey)
-                else if (database.messageDAO().getAllMessages().isNotEmpty())
-                    return Single.just(MediatorResult.Success(true))
-                else
-                    return Single.just(MediatorResult.Success(false))
+                if (nextAnchorMessageId != null)
+                    remoteKeySingle = Single.just(nextAnchorMessageId)
+                else {
+                    return if (!state.isEmpty())
+                        Single.just(MediatorResult.Success(true))
+                    else
+                        Single.just(MediatorResult.Success(false))
+                }
             }
-
         }
         return remoteKeySingle
             .subscribeOn(Schedulers.io())
-            .flatMap<MediatorResult> { remoteKey ->
-                return@flatMap (if (remoteKey !=
+            .flatMap<MediatorResult> { nextAnchorMessageId ->
+                return@flatMap (if (nextAnchorMessageId !=
                     NEWEST_MESSAGE
                 ) NetworkClient.client.getMessagesWithAnchor(
                     NetworkClient.makeJSONArray(
@@ -59,90 +58,47 @@ class MessagesRemoteMediator(
                             Pair("stream", stream),
                             Pair("topic", topic)
                         )
-                    ), numBefore = PAGE_SIZE, anchor = remoteKey
-                ) else NetworkClient.client.getMessages(
-                    NetworkClient.makeJSONArray(
-                        listOf(
-                            Pair("stream", stream),
-                            Pair("topic", topic)
-                        )
-                    ), numBefore = PAGE_SIZE + 1
-                ))
+                    ), numBefore = PAGE_SIZE, anchor = nextAnchorMessageId
+                ) else
+                    NetworkClient.client.getMessages(
+                        NetworkClient.makeJSONArray(
+                            listOf(
+                                Pair("stream", stream),
+                                Pair("topic", topic)
+                            )
+                        ), numBefore = PAGE_SIZE
+                    ))
                     .map { messagesResponse ->
                         database.runInTransaction {
                             if (loadType == LoadType.REFRESH) {
-                                database.messageDAO().clearMessages()
-                                database.messageRemoteKeysDAO().clearRemoteKeys()
+                                database.messagesDAO().clearMessages()
                             }
 
-                            val res = messagesResponse.messges
-                            if (res.size == PAGE_SIZE + 1 || remoteKey == NEWEST_MESSAGE)
-                                database.messageRemoteKeysDAO().insertAll(
-                                    listOf(
-                                        MessageRemoteKeysEntity(
-                                            res.last().messageId,
-                                            res.first().messageId,
-                                            null,
-                                            stream,
-                                            topic
-                                        )
-                                    )
-                                )
-                            else
-                                database.messageRemoteKeysDAO().insertAll(
-                                    listOf(
-                                        MessageRemoteKeysEntity(
-                                            res.last().messageId,
-                                            null,
-                                            null,
-                                            stream,
-                                            topic
-                                        )
-                                    )
-                                )
-                            val messagesProcessed = messagesResponse.messges.map {
-                                it.copy(
-                                    messageText =
-                                    Html.fromHtml(it.messageText, Html.FROM_HTML_MODE_COMPACT)
-                                        .toString()
-                                        .trim()
-                                )
-                            }
-                            for (msg in messagesProcessed) {
-                                for (reaction in msg.allReactions) {
-                                    if (!msg.reactions.containsKey(reaction.emoji_name))
-                                        msg.reactions[reaction.emoji_name] =
-                                            msg.allReactions.count {
-                                                it.emoji_name == reaction.emoji_name
-                                            }
-                                    if (!msg.selectedReactions.containsKey(reaction.emoji_name)) {
-                                        msg.selectedReactions[reaction.emoji_name] =
-                                            msg.allReactions.filter { it.emoji_name == reaction.emoji_name }
-                                                .find { it.userId == NetworkClient.MY_USER_ID } != null
-                                    }
-                                }
-                            }
+                            val messagesProcessed =
+                                processMessagesFromNetwork(messagesResponse.messges)
 
                             val messagesForDB =
                                 (if (messagesProcessed.size == PAGE_SIZE + 1) messagesProcessed.subList(
-                                    1, messagesProcessed.lastIndex + 1
+                                    0, messagesProcessed.lastIndex
                                 ) else
                                     messagesProcessed).map {
-                                    MessageEntity(
-                                        userId = it.userId,
-                                        name = it.name,
-                                        avatarUrl = it.avatarUrl,
-                                        messageText = it.messageText,
-                                        date = it.date,
-                                        messageId = it.messageId,
-                                        isSent = it.isSent,
-                                        reactions = it.reactions,
-                                        selectedReactions = it.selectedReactions,
-                                        channelName = stream,
-                                        topicName = topic
-                                    )
+                                    convertMessageFromNetworkToDb(it, topic, stream)
                                 }
-                            database.messageDAO().insertMessages(messagesForDB)
+                            if (MESSAGE_ANCHOR_TO_UPDATE == 0)
+                                database.messagesDAO().insertMessages(messagesForDB).subscribe()
+                            else {
+                                database.messagesDAO().updateMessages(
+                                    listOf(
+                                        convertMessageFromNetworkToDb(
+                                            messagesProcessed.last(),
+                                            topic,
+                                            stream
+                                        )
+                                    )
+                                ).subscribe()
+                                MESSAGE_ANCHOR_TO_UPDATE = 0
+                            }
+
                         }
                         MediatorResult.Success(endOfPaginationReached = messagesResponse.messges.size < PAGE_SIZE)
                     }
@@ -157,8 +113,10 @@ class MessagesRemoteMediator(
     }
 
     companion object {
+        var MESSAGE_ANCHOR_TO_UPDATE = 0
         const val PAGE_SIZE = 20
         const val PREFETCH_SIZE = 5
+        const val MAX_MESSAGES_TO_CACHE = 300
         const val INITIAL_LOAD_SIZE = 50
         const val NEWEST_MESSAGE = 1000000000
     }

@@ -1,9 +1,15 @@
 package android.example.tinkoffproject.utils
 
+import android.example.tinkoffproject.channels.model.db.ChannelEntity
+import android.example.tinkoffproject.channels.model.network.ChannelItem
 import android.example.tinkoffproject.channels.ui.BaseChannelsViewModel
 import android.example.tinkoffproject.channels.ui.ChannelsAdapter
+import android.example.tinkoffproject.chat.model.db.MessageEntity
+import android.example.tinkoffproject.chat.model.network.UserMessage
 import android.example.tinkoffproject.contacts.ui.ContactsAdapter
 import android.example.tinkoffproject.contacts.ui.ContactsViewModel
+import android.example.tinkoffproject.network.NetworkClient
+import android.text.Html
 import android.view.View
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +22,7 @@ import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.SingleSubject
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
 fun <T : RecyclerView.Adapter<RecyclerView.ViewHolder>> makeSearchDisposable(
     querySearch: PublishSubject<Boolean>,
@@ -24,6 +31,7 @@ fun <T : RecyclerView.Adapter<RecyclerView.ViewHolder>> makeSearchDisposable(
     recyclerAdapter: T,
     viewModel: ViewModel
 ) = querySearch
+    .debounce(100, TimeUnit.MILLISECONDS)
     .subscribeOn(Schedulers.io())
     .switchMapSingle {
         val queryTimeoutReset = SingleSubject.create<Boolean>()
@@ -43,7 +51,7 @@ fun <T : RecyclerView.Adapter<RecyclerView.ViewHolder>> makeSearchDisposable(
                     }
 
                     else -> {
-                        (recyclerAdapter as ChannelsAdapter).update((viewModel as BaseChannelsViewModel).currentChannels)
+                        (recyclerAdapter as ChannelsAdapter).update((viewModel as BaseChannelsViewModel<*>).currentChannels)
                     }
                 }
             )
@@ -63,7 +71,7 @@ fun <T : RecyclerView.Adapter<RecyclerView.ViewHolder>> makeSearchDisposable(
             }
             else -> {
                 (recyclerAdapter as ChannelsAdapter).data =
-                    (viewModel as BaseChannelsViewModel).currentChannels
+                    (viewModel as BaseChannelsViewModel<*>).currentChannels
             }
         }
         it.second.dispatchUpdatesTo(recyclerAdapter)
@@ -91,6 +99,98 @@ fun makeSearchObservable(
     .distinctUntilChanged()
 
 fun <T> makePublishSubject() = PublishSubject.create<T>()
+
+fun convertChannelFromNetworkToDb(
+    channelItem: ChannelItem, flag: Int, isMy: Boolean = false
+): ChannelEntity {
+    return when (flag) {
+        0 -> ChannelEntity.MyChannelsEntity(
+            channelItem.streamID,
+            channelItem.name,
+            channelItem.isTopic,
+            channelItem.isExpanded,
+            channelItem.parentChannel,
+            isMy
+        )
+        else -> ChannelEntity.AllChannelsEntity(
+            channelItem.streamID,
+            channelItem.name,
+            channelItem.isTopic,
+            channelItem.isExpanded,
+            channelItem.parentChannel
+        )
+    }
+}
+
+fun convertChannelFromDbToNetwork(channelEntity: ChannelEntity): ChannelItem {
+    return ChannelItem(
+        streamID = channelEntity.streamID,
+        name = channelEntity.name,
+        isTopic = channelEntity.isTopic,
+        isExpanded = channelEntity.isExpanded,
+        parentChannel = channelEntity.parentChannel
+    )
+}
+
+fun convertMessageFromNetworkToDb(
+    userMessage: UserMessage,
+    topic: String,
+    channel: String
+): MessageEntity {
+    return MessageEntity(
+        name = userMessage.name,
+        topicName = topic,
+        channelName = channel,
+        selectedReactions = userMessage.selectedReactions,
+        reactions = userMessage.reactions,
+        isSent = userMessage.isSent,
+        messageId = userMessage.messageId,
+        date = userMessage.date,
+        messageText = userMessage.messageText,
+        avatarUrl = userMessage.avatarUrl,
+        userId = userMessage.userId
+    )
+}
+
+fun convertMessageFromDbToNetwork(
+    messageEntity: MessageEntity
+): UserMessage {
+    return UserMessage(
+        name = messageEntity.name,
+        selectedReactions = messageEntity.selectedReactions,
+        reactions = messageEntity.reactions,
+        isSent = messageEntity.isSent,
+        messageId = messageEntity.messageId,
+        date = messageEntity.date,
+        messageText = messageEntity.messageText,
+        avatarUrl = messageEntity.avatarUrl,
+        userId = messageEntity.userId
+    )
+}
+
+fun processMessagesFromNetwork(messagesResponse: List<UserMessage>): List<UserMessage> {
+    val messagesProcessed = messagesResponse.map {
+        it.copy(
+            messageText =
+            Html.fromHtml(it.messageText, Html.FROM_HTML_MODE_COMPACT).toString()
+                .trim()
+        )
+    }
+    for (msg in messagesProcessed) {
+        for (reaction in msg.allReactions) {
+            if (!msg.reactions.containsKey(reaction.emoji_name))
+                msg.reactions[reaction.emoji_name] = msg.allReactions.count {
+                    it.emoji_name == reaction.emoji_name
+                }
+            if (!msg.selectedReactions.containsKey(reaction.emoji_name)) {
+                msg.selectedReactions[reaction.emoji_name] =
+                    msg.allReactions.filter { it.emoji_name == reaction.emoji_name }
+                        .find { it.userId == NetworkClient.MY_USER_ID } != null
+            }
+        }
+    }
+    return messagesProcessed
+}
 
 val EMOJI_MAP = mutableMapOf<String, Int>().apply {
     put("grinning", 0x1F600)

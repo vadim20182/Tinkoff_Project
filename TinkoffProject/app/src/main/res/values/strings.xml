@@ -15,4 +15,5 @@
     <string name="network_is_available">Network is available</string>
     <string name="network_is_lost">Network is lost</string>
     <string name="network_is_unavailable">Network is unavailable</string>
+    <string name="message_loading_item_text">Сообщение загружается...</string>
 </resources>

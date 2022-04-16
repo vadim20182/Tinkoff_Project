@@ -1,11 +1,12 @@
 package android.example.tinkoffproject.chat.model.db
 
+import android.example.tinkoffproject.chat.model.db.MessageEntity.Companion.TABLE_NAME
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 
-@Entity(tableName = "message")
+@Entity(tableName = TABLE_NAME)
 @TypeConverters(SelectedReactionsConverter::class, ReactionsConverter::class)
 data class MessageEntity(
     @PrimaryKey(autoGenerate = false)
@@ -31,19 +32,8 @@ data class MessageEntity(
     val date: Long,
     @ColumnInfo(name = "message_is_sent")
     val isSent: Boolean = true
-)
-
-@Entity(tableName = "message_remote_keys")
-data class MessageRemoteKeysEntity(
-    @PrimaryKey
-    @ColumnInfo(name = "message_remote_key_id")
-    val messageId: Int,
-    @ColumnInfo(name = "message_remote_key_prev_key")
-    val prevKey: Int?,
-    @ColumnInfo(name = "message_remote_key_next_key")
-    val nextKey: Int?,
-    @ColumnInfo(name = "message_remote_key_stream")
-    val stream: String,
-    @ColumnInfo(name = "message_remote_key_topic")
-    val topic: String
-)
+) {
+    companion object {
+        const val TABLE_NAME = "messages"
+    }
+}

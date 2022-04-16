@@ -16,12 +16,12 @@ interface ContactsDAO {
     @Delete
     fun deleteContacts(contacts: List<ContactEntity>): Completable
 
-    @Query("DELETE FROM contact")
+    @Query("DELETE FROM ${ContactEntity.TABLE_NAME}")
     fun clearChannels()
 
-    @Query("SELECT * FROM contact")
+    @Query("SELECT * FROM ${ContactEntity.TABLE_NAME}")
     fun getAllContacts(): Single<List<ContactEntity>>
 
-    @Query("SELECT * FROM contact WHERE contact_name LIKE :name")
+    @Query("SELECT * FROM ${ContactEntity.TABLE_NAME} WHERE contact_name LIKE :name")
     fun findContactsByName(name: String): Single<List<ContactEntity>>
 }

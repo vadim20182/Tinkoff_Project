@@ -1,5 +1,6 @@
 package android.example.tinkoffproject.chat.ui
 
+import android.example.tinkoffproject.chat.model.ChatRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.paging.ExperimentalPagingApi
@@ -10,7 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 class ChatViewModelFactory(
     private val stream: String,
     private val topic: String,
-    private val repository: MessagesRxRemoteRepository
+    private val repository: ChatRepository
 ) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

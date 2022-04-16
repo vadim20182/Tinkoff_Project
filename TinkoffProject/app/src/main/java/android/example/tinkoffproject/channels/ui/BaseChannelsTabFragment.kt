@@ -2,6 +2,7 @@ package android.example.tinkoffproject.channels.ui
 
 import androidx.fragment.app.Fragment
 import android.example.tinkoffproject.R
+import android.example.tinkoffproject.channels.model.db.ChannelEntity
 import android.example.tinkoffproject.channels.model.network.ChannelItem
 import android.example.tinkoffproject.chat.ui.ChatFragment
 import android.example.tinkoffproject.utils.makeSearchDisposable
@@ -21,12 +22,14 @@ import com.google.android.material.snackbar.Snackbar
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalPagingApi
-abstract class BaseChannelsTabFragment : Fragment(R.layout.base_fragment_channels),
+abstract class BaseChannelsTabFragment<T : ChannelEntity> :
+    Fragment(R.layout.base_fragment_channels),
     ChannelsAdapter.OnItemClickedListener {
 
-    protected abstract val viewModel: BaseChannelsViewModel
+    protected abstract val viewModel: BaseChannelsViewModel<T>
     private val channelsAdapter: ChannelsAdapter by lazy { ChannelsAdapter(this) }
     private val navController: NavController by lazy {
         var parent = parentFragment

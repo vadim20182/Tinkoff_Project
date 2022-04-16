@@ -93,7 +93,7 @@ private class ChildViewHolder(
         binding.topicItemName.text = item.name
         binding.topicItemLayout.setOnClickListener {
             onItemClickedListener.onItemClicked(
-                adapterPosition,
+                absoluteAdapterPosition,
                 item
             )
         }
@@ -113,7 +113,7 @@ private class HeaderViewHolder(
         binding.channelItemLayout.setOnClickListener {
             binding.channelItemArrow.showNext()
             onItemClickedListener.onItemClicked(
-                adapterPosition,
+                absoluteAdapterPosition,
                 item
             )
         }

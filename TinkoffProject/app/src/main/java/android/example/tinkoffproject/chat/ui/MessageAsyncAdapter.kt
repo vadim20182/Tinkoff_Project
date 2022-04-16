@@ -43,10 +43,6 @@ class MessageAsyncAdapter(
             else -> TYPE_MESSAGE
         }
 
-    override fun getItemCount(): Int {
-        return super.getItemCount()
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageBaseViewHolder {
         return when (viewType) {
             TYPE_MESSAGE -> {
@@ -73,11 +69,12 @@ class MessageAsyncAdapter(
     }
 
     override fun onBindViewHolder(holder: MessageBaseViewHolder, position: Int) {
-        val user = getItem(position)//differ.currentList[position]
+        val user = getItem(position)
         if (user != null)
             when (holder) {
                 is MessageViewHolder -> holder.bind(user)
                 is MyMessageViewHolder -> holder.bind(user)
+                else -> {}
             }
     }
 
@@ -124,7 +121,7 @@ private class MessageViewHolder(
                     setReactionCount(userMessage.reactions[key] ?: 0)
                     isSelected = userMessage.selectedReactions[key] == true
                     setOnClickListener {
-                        onItemClickedListener.onItemClicked(adapterPosition, it)
+                        onItemClickedListener.onItemClicked(absoluteAdapterPosition, it)
                     }
                 })
             }
@@ -136,12 +133,12 @@ private class MessageViewHolder(
                 ) as ReactionCustomView).apply {
                 isButton = true
                 setOnClickListener {
-                    onItemClickedListener.onItemClicked(adapterPosition, this)
+                    onItemClickedListener.onItemClicked(absoluteAdapterPosition, this)
                 }
             })
         }
         messageText.setOnLongClickListener {
-            onItemClickedListener.onItemClicked(adapterPosition, it)
+            onItemClickedListener.onItemClicked(absoluteAdapterPosition, it)
             return@setOnLongClickListener true
         }
         if (userMessage.avatarUrl != null) {
@@ -192,7 +189,7 @@ private class MyMessageViewHolder(
                     setReactionCount(userMessage.reactions[key] ?: 0x1F480)
                     isSelected = userMessage.selectedReactions[key] == true
                     setOnClickListener {
-                        onItemClickedListener.onItemClicked(adapterPosition, it)
+                        onItemClickedListener.onItemClicked(absoluteAdapterPosition, it)
                     }
                 })
             }
@@ -204,12 +201,12 @@ private class MyMessageViewHolder(
                 ) as ReactionCustomView).apply {
                 isButton = true
                 setOnClickListener {
-                    onItemClickedListener.onItemClicked(adapterPosition, this)
+                    onItemClickedListener.onItemClicked(absoluteAdapterPosition, this)
                 }
             })
         }
         messageText.setOnLongClickListener {
-            onItemClickedListener.onItemClicked(adapterPosition, it)
+            onItemClickedListener.onItemClicked(absoluteAdapterPosition, it)
             return@setOnLongClickListener true
         }
     }

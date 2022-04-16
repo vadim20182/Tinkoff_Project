@@ -9,7 +9,7 @@ data class ChannelItem(
     val name: String,
     val isTopic: Boolean = false,
     val isExpanded: Boolean = false,
-    val parentChannel: String? = null,
+    val parentChannel: String = "\t",
     @SerialName("stream_id")
     val streamID: Int = 0
 )

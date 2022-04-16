@@ -3,11 +3,13 @@ package android.example.tinkoffproject.network
 import android.example.tinkoffproject.channels.model.network.GetChannelsResponse
 import android.example.tinkoffproject.channels.model.network.GetTopicsResponse
 import android.example.tinkoffproject.channels.model.network.SubscriptionStatus
+import android.example.tinkoffproject.chat.model.network.FileResponse
 import android.example.tinkoffproject.chat.model.network.GetMessagesResponse
 import android.example.tinkoffproject.contacts.model.network.GetPresenceResponse
 import android.example.tinkoffproject.contacts.model.network.GetUsersResponse
 import android.example.tinkoffproject.contacts.model.network.UserResponse
 import io.reactivex.Single
+import okhttp3.MultipartBody
 import org.json.JSONArray
 import retrofit2.http.*
 
@@ -73,6 +75,12 @@ interface ApiService {
         @Query("to") to: String,
         @Query("type") type: String = "private"
     ): Single<String>
+
+    @Multipart
+    @POST("user_uploads")
+    fun uploadFile(
+        @Part file: MultipartBody.Part
+    ): Single<FileResponse>
 
     @POST("messages/{message_id}/reactions")
     fun addReaction(

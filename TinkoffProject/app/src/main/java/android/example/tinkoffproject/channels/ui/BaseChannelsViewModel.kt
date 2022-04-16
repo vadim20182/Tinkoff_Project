@@ -1,10 +1,11 @@
 package android.example.tinkoffproject.channels.ui
 
-import android.example.tinkoffproject.channels.model.db.ChannelDAO
+import android.example.tinkoffproject.channels.model.ChannelsRepository
 import android.example.tinkoffproject.channels.model.db.ChannelEntity
 import android.example.tinkoffproject.channels.model.network.ChannelItem
 import android.example.tinkoffproject.chat.ui.SingleLiveEvent
 import android.example.tinkoffproject.network.NetworkClient.client
+import android.example.tinkoffproject.utils.convertChannelFromNetworkToDb
 import android.example.tinkoffproject.utils.makePublishSubject
 import android.example.tinkoffproject.utils.makeSearchObservable
 import androidx.lifecycle.LiveData
@@ -21,16 +22,17 @@ import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
-abstract class BaseChannelsViewModel(protected val channelsDAO: ChannelDAO) : ViewModel() {
+abstract class BaseChannelsViewModel<T : ChannelEntity>(protected val channelsRepository: ChannelsRepository<T>) :
+    ViewModel() {
 
     protected abstract val allChannels: MutableList<ChannelItem>
     protected abstract val queryGetChannels: PublishSubject<Unit>
-    protected abstract var getChannelsDisposable: Disposable?
+    abstract val channelEntityType: Int
     private val searchObservable: Observable<String> by lazy { MainChannelsViewModel.querySearch }
-    private val queryGetTopics: PublishSubject<Pair<Int, String>> by lazy { makePublishSubject<Pair<Int, String>>() }
     private var compositeDisposable = CompositeDisposable()
-    private val disposables = mutableMapOf<String, Disposable>().apply {
+    protected val disposables = mutableMapOf<String, Disposable>().apply {
         this[KEY_INPUT] = searchObservable
             .map { query -> query.trim() }
             .distinctUntilChanged()
@@ -51,25 +53,6 @@ abstract class BaseChannelsViewModel(protected val channelsDAO: ChannelDAO) : Vi
         queryGetChannels
             .doOnNext { allChannels.clear() }
             .observeOn(Schedulers.io())
-            .switchMapSingle {
-                client.getAllStreams()
-                    .map { channels ->
-                        allChannels.apply { addAll(channels.channelsList) }
-                        channelsDAO.insertChannels(channels.channelsList.map {
-                            ChannelEntity(
-                                it.streamID, it.name, it.isTopic, it.isExpanded, it.parentChannel
-                            )
-                        }).subscribe()
-                        for (channel in channels.channelsList) {
-                            queryGetTopics.onNext(
-                                Pair(
-                                    channel.streamID,
-                                    channel.name
-                                )
-                            )
-                        }
-                    }
-            }
     }
 
     private val _isChannelClicked = SingleLiveEvent<Boolean>()
@@ -98,42 +81,7 @@ abstract class BaseChannelsViewModel(protected val channelsDAO: ChannelDAO) : Vi
 
     abstract fun subscribeGetChannels()
 
-    fun subscribeGetTopics() {
-        disposables[KEY_GET_TOPICS]?.dispose()
-        disposables[KEY_GET_TOPICS] = queryGetTopics
-            .observeOn(Schedulers.io())
-            .concatMap {
-                Observable.just(it).delay(30, TimeUnit.MILLISECONDS)
-            }
-            .toFlowable(BackpressureStrategy.BUFFER)
-            .onBackpressureBuffer(3000)
-            .flatMapSingle { input ->
-                client.getTopicsForStream(input.first)
-                    .map { topicsResponse ->
-                        val topicsProcessed = topicsResponse.channelsList.map {
-                            it.copy(
-                                isTopic = true,
-                                parentChannel = input.second
-                            )
-                        }
-                        topics[input.second] = topicsProcessed
-                        channelsDAO.insertChannels(topicsProcessed.map {
-                            ChannelEntity(
-                                it.streamID,
-                                it.name,
-                                it.isTopic,
-                                it.isExpanded,
-                                it.parentChannel
-                            )
-                        }).subscribe()
-                    }
-            }
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onError = {
-                _errorMessage.value = "Ошибка при загрузке каналов"
-                subscribeGetTopics()
-            })
-    }
+    abstract fun subscribeGetTopics()
 
     private fun filterChannels(input: String) = allChannels.filter {
         (it.name.contains(
@@ -141,9 +89,9 @@ abstract class BaseChannelsViewModel(protected val channelsDAO: ChannelDAO) : Vi
                 input,
                 RegexOption.IGNORE_CASE
             )
-        ) && !it.isTopic) || (it.parentChannel?.contains(
+        ) && !it.isTopic) || (it.parentChannel.contains(
             Regex(input, RegexOption.IGNORE_CASE)
-        ) == true)
+        ))
     }
 
     protected fun subscribeToSearch() {
@@ -242,7 +190,6 @@ abstract class BaseChannelsViewModel(protected val channelsDAO: ChannelDAO) : Vi
     override fun onCleared() {
         for (key in disposables.keys)
             disposables[key]?.dispose()
-        getChannelsDisposable?.dispose()
         compositeDisposable.clear()
     }
 

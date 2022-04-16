@@ -31,15 +31,3 @@ class SelectedReactionsConverter {
         }.toMutableMap() else mutableMapOf()
     }
 }
-
-//class MessageRemoteKeysConverter {
-//    @TypeConverter
-//    fun fromRemoteKeys(messageRemoteKeysEntity: MessageRemoteKeysEntity): String {
-//        return "${messageRemoteKeysEntity.messageId},${messageRemoteKeysEntity.nextKey},${messageRemoteKeysEntity.prevKey}}"
-//    }
-//
-//    @TypeConverter
-//    fun toRemoteKeys(data: String): MessageRemoteKeysEntity {
-//        return data.split(',').
-//    }
-//}

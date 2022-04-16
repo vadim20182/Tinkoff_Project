@@ -18,3 +18,13 @@ data class Reaction(
     @SerialName("user_id")
     val userId: Int,
 )
+
+@Serializable
+data class FileResponse(
+    @SerialName("msg")
+    val msg: String,
+    @SerialName("result")
+    val result: String,
+    @SerialName("uri")
+    val uri: String,
+)

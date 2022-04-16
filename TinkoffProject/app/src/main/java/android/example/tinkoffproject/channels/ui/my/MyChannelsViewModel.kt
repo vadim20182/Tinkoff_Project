@@ -1,144 +1,170 @@
 package android.example.tinkoffproject.channels.ui.my
 
-import android.example.tinkoffproject.channels.model.db.ChannelDAO
+import android.example.tinkoffproject.channels.model.ChannelsRepository
 import android.example.tinkoffproject.channels.model.db.ChannelEntity
 import android.example.tinkoffproject.channels.model.network.ChannelItem
 import android.example.tinkoffproject.channels.ui.BaseChannelsViewModel
 import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.network.NetworkClient.client
+import android.example.tinkoffproject.utils.convertChannelFromDbToNetwork
+import android.example.tinkoffproject.utils.convertChannelFromNetworkToDb
 import android.example.tinkoffproject.utils.makePublishSubject
-import io.reactivex.Completable
+import io.reactivex.BackpressureStrategy
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
+import java.util.concurrent.TimeUnit
 
-class MyChannelsViewModel(channelsDAO: ChannelDAO) : BaseChannelsViewModel(channelsDAO) {
-    override var getChannelsDisposable: Disposable? = null
-    override val queryGetChannels: PublishSubject<Unit>
+class MyChannelsViewModel(channelsRepository: ChannelsRepository<ChannelEntity.MyChannelsEntity>) :
+    BaseChannelsViewModel<ChannelEntity.MyChannelsEntity>(channelsRepository) {
+    private val queryGetTopics: PublishSubject<Pair<Int, String>> by lazy { makePublishSubject<Pair<Int, String>>() }
+    override val channelEntityType: Int = 0
+    override val queryGetChannels: PublishSubject<Unit> by lazy { makePublishSubject<Unit>() }
     override val allChannels = mutableListOf<ChannelItem>()
-    private var getSubscriptionStatusDisposable: Disposable? = null
+
+    private val compositeDisposable = CompositeDisposable()
+
 
     init {
-        queryGetChannels = makePublishSubject()
-        subscribeToSearch()
-        subscribeChannelClick()
         subscribeGetTopics()
         subscribeGetChannels()
+        subscribeToSearch()
+        subscribeChannelClick()
         _isLoaded.value = false
     }
 
-    private fun findMyChannels() = Observable.fromIterable(allChannels)
-        .observeOn(Schedulers.io())
-        .flatMapSingle { channel ->
-            NetworkClient.client.getSubscriptionStatus(
-                channel.streamID,
-                NetworkClient.MY_USER_ID
-            )
-                .map {
-                    Pair(channel, it)
-                }
-        }
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribeBy(onComplete = {
-//            for (topics in topics.values)
-//                allChannels.addAll(topics)
-//
-//            for (channel in allChannels.map {
-//                ChannelEntity(
-//                    it.streamID,
-//                    it.name,
-//                    it.isTopic,
-//                    it.isExpanded,
-//                    it.parentChannel,
-//                    isMy = true
-//                )
-//            })
-//                channelsDAO.updateChannels(channel.name, channel.parentChannel, true).subscribe()
-//            channelsDAO.insertChannels(allChannels.map {
-//                ChannelEntity(
-//                    it.streamID,
-//                    it.name,
-//                    it.isTopic,
-//                    it.isExpanded,
-//                    it.parentChannel,
-//                    isMy = true
-//                )
-//            }).subscribe()
-//            channelsDAO.insertChannels(allChannels.map {
-//                ChannelEntity(
-//                    it.streamID, it.name, it.isTopic, it.isExpanded, it.parentChannel, true
-//                )
-//            }).subscribe()
-            currentChannels = allChannels
-            _isLoading.value = false
-            _isLoaded.value = true
-            getSubscriptionStatusDisposable?.dispose()
-        }, onNext = { (channel, status) ->
-            if (!status.isSubscribed)
-                allChannels.remove(channel)
-        }, onError = {
-            _errorMessage.value = "Ошибка при загрузке подписок"
-            getSubscriptionStatusDisposable?.dispose()
-        })
+    override fun subscribeGetTopics() {
+        queryGetTopics
+            .observeOn(Schedulers.io())
+            .flatMapSingle { (streamId, name) ->
+                client.getTopicsForStream(streamId)
+                    .map { topicsResponse ->
+                        val topicsProcessed = topicsResponse.channelsList.map {
+                            it.copy(
+                                isTopic = true,
+                                parentChannel = name
+                            )
+                        }
+                        topics[name] = topicsProcessed
+                        channelsRepository.insertChannelsIgnore(topicsProcessed.map {
+                            convertChannelFromNetworkToDb(
+                                it,
+                                channelEntityType, true
+                            ) as ChannelEntity.MyChannelsEntity
+                        })
+                    }
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onNext = {}, onError = {
+                _errorMessage.value = "Ошибка при загрузке каналов"
+            }).addTo(compositeDisposable)
+    }
+
+    private fun findMyChannels() {
+        Observable.fromIterable(allChannels.filter { it.parentChannel == "\t" })
+            .observeOn(Schedulers.io())
+            .flatMapSingle { channel ->
+                client.getSubscriptionStatus(
+                    channel.streamID,
+                    NetworkClient.MY_USER_ID
+                )
+                    .map { status ->
+                        if (!status.isSubscribed)
+                            allChannels.remove(channel)
+                        else
+                            queryGetTopics.onNext(Pair(channel.streamID, channel.name))
+                    }
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onComplete = {
+                channelsRepository.insertChannelsIgnore(allChannels.map {
+                    convertChannelFromNetworkToDb(
+                        it,
+                        channelEntityType, true
+                    ) as ChannelEntity.MyChannelsEntity
+                })
+            }, onError = {
+
+                _errorMessage.value = "Ошибка при загрузке подписок"
+            })
+            .addTo(compositeDisposable)
+    }
 
     override fun subscribeGetChannels() {
-        getChannelsDisposable?.dispose()
-        getChannelsDisposable =
-            getChannelsObservable
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(onNext = {
-                    getSubscriptionStatusDisposable = findMyChannels()
-                }, onError = {
-                    _errorMessage.value = "Ошибка при загрузке каналов"
-                    subscribeGetChannels()
-                })
+        getChannelsObservable
+            .switchMapSingle {
+                client.getAllStreams()
+                    .map { channels ->
+                        allChannels.apply { addAll(channels.channelsList) }
+                    }
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onNext = { findMyChannels() }, onError = {
+                _errorMessage.value = "Ошибка при загрузке каналов"
+            })
+            .addTo(compositeDisposable)
+    }
+
+    private fun subscribeToDbUpdates() {
+        channelsRepository.getMyChannelsFromDb()
+            .map { dbList ->
+                val dbResponse = dbList.map {
+                    convertChannelFromDbToNetwork(it)
+                }
+                Pair(
+                    dbResponse,
+                    dbResponse.filter { it.isExpanded || (!it.isTopic) })
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onNext = { (all, current) ->
+                if (all.isNotEmpty()) {
+                    allChannels.clear()
+                    allChannels.addAll(all)
+                    currentChannels = current
+                    _isLoading.value = false
+                }
+            }, onError = {
+            }).addTo(compositeDisposable)
     }
 
     override fun loadChannels() {
-//        _isLoading.value = true
-//        channelsDAO.getMyAllChannels()
-//            .subscribeOn(Schedulers.io())
-//            .map { dbList ->
-//                Pair(dbList.map {
-//                    ChannelItem(
-//                        it.name,
-//                        it.isTopic,
-//                        it.isExpanded,
-//                        it.parentChannel,
-//                        it.streamID
-//                    )
-//                }, dbList.map {
-//                    ChannelItem(
-//                        it.name,
-//                        it.isTopic,
-//                        it.isExpanded,
-//                        it.parentChannel,
-//                        it.streamID
-//                    )
-//                }.filter { it.isExpanded || (!it.isTopic) })
-//            }
-//            .observeOn(AndroidSchedulers.mainThread())
-//            .subscribeBy(onSuccess = { (all, current) ->
-//                if (all.isNotEmpty()) {
-//                    allChannels.clear()
-//                    allChannels.addAll(all)
-//                    for (parent in allChannels.filter { it.parentChannel == null })
-//                        topics[parent.name] = allChannels.filter { it.parentChannel == parent.name }
-//                    currentChannels = current
-//                    _isLoading.value = false
-//                    _isLoaded.value = true
-//                } else {
-//                    _isLoading.value = true
-//                    queryGetChannels.onNext(Unit)
-//                }
-//            })
-//        queryGetChannels.onNext(Unit)
+        channelsRepository.loadMyChannelsFromDb()
+            .map { dbList ->
+                Triple(dbList.map {
+                    convertChannelFromDbToNetwork(it)
+                }, dbList.map {
+                    convertChannelFromDbToNetwork(it)
+                }.filter { it.isExpanded || (!it.isTopic) }, dbList.map {
+                    convertChannelFromDbToNetwork(it)
+                }.filter { it.parentChannel == "\t" })
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onSuccess = { (all, current, topicsProcessed) ->
+                if (all.isNotEmpty()) {
+                    allChannels.clear()
+                    allChannels.addAll(all)
+                    for (parent in topicsProcessed)
+                        topics[parent.name] = allChannels.filter { it.parentChannel == parent.name }
+                    currentChannels = current
+                    _isLoading.value = false
+                } else {
+                    _isLoading.value = true
+                }
+                if (isLoaded.value == false) {
+                    queryGetChannels.onNext(Unit)
+                    _isLoaded.value = true
+                }
+                subscribeToDbUpdates()
+            }).addTo(compositeDisposable)
     }
 
     override fun onCleared() {
-        getSubscriptionStatusDisposable?.dispose()
+        compositeDisposable.clear()
         super.onCleared()
     }
 }

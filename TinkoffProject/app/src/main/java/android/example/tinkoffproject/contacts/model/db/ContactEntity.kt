@@ -1,10 +1,11 @@
 package android.example.tinkoffproject.contacts.model.db
 
+import android.example.tinkoffproject.contacts.model.db.ContactEntity.Companion.TABLE_NAME
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "contact")
+@Entity(tableName = TABLE_NAME)
 data class ContactEntity(
     @PrimaryKey(autoGenerate = false)
     @ColumnInfo(name = "contact_id")
@@ -17,4 +18,8 @@ data class ContactEntity(
     val status: String = "idle",
     @ColumnInfo(name = "contact_avatar_url")
     val avatarUrl: String? = null
-)
+){
+    companion object {
+        const val TABLE_NAME = "contacts"
+    }
+}

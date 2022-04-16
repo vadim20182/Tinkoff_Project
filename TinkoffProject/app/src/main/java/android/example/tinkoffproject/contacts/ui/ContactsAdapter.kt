@@ -85,7 +85,7 @@ private class ContactViewHolder(
             else -> binding.contactItemStatus.setImageResource(android.R.drawable.presence_busy)
         }
         binding.contactItemLayer.setOnClickListener {
-            onItemClickedListener.onItemClicked(adapterPosition, contact)
+            onItemClickedListener.onItemClicked(absoluteAdapterPosition, contact)
         }
     }
 }
