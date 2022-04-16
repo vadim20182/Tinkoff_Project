@@ -40,6 +40,13 @@ interface MessagesDAO {
     )
     fun clearUnsentMessages(channel: String, topic: String): Completable
 
+    @Transaction
+    fun clearAndInsertInTransaction(messages: List<MessageEntity>, channel: String, topic: String) {
+        insertMessages(messages).subscribe()
+        clearUnsentMessages(channel, topic).subscribe()
+
+    }
+
 
     @Query("DELETE FROM ${MessageEntity.TABLE_NAME}")
     fun clearMessages(): Completable

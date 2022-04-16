@@ -9,6 +9,8 @@ import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.rxjava2.RxRemoteMediator
 import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 
 @ExperimentalPagingApi
@@ -87,18 +89,17 @@ class MessagesRemoteMediator(
                             if (MESSAGE_ANCHOR_TO_UPDATE == 0)
                                 database.messagesDAO().insertMessages(messagesForDB).subscribe()
                             else {
-                                database.messagesDAO().updateMessages(
+                                database.messagesDAO().clearAndInsertInTransaction(
                                     listOf(
                                         convertMessageFromNetworkToDb(
                                             messagesProcessed.last(),
                                             topic,
                                             stream
                                         )
-                                    )
-                                ).subscribe()
+                                    ), stream, topic
+                                )
                                 MESSAGE_ANCHOR_TO_UPDATE = 0
                             }
-
                         }
                         MediatorResult.Success(endOfPaginationReached = messagesResponse.messges.size < PAGE_SIZE)
                     }

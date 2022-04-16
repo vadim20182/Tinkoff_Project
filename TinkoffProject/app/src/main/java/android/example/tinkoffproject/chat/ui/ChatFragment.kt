@@ -23,6 +23,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadState
+import androidx.paging.RemoteMediator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
@@ -40,8 +41,6 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
     MessageAsyncAdapter.OnItemClickedListener {
 
     private val compositeDatabase = CompositeDisposable()
-    private var flag = false
-    private var count = 0
 
     private val viewModel: ChatViewModel by viewModels {
         ChatViewModelFactory(
@@ -92,13 +91,15 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
                 messagesAdapter.submitData(lifecycle, it)
             }.addTo(compositeDatabase)
             messageSent.observe(viewLifecycleOwner) { messageSent ->
-                if (messageSent == null || messagePlaceholderSent == null) {
+                if (messageSent == null) {
+                    MessagesRemoteMediator.MESSAGE_ANCHOR_TO_UPDATE =
+                        MessagesRemoteMediator.NEWEST_MESSAGE
                     messagesAdapter.refresh()
-                    if (messagePlaceholderSent == null) {
-                        recyclerView.scrollToPosition(0)
-                        messagePlaceholderSent = false
-                    }
                     setMessageSent(true)
+                }
+                if (messagePlaceholderSent == null) {
+                    recyclerView.scrollToPosition(0)
+                    messagePlaceholderSent = false
                 }
             }
             errorMessage.observe(viewLifecycleOwner) {
@@ -111,31 +112,6 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
                     setTextColor(Color.WHITE)
                     setBackgroundTint(Color.RED)
                 }.show()
-            }
-        }
-        messagesAdapter.addLoadStateListener {
-            //to fix later
-            if (viewModel.messageSent.value == true && (it.refresh == LoadState.Loading || it.prepend == LoadState.Loading || it.append == LoadState.Loading) && !flag) {
-                flag = true
-            }
-            if (flag
-                && (it.refresh == LoadState.NotLoading(false) || it.refresh == LoadState.NotLoading(
-                    true
-                ))
-                && (it.append == LoadState.NotLoading(false) || it.append == LoadState.NotLoading(
-                    true
-                ))
-                && (it.prepend == LoadState.NotLoading(false) || it.prepend == LoadState.NotLoading(
-                    true
-                ))
-            ) {
-                flag = false
-                count++
-                recyclerView.scrollToPosition(0)
-                if (count == 2) {
-                    viewModel.setMessageSent(false)
-                    count = 0
-                }
             }
         }
         recyclerView.itemAnimator = null

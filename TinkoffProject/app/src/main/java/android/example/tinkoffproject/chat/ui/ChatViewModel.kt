@@ -84,7 +84,7 @@ class ChatViewModel(
         _messageSent.value = false
     }
 
-    fun setMessageSent(value:Boolean?) {
+    fun setMessageSent(value: Boolean?) {
         _messageSent.value = value
     }
 
@@ -131,27 +131,11 @@ class ChatViewModel(
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onNext = { messages ->
-                chatRepository.clearUnsentMessages(stream, topic)
                 if (messageIdToUpdate != 0) {
-                    chatRepository.updateMessages(messages.filter { it.messageId == messageIdToUpdate }
-                        .map {
-                            convertMessageFromNetworkToDb(
-                                it,
-                                stream,
-                                topic
-                            )
-                        })
                     posToUpdate = messageIdToUpdate
                     messageIdToUpdate = 0
                     _reactionUpdateMessageId.value = 0
                 } else if (_messageSent.value == false) {
-                    chatRepository.insertMessagesReplace(messages.map {
-                        convertMessageFromNetworkToDb(
-                            it,
-                            stream,
-                            topic
-                        )
-                    })
                     _messageSent.value = null
                 }
 
