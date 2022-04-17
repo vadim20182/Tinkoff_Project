@@ -29,7 +29,7 @@ abstract class BaseChannelsViewModel<T : ChannelEntity>(protected val channelsRe
 
     protected abstract val allChannels: MutableList<ChannelItem>
     protected abstract val queryGetChannels: PublishSubject<Unit>
-    abstract val channelEntityType: Int
+    protected abstract val channelEntityType: Int
     private val searchObservable: Observable<String> by lazy { MainChannelsViewModel.querySearch }
     private var compositeDisposable = CompositeDisposable()
     protected val disposables = mutableMapOf<String, Disposable>().apply {
@@ -51,7 +51,6 @@ abstract class BaseChannelsViewModel<T : ChannelEntity>(protected val channelsRe
 
     protected val getChannelsObservable: Observable<Unit> by lazy {
         queryGetChannels
-            .doOnNext { allChannels.clear() }
             .observeOn(Schedulers.io())
     }
 
@@ -79,9 +78,9 @@ abstract class BaseChannelsViewModel<T : ChannelEntity>(protected val channelsRe
 
     abstract fun loadChannels()
 
-    abstract fun subscribeGetChannels()
+    protected abstract fun subscribeGetChannels()
 
-    abstract fun subscribeGetTopics()
+    protected abstract fun subscribeGetTopics()
 
     private fun filterChannels(input: String) = allChannels.filter {
         (it.name.contains(

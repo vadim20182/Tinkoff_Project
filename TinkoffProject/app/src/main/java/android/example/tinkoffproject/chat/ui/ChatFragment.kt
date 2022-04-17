@@ -1,6 +1,10 @@
 package android.example.tinkoffproject.chat.ui
 
-import androidx.fragment.app.Fragment
+import android.app.Activity
+import android.app.DownloadManager
+import android.app.DownloadManager.Request.*
+import android.content.Context
+import android.content.Intent
 import android.example.tinkoffproject.R
 import android.example.tinkoffproject.chat.model.ChatRepository
 import android.example.tinkoffproject.chat.model.db.MessagesRemoteMediator
@@ -8,22 +12,26 @@ import android.example.tinkoffproject.database.AppDatabase
 import android.example.tinkoffproject.message.customviews.FlexBoxLayout
 import android.example.tinkoffproject.message.customviews.MessageInputCustomViewGroup
 import android.example.tinkoffproject.message.customviews.ReactionCustomView
+import android.example.tinkoffproject.network.NetworkClient
 import android.example.tinkoffproject.utils.EMOJI_MAP
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment.DIRECTORY_DOWNLOADS
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.appcompat.widget.Toolbar
+import androidx.core.net.toFile
 import androidx.core.view.children
 import androidx.core.view.isEmpty
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.paging.ExperimentalPagingApi
-import androidx.paging.LoadState
-import androidx.paging.RemoteMediator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
@@ -33,6 +41,11 @@ import com.google.android.material.snackbar.Snackbar
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import okhttp3.Credentials
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 
 
 @ExperimentalCoroutinesApi
@@ -59,9 +72,23 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
     private val messagesAdapter: MessageAsyncAdapter by lazy {
         MessageAsyncAdapter(this)
     }
+    private val pickFile =
+        registerForActivityResult(OpenDoc()) { uri: Uri? ->
+            if (uri != null) {
+                val tempUri = uri.buildUpon().scheme("file").build()
+                val f = tempUri.toFile()
+                val requestFile: RequestBody = f
+                    .asRequestBody(context?.contentResolver?.getType(tempUri)?.toMediaTypeOrNull())
+                val body =
+                    MultipartBody.Part.createFormData("file", f.name, requestFile)
+                viewModel.uploadFile(f.name, body)
+            }
+        }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         val itemDecoration = MessageCustomItemDecoration(
             view.context
         )
@@ -128,7 +155,7 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
                 viewModel.sendMessage(messageText.text.trim().toString())
                 messageText.text.clear()
             } else {
-                // upload files
+                pickFile.launch(arrayOf("*/*"))
             }
         }
 
@@ -155,6 +182,10 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
                 showBottomSheetDialog(position)
             }
         }
+    }
+
+    override fun onLinkClicked(link: String) {
+        downloadFile(link)
     }
 
     private fun showBottomSheetDialog(position: Int) {
@@ -192,8 +223,37 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         super.onDestroyView()
     }
 
+    private fun downloadFile(link: String) {
+        val downloadManager = context?.getSystemService(Context.DOWNLOAD_SERVICE)
+                as DownloadManager
+        val request = DownloadManager.Request(Uri.parse(link))
+            .setAllowedOverMetered(true)
+            .addRequestHeader(
+                "Authorization",
+                Credentials.basic(NetworkClient.EMAIL, NetworkClient.API_KEY)
+            )
+            .setDescription("Downloading")
+            .setTitle("Zulip file")
+            .setDestinationInExternalPublicDir(DIRECTORY_DOWNLOADS, link.substringAfterLast("/"))
+            .setNotificationVisibility(VISIBILITY_VISIBLE)
+            .setNotificationVisibility(VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        downloadManager.enqueue(request)
+    }
+
     companion object {
         const val ARG_CHANNEL_NAME = "channel_name"
         const val ARG_TOPIC_NAME = "topic_name"
+    }
+}
+
+private class OpenDoc : ActivityResultContract<Array<String>, Uri>() {
+    override fun createIntent(context: Context, input: Array<String>?): Intent =
+        Intent(Intent.ACTION_OPEN_DOCUMENT)
+            .addCategory(Intent.CATEGORY_OPENABLE)
+            .putExtra(Intent.EXTRA_MIME_TYPES, input)
+            .setType("*/*");
+
+    override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+        return if (intent == null || resultCode != Activity.RESULT_OK) null else intent.data
     }
 }

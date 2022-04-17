@@ -66,5 +66,4 @@ dependencies {
     kapt "androidx.room:room-compiler:${rootProject.room}"
     implementation "androidx.room:room-rxjava2:${rootProject.room}"
     implementation "androidx.room:room-paging:${rootProject.room}"
-
 }

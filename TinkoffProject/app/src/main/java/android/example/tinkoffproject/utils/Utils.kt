@@ -11,6 +11,7 @@ import android.example.tinkoffproject.contacts.ui.ContactsViewModel
 import android.example.tinkoffproject.network.NetworkClient
 import android.text.Html
 import android.view.View
+import androidx.core.text.HtmlCompat
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
@@ -108,7 +109,7 @@ fun convertChannelFromNetworkToDb(
             channelItem.streamID,
             channelItem.name,
             channelItem.isTopic,
-            channelItem.isExpanded,
+            false,
             channelItem.parentChannel,
             isMy
         )
@@ -116,7 +117,7 @@ fun convertChannelFromNetworkToDb(
             channelItem.streamID,
             channelItem.name,
             channelItem.isTopic,
-            channelItem.isExpanded,
+            false,
             channelItem.parentChannel
         )
     }
@@ -127,7 +128,7 @@ fun convertChannelFromDbToNetwork(channelEntity: ChannelEntity): ChannelItem {
         streamID = channelEntity.streamID,
         name = channelEntity.name,
         isTopic = channelEntity.isTopic,
-        isExpanded = channelEntity.isExpanded,
+        isExpanded = false,
         parentChannel = channelEntity.parentChannel
     )
 }
@@ -148,7 +149,8 @@ fun convertMessageFromNetworkToDb(
         date = userMessage.date,
         messageText = userMessage.messageText,
         avatarUrl = userMessage.avatarUrl,
-        userId = userMessage.userId
+        userId = userMessage.userId,
+        fileLink = userMessage.fileLink
     )
 }
 
@@ -164,17 +166,32 @@ fun convertMessageFromDbToNetwork(
         date = messageEntity.date,
         messageText = messageEntity.messageText,
         avatarUrl = messageEntity.avatarUrl,
-        userId = messageEntity.userId
+        userId = messageEntity.userId,
+        fileLink = messageEntity.fileLink
     )
 }
 
 fun processMessagesFromNetwork(messagesResponse: List<UserMessage>): List<UserMessage> {
     val messagesProcessed = messagesResponse.map {
-        it.copy(
-            messageText =
-            Html.fromHtml(it.messageText, Html.FROM_HTML_MODE_COMPACT).toString()
-                .trim()
-        )
+        if (!it.messageText.contains("<a href="))
+            it.copy(
+                messageText =
+                HtmlCompat.fromHtml(it.messageText, HtmlCompat.FROM_HTML_MODE_COMPACT).toString()
+                    .trim()
+            )
+        else {
+            it.copy(
+                messageText =
+                HtmlCompat.fromHtml(it.messageText, HtmlCompat.FROM_HTML_MODE_COMPACT)
+                    .toString()
+                    .trim(),
+                fileLink = "https://tinkoff-android-spring-2022.zulipchat.com" + it.messageText.substringAfter(
+                    "href=\""
+                ).substringBefore(
+                    "\">"
+                )
+            )
+        }
     }
     for (msg in messagesProcessed) {
         for (reaction in msg.allReactions) {

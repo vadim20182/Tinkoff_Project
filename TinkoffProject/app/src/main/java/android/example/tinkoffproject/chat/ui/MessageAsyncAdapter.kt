@@ -10,6 +10,7 @@ import android.example.tinkoffproject.message.customviews.ReactionCustomView
 import android.example.tinkoffproject.message.customviews.MyMessageCustomViewGroup
 import android.example.tinkoffproject.network.NetworkClient
 import android.example.tinkoffproject.utils.EMOJI_MAP
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
@@ -80,6 +81,7 @@ class MessageAsyncAdapter(
 
     interface OnItemClickedListener {
         fun onItemClicked(position: Int, view: View)
+        fun onLinkClicked(link: String)
     }
 
     object DiffCallback : DiffUtil.ItemCallback<MessageEntity>() {
@@ -108,6 +110,17 @@ private class MessageViewHolder(
     fun bind(userMessage: MessageEntity) {
         name.text = userMessage.name
         messageText.text = userMessage.messageText
+        messageText.text = userMessage.messageText
+        if (userMessage.fileLink != null) {
+            messageText.setOnClickListener {
+                onItemClickedListener.onLinkClicked(
+                    userMessage.fileLink
+                )
+            }
+            messageText.setTextColor(Color.BLUE)
+        } else
+            messageText.setTextColor(Color.WHITE)
+
         reactionsFlexBoxLayout.removeAllViews()
 
         if (userMessage.reactions.isNotEmpty()) {
@@ -175,6 +188,15 @@ private class MyMessageViewHolder(
 
     fun bind(userMessage: MessageEntity) {
         messageText.text = userMessage.messageText
+        if (userMessage.fileLink != null) {
+            messageText.setOnClickListener {
+                onItemClickedListener.onLinkClicked(
+                    userMessage.fileLink
+                )
+            }
+            messageText.setTextColor(Color.BLUE)
+        } else
+            messageText.setTextColor(Color.WHITE)
         reactionsFlexBoxLayout.removeAllViews()
         (binding.root as MyMessageCustomViewGroup).setShader(userMessage.isSent)
 

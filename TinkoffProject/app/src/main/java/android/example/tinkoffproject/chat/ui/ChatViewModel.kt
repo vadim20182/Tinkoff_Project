@@ -37,7 +37,7 @@ class ChatViewModel(
 ) : ViewModel() {
 
     private val querySendMessage: PublishSubject<String> by lazy { makePublishSubject<String>() }
-    private val queryUploadFile: PublishSubject<MultipartBody.Part> by lazy { makePublishSubject<MultipartBody.Part>() }
+    private val queryUploadFile: PublishSubject<Pair<String, MultipartBody.Part>> by lazy { makePublishSubject<Pair<String, MultipartBody.Part>>() }
     private val queryGetMessages: PublishSubject<Unit> by lazy { makePublishSubject<Unit>() }
     private val queryAddReaction: PublishSubject<Pair<Int, String>> by lazy { makePublishSubject<Pair<Int, String>>() }
     private val queryRemoveReaction: PublishSubject<Pair<Int, String>> by lazy { makePublishSubject<Pair<Int, String>>() }
@@ -98,8 +98,8 @@ class ChatViewModel(
         querySendMessage.onNext(message)
     }
 
-    fun uploadFile(file: MultipartBody.Part) {
-        queryUploadFile.onNext(file)
+    fun uploadFile(fileName: String, file: MultipartBody.Part) {
+        queryUploadFile.onNext(Pair(fileName, file))
     }
 
 
@@ -187,13 +187,14 @@ class ChatViewModel(
         disposables[KEY_UPLOAD_FILE] =
             queryUploadFile
                 .observeOn(Schedulers.io())
-                .concatMapSingle { file ->
+                .concatMapSingle { (fileName, file) ->
                     client.uploadFile(file)
+                        .map { Pair(it, fileName) }
                 }
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
-                    onNext = {
-                        querySendMessage.onNext("This is a link to a new file: ${it.uri}")
+                    onNext = { (response, name) ->
+                        querySendMessage.onNext("[${name}](${response.uri})")
                     },
                     onError = {
                         _errorMessage.value = "Ошибка отправки сообщения"

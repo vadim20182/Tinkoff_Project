@@ -73,17 +73,17 @@ class AllChannelsViewModel(channelsRepository: ChannelsRepository<ChannelEntity.
                     convertChannelFromDbToNetwork(it)
                 }, dbList.map {
                     convertChannelFromDbToNetwork(it)
-                }.filter { it.isExpanded || (!it.isTopic) }, dbList.map {
+                }.filter { !it.isTopic }, dbList.map {
                     convertChannelFromDbToNetwork(it)
                 }.filter { it.parentChannel == "\t" })
             }
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onSuccess = { (all, current, topicsProcessed) ->
+            .subscribeBy(onSuccess = { (all, current, channelsProcessed) ->
                 if (all.isNotEmpty()) {
                     allChannels.clear()
-                    allChannels.addAll(all)
-                    for (parent in topicsProcessed)
-                        topics[parent.name] = allChannels.filter { it.parentChannel == parent.name }
+                    allChannels.addAll(current)
+                    for (parent in channelsProcessed)
+                        topics[parent.name] = all.filter { it.parentChannel == parent.name }
                     currentChannels = current
                     _isLoading.value = false
                 } else {
@@ -103,7 +103,8 @@ class AllChannelsViewModel(channelsRepository: ChannelsRepository<ChannelEntity.
             .switchMapSingle {
                 client.getAllStreams()
                     .map { channels ->
-                        allChannels.apply { addAll(channels.channelsList) }
+                        allChannels.clear()
+                        allChannels.addAll(channels.channelsList)
                         for (channel in channels.channelsList) {
                             queryGetTopics.onNext(
                                 Pair(
@@ -137,13 +138,13 @@ class AllChannelsViewModel(channelsRepository: ChannelsRepository<ChannelEntity.
                 }
                 Pair(
                     dbResponse,
-                    dbResponse.filter { it.isExpanded || (!it.isTopic) })
+                    dbResponse.filter { !it.isTopic })
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onNext = { (all, current) ->
                 if (all.isNotEmpty()) {
                     allChannels.clear()
-                    allChannels.addAll(all)
+                    allChannels.addAll(current)
                     currentChannels = current
                     _isLoading.value = false
                 }

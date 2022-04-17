@@ -31,7 +31,9 @@ data class MessageEntity(
     @ColumnInfo(name = "message_timestamp")
     val date: Long,
     @ColumnInfo(name = "message_is_sent")
-    val isSent: Boolean = true
+    val isSent: Boolean = true,
+    @ColumnInfo(name = "message_file_link")
+    val fileLink: String? = null
 ) {
     companion object {
         const val TABLE_NAME = "messages"

@@ -1,15 +1,30 @@
 package android.example.tinkoffproject
 
+import android.Manifest.permission.*
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.ConnectivityManager
 import android.net.Network
+import android.net.Uri
+import android.os.Build
+import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+import android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.collection.ArrayMap
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.android.material.snackbar.Snackbar
 
 
@@ -60,9 +75,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val requestPermissionLauncher =
+        if (SDK_INT >= Build.VERSION_CODES.R)
+            registerForActivityResult(
+                RequestReadAllFiles()
+            ) {}
+        else
+            registerForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()
+            ) {}
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        if (SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager())
+                requestPermissionLauncher.launch(arrayOf(MANAGE_EXTERNAL_STORAGE))
+        } else
+            requestPermissionLauncher.launch(
+                arrayOf(WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE)
+            )
+
 //        context.deleteDatabase("Tinkoff_Project.db")
         if (connectivityManager.activeNetwork == null) {
             hasNetworkBeenLost = true
@@ -87,5 +122,66 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         connectivityManager.unregisterNetworkCallback(networkCallback)
+    }
+}
+
+private class RequestReadAllFiles :
+    ActivityResultContract<Array<String?>, Map<String?, Boolean>>() {
+    @RequiresApi(Build.VERSION_CODES.R)
+    override fun createIntent(context: Context, input: Array<String?>): Intent {
+        return createIntent()
+    }
+
+    override fun getSynchronousResult(
+        context: Context, input: Array<String?>?
+    ): SynchronousResult<Map<String?, Boolean>>? {
+        if (input == null || input.isEmpty()) {
+            return SynchronousResult(emptyMap())
+        }
+        val grantState: MutableMap<String?, Boolean> = ArrayMap()
+        var allGranted = true
+        for (permission in input) {
+            val granted = (ContextCompat.checkSelfPermission(
+                context,
+                permission!!
+            )
+                    == PackageManager.PERMISSION_GRANTED)
+            grantState[permission] = granted
+            if (!granted) allGranted = false
+        }
+        return if (allGranted) {
+            SynchronousResult(grantState)
+        } else null
+    }
+
+    override fun parseResult(
+        resultCode: Int,
+        intent: Intent?
+    ): Map<String?, Boolean> {
+        if (resultCode != Activity.RESULT_OK) return emptyMap()
+        if (intent == null) return emptyMap()
+        val permissions = intent.getStringArrayExtra(EXTRA_PERMISSIONS)
+        val grantResults = intent.getIntArrayExtra(EXTRA_PERMISSION_GRANT_RESULTS)
+        if (grantResults == null || permissions == null) return emptyMap()
+        val result: MutableMap<String?, Boolean> = HashMap()
+        var i = 0
+        val size = permissions.size
+        while (i < size) {
+            result[permissions[i]] = grantResults[i] == PackageManager.PERMISSION_GRANTED
+            i++
+        }
+        return result
+    }
+
+    companion object {
+        const val EXTRA_PERMISSIONS = "androidx.activity.result.contract.extra.PERMISSIONS"
+
+        const val EXTRA_PERMISSION_GRANT_RESULTS =
+            "androidx.activity.result.contract.extra.PERMISSION_GRANT_RESULTS"
+
+        @RequiresApi(Build.VERSION_CODES.R)
+        fun createIntent(): Intent {
+            return Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+        }
     }
 }

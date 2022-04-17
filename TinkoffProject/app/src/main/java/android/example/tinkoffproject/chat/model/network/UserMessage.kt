@@ -24,5 +24,7 @@ data class UserMessage(
     @SerialName("id")
     val messageId: Int = Random.nextInt(10000),
     @Transient
+    val fileLink: String? = null,
+    @Transient
     val isSent: Boolean = true
 )

@@ -38,20 +38,36 @@ class MyChannelsViewModel(channelsRepository: ChannelsRepository<ChannelEntity.M
         _isLoaded.value = false
     }
 
+    override fun subscribeGetChannels() {
+        getChannelsObservable
+            .switchMapSingle {
+                client.getAllStreams()
+                    .map { channels ->
+                        allChannels.clear()
+                        allChannels.addAll(channels.channelsList)
+                    }
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onNext = { findMyChannels() }, onError = {
+                _errorMessage.value = "Ошибка при загрузке каналов"
+            })
+            .addTo(compositeDisposable)
+    }
+
     override fun subscribeGetTopics() {
         queryGetTopics
             .observeOn(Schedulers.io())
             .flatMapSingle { (streamId, name) ->
                 client.getTopicsForStream(streamId)
                     .map { topicsResponse ->
-                        val topicsProcessed = topicsResponse.channelsList.map {
+                        val channelsProcessed = topicsResponse.channelsList.map {
                             it.copy(
                                 isTopic = true,
                                 parentChannel = name
                             )
                         }
-                        topics[name] = topicsProcessed
-                        channelsRepository.insertChannelsIgnore(topicsProcessed.map {
+                        topics[name] = channelsProcessed
+                        channelsRepository.insertChannelsIgnore(channelsProcessed.map {
                             convertChannelFromNetworkToDb(
                                 it,
                                 channelEntityType, true
@@ -89,26 +105,11 @@ class MyChannelsViewModel(channelsRepository: ChannelsRepository<ChannelEntity.M
                     ) as ChannelEntity.MyChannelsEntity
                 })
             }, onError = {
-
                 _errorMessage.value = "Ошибка при загрузке подписок"
             })
             .addTo(compositeDisposable)
     }
 
-    override fun subscribeGetChannels() {
-        getChannelsObservable
-            .switchMapSingle {
-                client.getAllStreams()
-                    .map { channels ->
-                        allChannels.apply { addAll(channels.channelsList) }
-                    }
-            }
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onNext = { findMyChannels() }, onError = {
-                _errorMessage.value = "Ошибка при загрузке каналов"
-            })
-            .addTo(compositeDisposable)
-    }
 
     private fun subscribeToDbUpdates() {
         channelsRepository.getMyChannelsFromDb()
@@ -118,13 +119,13 @@ class MyChannelsViewModel(channelsRepository: ChannelsRepository<ChannelEntity.M
                 }
                 Pair(
                     dbResponse,
-                    dbResponse.filter { it.isExpanded || (!it.isTopic) })
+                    dbResponse.filter { !it.isTopic })
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onNext = { (all, current) ->
                 if (all.isNotEmpty()) {
                     allChannels.clear()
-                    allChannels.addAll(all)
+                    allChannels.addAll(current)
                     currentChannels = current
                     _isLoading.value = false
                 }
@@ -139,17 +140,17 @@ class MyChannelsViewModel(channelsRepository: ChannelsRepository<ChannelEntity.M
                     convertChannelFromDbToNetwork(it)
                 }, dbList.map {
                     convertChannelFromDbToNetwork(it)
-                }.filter { it.isExpanded || (!it.isTopic) }, dbList.map {
+                }.filter { !it.isTopic }, dbList.map {
                     convertChannelFromDbToNetwork(it)
                 }.filter { it.parentChannel == "\t" })
             }
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onSuccess = { (all, current, topicsProcessed) ->
+            .subscribeBy(onSuccess = { (all, current, channelsProcessed) ->
                 if (all.isNotEmpty()) {
                     allChannels.clear()
-                    allChannels.addAll(all)
-                    for (parent in topicsProcessed)
-                        topics[parent.name] = allChannels.filter { it.parentChannel == parent.name }
+                    allChannels.addAll(current)
+                    for (parent in channelsProcessed)
+                        topics[parent.name] = all.filter { it.parentChannel == parent.name }
                     currentChannels = current
                     _isLoading.value = false
                 } else {

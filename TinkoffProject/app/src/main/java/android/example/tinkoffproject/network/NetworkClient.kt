@@ -19,8 +19,8 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
 
 object NetworkClient {
-    private const val API_KEY = "NIR3wit9SYwt4O5VuXghNRfwXfqADy41"
-    private const val EMAIL = "buzka16@ya.ru"
+    const val API_KEY = "NIR3wit9SYwt4O5VuXghNRfwXfqADy41"
+    const val EMAIL = "buzka16@ya.ru"
     private const val BASE_URL = "https://tinkoff-android-spring-2022.zulipchat.com/api/v1/"
     const val MY_USER_ID = 491496
 
