@@ -6,8 +6,11 @@ import android.app.DownloadManager.Request.*
 import android.content.Context
 import android.content.Intent
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.chat.model.ChatRepository
-import android.example.tinkoffproject.chat.model.db.MessagesRemoteMediator
+import android.example.tinkoffproject.chat.data.ChatRepository
+import android.example.tinkoffproject.chat.data.db.MessagesRemoteMediator
+import android.example.tinkoffproject.chat.presentation.ChatViewModel
+import android.example.tinkoffproject.chat.presentation.ChatViewModelFactory
+import android.example.tinkoffproject.chat.presentation.elm.*
 import android.example.tinkoffproject.database.AppDatabase
 import android.example.tinkoffproject.message.customviews.FlexBoxLayout
 import android.example.tinkoffproject.message.customviews.MessageInputCustomViewGroup
@@ -31,7 +34,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
-import androidx.paging.ExperimentalPagingApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
@@ -40,18 +42,79 @@ import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import vivid.money.elmslie.android.base.ElmFragment
+import vivid.money.elmslie.core.store.Store
 
 
-@ExperimentalCoroutinesApi
-@ExperimentalPagingApi
-class ChatFragment : Fragment(R.layout.topic_chat_layout),
+class ChatFragment :
+    ElmFragment<ChatEvent, ChatEffect, ChatState>(R.layout.topic_chat_layout),
     MessageAsyncAdapter.OnItemClickedListener {
+
+    private val chatRepository by lazy {
+        ChatRepository(
+            AppDatabase.getInstance(requireContext()).messagesDAO(),
+            MessagesRemoteMediator(
+                AppDatabase.getInstance(requireContext()), requireArguments().getString(
+                    ARG_CHANNEL_NAME
+                )!!, requireArguments().getString(ARG_TOPIC_NAME)!!
+            ), requireArguments().getString(
+                ARG_CHANNEL_NAME
+            )!!, requireArguments().getString(ARG_TOPIC_NAME)!!
+        )
+    }
+
+    private lateinit var shimmer: ShimmerFrameLayout
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var inputViewGroup: MessageInputCustomViewGroup
+
+    override val initEvent: ChatEvent = ChatEvent.Ui.InitLoad
+
+    override fun createStore(): Store<ChatEvent, ChatEffect, ChatState> =
+        ChatStoreFactory(ChatActor(chatRepository)).provide()
+
+    override fun render(state: ChatState) {
+        if (state.isLoading) {
+            shimmer.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
+        } else {
+            shimmer.visibility = View.GONE
+            recyclerView.visibility = View.VISIBLE
+        }
+    }
+
+    override fun handleEffect(effect: ChatEffect) {
+        when (effect) {
+            is ChatEffect.MessagePlaceholderIsSent -> {
+                recyclerView.scrollToPosition(0)
+            }
+            is ChatEffect.MessageIsSent -> {
+                MessagesRemoteMediator.MESSAGE_ANCHOR_TO_UPDATE =
+                    MessagesRemoteMediator.NEWEST_MESSAGE
+                messagesAdapter.refresh()
+            }
+            is ChatEffect.MessageReactionUpdated -> {
+                MessagesRemoteMediator.MESSAGE_ANCHOR_TO_UPDATE = effect.posToUpdate
+                messagesAdapter.refresh()
+            }
+            is ChatEffect.SomeError -> {
+                Snackbar.make(
+                    inputViewGroup,
+                    effect.error.localizedMessage,
+                    Snackbar.LENGTH_SHORT
+                ).apply {
+                    anchorView = inputViewGroup
+                    setTextColor(Color.WHITE)
+                    setBackgroundTint(Color.RED)
+                }.show()
+            }
+        }
+    }
 
     private val compositeDatabase = CompositeDisposable()
 
@@ -59,14 +122,9 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         ChatViewModelFactory(
             requireArguments().getString(
                 ARG_CHANNEL_NAME
-            )!!, requireArguments().getString(ARG_TOPIC_NAME)!!, ChatRepository(
-                AppDatabase.getInstance(requireContext()).messagesDAO(),
-                MessagesRemoteMediator(
-                    AppDatabase.getInstance(requireContext()), requireArguments().getString(
-                        ARG_CHANNEL_NAME
-                    )!!, requireArguments().getString(ARG_TOPIC_NAME)!!
-                )
-            )
+            )!!,
+            requireArguments().getString(ARG_TOPIC_NAME)!!,
+            chatRepository
         )
     }
     private val messagesAdapter: MessageAsyncAdapter by lazy {
@@ -77,11 +135,13 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
             if (uri != null) {
                 val tempUri = uri.buildUpon().scheme("file").build()
                 val f = tempUri.toFile()
-                val requestFile: RequestBody = f
-                    .asRequestBody(context?.contentResolver?.getType(tempUri)?.toMediaTypeOrNull())
+                val requestFile = requireContext().contentResolver.openInputStream(uri).use {
+                    it?.readBytes()
+                        ?.toRequestBody(context?.contentResolver?.getType(uri)?.toMediaTypeOrNull())
+                }
                 val body =
-                    MultipartBody.Part.createFormData("file", f.name, requestFile)
-                viewModel.uploadFile(f.name, body)
+                    MultipartBody.Part.createFormData("file", f.name, requestFile!!)
+                store.accept(ChatEvent.Ui.UploadFile(f.name, body))
             }
         }
 
@@ -92,54 +152,16 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         val itemDecoration = MessageCustomItemDecoration(
             view.context
         )
-        val recyclerView = view.findViewById<RecyclerView>(R.id.messages_recycler_view)
-        val shimmer = view.findViewById<ShimmerFrameLayout>(R.id.shimmer_chat)
-        val inputViewGroup =
-            view.findViewById<MessageInputCustomViewGroup>(R.id.message_input_custom_view_group)
+        recyclerView = view.findViewById(R.id.messages_recycler_view)
+        shimmer = view.findViewById(R.id.shimmer_chat)
+        inputViewGroup =
+            view.findViewById(R.id.message_input_custom_view_group)
         val inputButton: ShapeableImageView = view.findViewById(R.id.message_input_button)
 
         with(viewModel) {
-            uiState.observe(viewLifecycleOwner) { state ->
-                if (state.isLoading) {
-                    inputButton.visibility = View.GONE
-                    shimmer.visibility = View.VISIBLE
-                    recyclerView.visibility = View.GONE
-                } else {
-                    inputButton.visibility = View.VISIBLE
-                    shimmer.visibility = View.GONE
-                    recyclerView.visibility = View.VISIBLE
-                }
-            }
-            reactionUpdateMessageId.observe(viewLifecycleOwner) {
-                MessagesRemoteMediator.MESSAGE_ANCHOR_TO_UPDATE = viewModel.posToUpdate
-                messagesAdapter.refresh()
-            }
             getMessages().subscribe {
                 messagesAdapter.submitData(lifecycle, it)
             }.addTo(compositeDatabase)
-            messageSent.observe(viewLifecycleOwner) { messageSent ->
-                if (messageSent == null) {
-                    MessagesRemoteMediator.MESSAGE_ANCHOR_TO_UPDATE =
-                        MessagesRemoteMediator.NEWEST_MESSAGE
-                    messagesAdapter.refresh()
-                    setMessageSent(true)
-                }
-                if (messagePlaceholderSent == null) {
-                    recyclerView.scrollToPosition(0)
-                    messagePlaceholderSent = false
-                }
-            }
-            errorMessage.observe(viewLifecycleOwner) {
-                Snackbar.make(
-                    inputViewGroup,
-                    it,
-                    Snackbar.LENGTH_SHORT
-                ).apply {
-                    anchorView = inputViewGroup
-                    setTextColor(Color.WHITE)
-                    setBackgroundTint(Color.RED)
-                }.show()
-            }
         }
         recyclerView.itemAnimator = null
         recyclerView.layoutManager = LinearLayoutManager(context).apply {
@@ -152,7 +174,7 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         inputButton.setOnClickListener {
             val messageText = view.findViewById<EditText>(R.id.send_message_text)
             if (messageText.text.trim().isNotEmpty()) {
-                viewModel.sendMessage(messageText.text.trim().toString())
+                store.accept(ChatEvent.Ui.SendMessage(messageText.text.trim().toString()))
                 messageText.text.clear()
             } else {
                 pickFile.launch(arrayOf("*/*"))
@@ -169,17 +191,22 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
             getString(R.string.topic_name, arguments?.getString(ARG_TOPIC_NAME))
     }
 
-    override fun onItemClicked(position: Int, view: View) {
+    override fun onItemClicked(view: View, messageId: Int) {
         when (view) {
             is ReactionCustomView -> {
                 if (!view.isButton && !view.isSimpleEmoji) {
-                    viewModel.reactionClicked(position, view.pair.first)
+                    store.accept(
+                        ChatEvent.Ui.ClickReaction(
+                            view.pair.first,
+                            messageId
+                        )
+                    )
                 } else if (view.isButton) {
-                    showBottomSheetDialog(position)
+                    showBottomSheetDialog(messageId)
                 }
             }
             is TextView -> {
-                showBottomSheetDialog(position)
+                showBottomSheetDialog(messageId)
             }
         }
     }
@@ -188,7 +215,7 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
         downloadFile(link)
     }
 
-    private fun showBottomSheetDialog(position: Int) {
+    private fun showBottomSheetDialog(messageId: Int) {
         object : BottomSheetDialog(requireContext()) {
             override fun onCreate(savedInstanceState: Bundle?) {
                 super.onCreate(savedInstanceState)
@@ -207,7 +234,12 @@ class ChatFragment : Fragment(R.layout.topic_chat_layout),
                     for (child in bottomSheetFlexBoxLayout.children)
                         child.setOnClickListener {
                             with(child as ReactionCustomView) {
-                                viewModel.addReaction(position, this.pair.first)
+                                store.accept(
+                                    ChatEvent.Ui.AddReaction(
+                                        this.pair.first,
+                                        messageId
+                                    )
+                                )
                             }
                             cancel()
                         }

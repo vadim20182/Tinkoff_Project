@@ -28,6 +28,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+        freeCompilerArgs += ["-opt-in=androidx.paging.ExperimentalPagingApi",
+                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                             "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"]
     }
 }
 
@@ -66,4 +69,8 @@ dependencies {
     kapt "androidx.room:room-compiler:${rootProject.room}"
     implementation "androidx.room:room-rxjava2:${rootProject.room}"
     implementation "androidx.room:room-paging:${rootProject.room}"
+    //Elmslie
+    implementation "com.github.vivid-money.elmslie:elmslie-core:${rootProject.elmslie}"
+    implementation "com.github.vivid-money.elmslie:elmslie-android:${rootProject.elmslie}"
+    implementation "com.github.vivid-money.elmslie:elmslie-rxjava-2:${rootProject.elmslie}"
 }

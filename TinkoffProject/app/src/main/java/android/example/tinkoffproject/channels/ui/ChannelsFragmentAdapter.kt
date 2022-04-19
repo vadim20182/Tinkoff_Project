@@ -5,12 +5,10 @@ import android.example.tinkoffproject.channels.ui.my.MyChannelsFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
-import androidx.paging.ExperimentalPagingApi
 import androidx.viewpager2.adapter.FragmentStateAdapter
 
 private const val NUM_PAGES = 2
 
-@ExperimentalPagingApi
 class ChannelsFragmentAdapter(fragmentManager: FragmentManager, lifecycle: Lifecycle) :
     FragmentStateAdapter(fragmentManager, lifecycle) {
 

@@ -1,7 +1,8 @@
 package android.example.tinkoffproject.profile.ui
 
+import android.content.Context
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.contacts.model.network.ContactItem
+import android.example.tinkoffproject.contacts.data.network.ContactItem
 import android.example.tinkoffproject.network.NetworkClient
 import android.example.tinkoffproject.utils.makePublishSubject
 import android.graphics.Color
@@ -69,11 +70,32 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             toolbar.findViewById<TextView>(R.id.profile_toolbar_title).text =
                 getString(R.string.profile_title)
         } else {
-            shimmer.visibility = View.VISIBLE
-            profileLayout.visibility = View.GONE
+            val pref = context?.getSharedPreferences(SHARED_PREFS, Context.MODE_PRIVATE)
+            val editor = pref?.edit()
+            if (pref?.getString(KEY_NAME, PREFS_DEFAULT_VALUE) == PREFS_DEFAULT_VALUE) {
+                shimmer.visibility = View.VISIBLE
+                profileLayout.visibility = View.GONE
+            } else {
+                userName.text = pref?.getString(KEY_NAME, PREFS_DEFAULT_VALUE)
+                userStatus.text = "offline"
+                Glide.with(this)
+                    .asDrawable()
+                    .load(
+                        pref?.getString(
+                            KEY_AVATAR,
+                            PREFS_DEFAULT_VALUE
+                        )
+                    )
+                    .placeholder(R.mipmap.ic_launcher_round)
+                    .error(R.mipmap.avatar)
+                    .into(userAvatar)
+            }
             getUserDisposable = getUserObservable
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(onNext = {
+                    editor?.putString(KEY_NAME, it.user.name)
+                    editor?.putString(KEY_AVATAR, it.user.avatarUrl)
+                    editor?.apply()
                     userName.text = it.user.name
                     Glide.with(this)
                         .asDrawable()
@@ -120,5 +142,9 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         const val ARG_PROFILE_NAME = "name"
         const val ARG_PROFILE_STATUS = "status"
         const val ARG_PROFILE_AVATAR = "image"
+        const val SHARED_PREFS = "profile shared prefs"
+        const val KEY_NAME = "name"
+        const val KEY_AVATAR = "avatar"
+        const val PREFS_DEFAULT_VALUE = "empty"
     }
 }

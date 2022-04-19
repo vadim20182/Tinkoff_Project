@@ -1,8 +1,8 @@
 package android.example.tinkoffproject.network
 
-import android.example.tinkoffproject.contacts.model.network.ContactItem
-import android.example.tinkoffproject.contacts.model.network.GetPresenceResponse
-import android.example.tinkoffproject.contacts.model.network.UserResponse
+import android.example.tinkoffproject.contacts.data.network.ContactItem
+import android.example.tinkoffproject.contacts.data.network.GetPresenceResponse
+import android.example.tinkoffproject.contacts.data.network.UserResponse
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers

@@ -2,8 +2,7 @@ package android.example.tinkoffproject.chat.ui
 
 import android.content.Context
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.chat.model.db.MessageEntity
-import android.example.tinkoffproject.chat.model.network.UserMessage
+import android.example.tinkoffproject.chat.data.db.MessageEntity
 import android.graphics.*
 import android.text.TextPaint
 import android.view.View

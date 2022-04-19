@@ -1,24 +1,21 @@
 package android.example.tinkoffproject.database
 
 import android.content.Context
-import android.example.tinkoffproject.channels.model.db.AllChannelsDAO
-import android.example.tinkoffproject.channels.model.db.ChannelEntity
-import android.example.tinkoffproject.channels.model.db.MyChannelsDAO
-import android.example.tinkoffproject.chat.model.db.*
-import android.example.tinkoffproject.contacts.model.db.ContactEntity
-import android.example.tinkoffproject.contacts.model.db.ContactsDAO
+import android.example.tinkoffproject.channels.data.db.ChannelEntity
+import android.example.tinkoffproject.channels.data.db.ChannelsDAO
+import android.example.tinkoffproject.chat.data.db.*
+import android.example.tinkoffproject.contacts.data.db.ContactEntity
+import android.example.tinkoffproject.contacts.data.db.ContactsDAO
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [ChannelEntity.AllChannelsEntity::class, ChannelEntity.MyChannelsEntity::class, MessageEntity::class, ContactEntity::class],
+    entities = [ChannelEntity::class, MessageEntity::class, ContactEntity::class],
     version = 1, exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun allChannelsDAO(): AllChannelsDAO
-
-    abstract fun myChannelsDAO(): MyChannelsDAO
+    abstract fun channelsDAO(): ChannelsDAO
 
     abstract fun messagesDAO(): MessagesDAO
 

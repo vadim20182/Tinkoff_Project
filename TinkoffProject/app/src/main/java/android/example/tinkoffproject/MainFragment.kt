@@ -25,13 +25,13 @@ class MainFragment : Fragment(R.layout.fragment_main) {
         bottomNavigationView.setupWithNavController(navController)
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onResume() {
         activity?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+        super.onResume()
     }
 
     override fun onPause() {
-        super.onPause()
         activity?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        super.onPause()
     }
 }

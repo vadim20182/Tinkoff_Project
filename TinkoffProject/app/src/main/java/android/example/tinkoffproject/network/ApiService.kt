@@ -1,13 +1,13 @@
 package android.example.tinkoffproject.network
 
-import android.example.tinkoffproject.channels.model.network.GetChannelsResponse
-import android.example.tinkoffproject.channels.model.network.GetTopicsResponse
-import android.example.tinkoffproject.channels.model.network.SubscriptionStatus
-import android.example.tinkoffproject.chat.model.network.FileResponse
-import android.example.tinkoffproject.chat.model.network.GetMessagesResponse
-import android.example.tinkoffproject.contacts.model.network.GetPresenceResponse
-import android.example.tinkoffproject.contacts.model.network.GetUsersResponse
-import android.example.tinkoffproject.contacts.model.network.UserResponse
+import android.example.tinkoffproject.channels.data.network.GetChannelsResponse
+import android.example.tinkoffproject.channels.data.network.GetTopicsResponse
+import android.example.tinkoffproject.channels.data.network.SubscriptionStatus
+import android.example.tinkoffproject.chat.data.network.FileResponse
+import android.example.tinkoffproject.chat.data.network.GetMessagesResponse
+import android.example.tinkoffproject.contacts.data.network.GetPresenceResponse
+import android.example.tinkoffproject.contacts.data.network.GetUsersResponse
+import android.example.tinkoffproject.contacts.data.network.UserResponse
 import io.reactivex.Single
 import okhttp3.MultipartBody
 import org.json.JSONArray

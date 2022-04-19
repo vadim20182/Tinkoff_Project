@@ -1,8 +1,7 @@
 package android.example.tinkoffproject.chat.ui
 
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.chat.model.db.MessageEntity
-import android.example.tinkoffproject.chat.model.network.UserMessage
+import android.example.tinkoffproject.chat.data.db.MessageEntity
 import android.example.tinkoffproject.databinding.*
 import android.example.tinkoffproject.message.customviews.FlexBoxLayout
 import android.example.tinkoffproject.message.customviews.MessageCustomViewGroup
@@ -17,7 +16,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.paging.PagingDataAdapter
-import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -80,7 +78,7 @@ class MessageAsyncAdapter(
     }
 
     interface OnItemClickedListener {
-        fun onItemClicked(position: Int, view: View)
+        fun onItemClicked(view: View, messageId: Int)
         fun onLinkClicked(link: String)
     }
 
@@ -134,7 +132,10 @@ private class MessageViewHolder(
                     setReactionCount(userMessage.reactions[key] ?: 0)
                     isSelected = userMessage.selectedReactions[key] == true
                     setOnClickListener {
-                        onItemClickedListener.onItemClicked(absoluteAdapterPosition, it)
+                        onItemClickedListener.onItemClicked(
+                            it,
+                            userMessage.messageId
+                        )
                     }
                 })
             }
@@ -146,12 +147,15 @@ private class MessageViewHolder(
                 ) as ReactionCustomView).apply {
                 isButton = true
                 setOnClickListener {
-                    onItemClickedListener.onItemClicked(absoluteAdapterPosition, this)
+                    onItemClickedListener.onItemClicked(
+                        this,
+                        userMessage.messageId
+                    )
                 }
             })
         }
         messageText.setOnLongClickListener {
-            onItemClickedListener.onItemClicked(absoluteAdapterPosition, it)
+            onItemClickedListener.onItemClicked(it, userMessage.messageId)
             return@setOnLongClickListener true
         }
         if (userMessage.avatarUrl != null) {
@@ -211,7 +215,10 @@ private class MyMessageViewHolder(
                     setReactionCount(userMessage.reactions[key] ?: 0x1F480)
                     isSelected = userMessage.selectedReactions[key] == true
                     setOnClickListener {
-                        onItemClickedListener.onItemClicked(absoluteAdapterPosition, it)
+                        onItemClickedListener.onItemClicked(
+                            it,
+                            userMessage.messageId
+                        )
                     }
                 })
             }
@@ -223,12 +230,15 @@ private class MyMessageViewHolder(
                 ) as ReactionCustomView).apply {
                 isButton = true
                 setOnClickListener {
-                    onItemClickedListener.onItemClicked(absoluteAdapterPosition, this)
+                    onItemClickedListener.onItemClicked(
+                        this,
+                        userMessage.messageId
+                    )
                 }
             })
         }
         messageText.setOnLongClickListener {
-            onItemClickedListener.onItemClicked(absoluteAdapterPosition, it)
+            onItemClickedListener.onItemClicked(it, userMessage.messageId)
             return@setOnLongClickListener true
         }
     }
