@@ -3,26 +3,29 @@ package android.example.tinkoffproject.chat.data
 import android.example.tinkoffproject.chat.data.db.MessageEntity
 import android.example.tinkoffproject.chat.data.db.MessagesDAO
 import android.example.tinkoffproject.chat.data.db.MessagesRemoteMediator
-import android.example.tinkoffproject.chat.data.network.UserMessage
-import android.example.tinkoffproject.network.NetworkClient
-import android.example.tinkoffproject.network.NetworkClient.client
+import android.example.tinkoffproject.chat.di.Chat
+import android.example.tinkoffproject.network.ApiService
+import android.example.tinkoffproject.network.NetworkCommon
 import android.example.tinkoffproject.utils.EMOJI_MAP
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.rxjava2.flowable
+import io.reactivex.Completable
 import io.reactivex.Flowable
-import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import okhttp3.MultipartBody
 import java.util.*
+import javax.inject.Inject
 import kotlin.random.Random
 
-class ChatRepository(
+@Chat
+class ChatRepository @Inject constructor(
     private val messagesDAO: MessagesDAO,
     private val remoteMediator: MessagesRemoteMediator,
     val channel: String,
-    val topic: String
+    val topic: String,
+    private val client: ApiService
 ) {
     fun getMessages(): Flowable<PagingData<MessageEntity>> {
         return Pager(
@@ -38,23 +41,23 @@ class ChatRepository(
                 messagesDAO
                     .messagesPagingSource(remoteMediator.stream, remoteMediator.topic)
             }
-        ).flowable
+        ).flowable.share()
+
     }
 
     fun getAllMessagesFromDb(channel: String, topic: String) =
         messagesDAO.getAllMessages(channel, topic)
             .subscribeOn(Schedulers.io())
 
-    fun clearMessagesOnExit(channel: String, topic: String): Disposable =
+    fun clearMessagesOnExit(channel: String, topic: String): Completable =
         messagesDAO.clearCachedMessages(channel, topic)
             .subscribeOn(Schedulers.io())
-            .subscribe()
 
     fun sendMessage(messageText: String): Flowable<String> =
         client.sendPublicMessage(messageText, channel, topic)
             .concatWith {
                 client.getMessages(
-                    NetworkClient.makeJSONArray(
+                    NetworkCommon.makeJSONArray(
                         listOf(
                             Pair("stream", channel),
                             Pair("topic", topic)
@@ -69,7 +72,7 @@ class ChatRepository(
                 Random.nextInt(-20, -1),
                 channel,
                 topic,
-                NetworkClient.MY_USER_ID,
+                NetworkCommon.MY_USER_ID,
                 "Vadim",
                 messageText = messageText,
                 date = Date().time / 1000,
@@ -90,7 +93,7 @@ class ChatRepository(
             }
             .concatWith {
                 client.getMessages(
-                    NetworkClient.makeJSONArray(
+                    NetworkCommon.makeJSONArray(
                         listOf(
                             Pair("stream", channel),
                             Pair("topic", topic)
@@ -120,7 +123,7 @@ class ChatRepository(
         }
         .concatWith {
             client.getMessagesWithAnchor(
-                NetworkClient.makeJSONArray(
+                NetworkCommon.makeJSONArray(
                     listOf(
                         Pair("stream", channel),
                         Pair("topic", topic)
@@ -139,7 +142,7 @@ class ChatRepository(
         )
             .concatWith {
                 client.getMessagesWithAnchor(
-                    NetworkClient.makeJSONArray(
+                    NetworkCommon.makeJSONArray(
                         listOf(
                             Pair("stream", channel),
                             Pair("topic", topic)

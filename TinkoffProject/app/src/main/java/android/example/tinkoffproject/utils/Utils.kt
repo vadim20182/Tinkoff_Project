@@ -6,10 +6,15 @@ import android.example.tinkoffproject.chat.data.db.MessageEntity
 import android.example.tinkoffproject.chat.data.network.UserMessage
 import android.example.tinkoffproject.contacts.data.db.ContactEntity
 import android.example.tinkoffproject.contacts.data.network.ContactItem
-import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.network.NetworkCommon
+import androidx.annotation.MainThread
 import androidx.core.text.HtmlCompat
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 fun makeSearchObservable(
@@ -144,9 +149,41 @@ fun processMessagesFromNetwork(messagesResponse: List<UserMessage>): List<UserMe
             if (!msg.selectedReactions.containsKey(reaction.emoji_name)) {
                 msg.selectedReactions[reaction.emoji_name] =
                     msg.allReactions.filter { it.emoji_name == reaction.emoji_name }
-                        .find { it.userId == NetworkClient.MY_USER_ID } != null
+                        .find { it.userId == NetworkCommon.MY_USER_ID } != null
             }
         }
     }
     return messagesProcessed
+}
+
+/**
+ * A lifecycle-aware observable that sends only new updates after subscription, used for events like
+ * navigation and Snackbar messages.
+ *
+ *
+ * This avoids a common problem with events: on configuration change (like rotation) an update
+ * can be emitted if the observer is active. This LiveData only calls the observable if there's an
+ * explicit call to setValue() or call().
+ *
+ *
+ * Note that only one observer is going to be notified of changes.
+ */
+class SingleLiveEvent<T> : MutableLiveData<T>() {
+    private val mPending: AtomicBoolean = AtomicBoolean(false)
+
+    @MainThread
+    override fun observe(owner: LifecycleOwner, observer: Observer<in T>) {
+        // Observe the internal MutableLiveData
+        super.observe(owner) { value ->
+            if (mPending.compareAndSet(true, false)) {
+                observer.onChanged(value)
+            }
+        }
+    }
+
+    @MainThread
+    override fun setValue(t: T?) {
+        mPending.set(true)
+        super.setValue(t)
+    }
 }

@@ -1,11 +1,11 @@
 package android.example.tinkoffproject.channels.ui
 
-import androidx.fragment.app.Fragment
 import android.example.tinkoffproject.R
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
 import androidx.core.widget.doAfterTextChanged
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout

@@ -23,9 +23,10 @@ ext {
     lifecycleLivedataKTX = '2.4.1'
     navComponent = '2.4.2'
     legacySupport = '1.0.0'
-    rxJava = '2.2.21'
+    rxJava2 = '2.2.21'
     rxAndroid = '2.1.1'
     rxKotlin = '2.4.0'
+    rxJava3 = '3.1.4'
     shimmer = '0.5.0'
     retrofit = '2.9.0'
     retrofitSerialization = '0.8.0'
@@ -35,4 +36,5 @@ ext {
     paging = '3.1.1'
     room = '2.4.2'
     elmslie = '1.4.0'
+    dagger = '2.41'
 }

@@ -1,13 +1,10 @@
 package android.example.tinkoffproject.contacts.ui
 
+import android.content.Context
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.channels.data.ChannelsRepository
-import android.example.tinkoffproject.channels.presentation.all.AllChannelViewModelFactory
-import android.example.tinkoffproject.contacts.data.ContactsRepository
 import android.example.tinkoffproject.contacts.data.network.ContactItem
 import android.example.tinkoffproject.contacts.presentation.ContactsViewModel
-import android.example.tinkoffproject.contacts.presentation.ContactsViewModelFactory
-import android.example.tinkoffproject.database.AppDatabase
+import android.example.tinkoffproject.getComponent
 import android.example.tinkoffproject.profile.ui.ProfileFragment
 import android.graphics.Color
 import android.os.Bundle
@@ -17,9 +14,11 @@ import androidx.core.os.bundleOf
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
@@ -33,17 +32,15 @@ import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.SingleSubject
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 class ContactsFragment : Fragment(R.layout.fragment_contacts),
     ContactsAdapter.OnItemClickedListener {
+    @Inject
+    lateinit var viewModelFactory: ViewModelProvider.Factory
 
-    private val viewModel: ContactsViewModel by viewModels {
-        ContactsViewModelFactory(
-            ContactsRepository(
-                AppDatabase.getInstance(requireContext()).contactsDAO()
-            )
-        )
-    }
+    private val viewModel: ContactsViewModel by viewModels { viewModelFactory }
+
     private val contactsAdapter: ContactsAdapter by lazy { ContactsAdapter(this) }
     private val navController: NavController by lazy {
         var parent = parentFragment
@@ -56,6 +53,11 @@ class ContactsFragment : Fragment(R.layout.fragment_contacts),
         return@lazy navController
     }
     private val compositeDisposable = CompositeDisposable()
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        this.requireActivity().getComponent().contactsComponent().create().inject(this)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -131,8 +133,9 @@ class ContactsFragment : Fragment(R.layout.fragment_contacts),
                     recyclerView.visibility = View.GONE
                 })
             Single.fromCallable {
-                Pair(
-                    it, contactsAdapter.update(viewModel.contactsRepository.currentContacts)
+                SearchResult(
+                    it,
+                    contactsAdapter.update(viewModel.contactsRepository.currentContacts)
                 )
             }
                 .subscribeOn(Schedulers.io())
@@ -144,8 +147,8 @@ class ContactsFragment : Fragment(R.layout.fragment_contacts),
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeBy(onNext = {
             contactsAdapter.data = viewModel.contactsRepository.currentContacts
-            it.second.dispatchUpdatesTo(contactsAdapter)
-            if (!it.first) {
+            it.diffResult.dispatchUpdatesTo(contactsAdapter)
+            if (!it.longLoadFlag) {
                 shimmer.visibility = View.GONE
                 recyclerView.visibility = View.VISIBLE
             } else {
@@ -153,4 +156,6 @@ class ContactsFragment : Fragment(R.layout.fragment_contacts),
                 recyclerView.visibility = View.GONE
             }
         })
+
+    private class SearchResult(val longLoadFlag: Boolean, val diffResult: DiffUtil.DiffResult)
 }

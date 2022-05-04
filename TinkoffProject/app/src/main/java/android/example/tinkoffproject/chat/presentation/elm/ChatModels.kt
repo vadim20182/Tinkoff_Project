@@ -1,13 +1,19 @@
 package android.example.tinkoffproject.chat.presentation.elm
 
+import android.example.tinkoffproject.chat.data.db.MessageEntity
+import androidx.paging.PagingData
+import io.reactivex.Flowable
 import okhttp3.MultipartBody
 
 
 data class ChatState(
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val data: Flowable<PagingData<MessageEntity>>? = null
 )
 
 sealed class ChatEffect {
+    data class AdapterUpdated(val data: Flowable<PagingData<MessageEntity>>) : ChatEffect()
+
     object MessagePlaceholderIsSent : ChatEffect()
 
     object MessageIsSent : ChatEffect()
@@ -27,6 +33,10 @@ sealed class ChatCommand {
     ) : ChatCommand()
 
     object InitLoad : ChatCommand()
+
+    object InitAdapter : ChatCommand()
+
+    object ClearMessages : ChatCommand()
 
     data class ClickReaction(
         val emoji_name: String,
@@ -48,6 +58,10 @@ sealed class ChatEvent {
 
         object InitLoading : Internal()
 
+        object MessagesCleared : Internal()
+
+        data class AdapterUpdated(val data: Flowable<PagingData<MessageEntity>>) : Internal()
+
         data class MessageUpdated(val posToUpdate: Int) : Internal()
 
         data class SomeError(val error: Throwable) : Internal()
@@ -55,6 +69,8 @@ sealed class ChatEvent {
 
     sealed class Ui : ChatEvent() {
         object InitLoad : Ui()
+
+        object ClearMessages : Ui()
 
         data class AddReaction(
             val emoji_name: String, val messageId: Int

@@ -5,9 +5,9 @@ import android.example.tinkoffproject.chat.data.db.MessageEntity
 import android.example.tinkoffproject.databinding.*
 import android.example.tinkoffproject.message.customviews.FlexBoxLayout
 import android.example.tinkoffproject.message.customviews.MessageCustomViewGroup
-import android.example.tinkoffproject.message.customviews.ReactionCustomView
 import android.example.tinkoffproject.message.customviews.MyMessageCustomViewGroup
-import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.message.customviews.ReactionCustomView
+import android.example.tinkoffproject.network.NetworkCommon
 import android.example.tinkoffproject.utils.EMOJI_MAP
 import android.graphics.Color
 import android.graphics.drawable.Drawable
@@ -36,7 +36,7 @@ class MessageAsyncAdapter(
             null -> {
                 TYPE_PLACEHOLDER
             }
-            NetworkClient.MY_USER_ID -> {
+            NetworkCommon.MY_USER_ID -> {
                 TYPE_MY_MESSAGE
             }
             else -> TYPE_MESSAGE

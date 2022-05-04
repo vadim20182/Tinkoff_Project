@@ -4,18 +4,22 @@ import android.example.tinkoffproject.channels.data.db.ChannelEntity
 import android.example.tinkoffproject.channels.data.db.ChannelsDAO
 import android.example.tinkoffproject.channels.data.network.ChannelItem
 import android.example.tinkoffproject.channels.ui.MainChannelsViewModel
-import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.network.ApiService
+import android.example.tinkoffproject.network.NetworkCommon
 import android.example.tinkoffproject.utils.convertChannelFromNetworkToDb
 import android.example.tinkoffproject.utils.makePublishSubject
 import io.reactivex.Observable
 import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
-class ChannelsRepository(private val channelsDAO: ChannelsDAO) {
+class ChannelsRepository @Inject constructor(
+    private val channelsDAO: ChannelsDAO,
+    private val client: ApiService
+) {
 
     val searchObservable: Observable<String> by lazy { MainChannelsViewModel.querySearch }
     val allChannels = mutableListOf<ChannelItem>()
@@ -44,7 +48,7 @@ class ChannelsRepository(private val channelsDAO: ChannelsDAO) {
     val getMyTopicsObservable: Observable<Disposable> = queryGetTopics
         .observeOn(Schedulers.io())
         .flatMapSingle { (streamId, name) ->
-            NetworkClient.client.getTopicsForStream(streamId)
+            client.getTopicsForStream(streamId)
                 .map { topicsResponse ->
                     val channelsProcessed = topicsResponse.channelsList.map {
                         it.copy(
@@ -67,7 +71,7 @@ class ChannelsRepository(private val channelsDAO: ChannelsDAO) {
             Observable.just(it).delay(100, TimeUnit.MILLISECONDS)
         }
         .flatMapSingle { input ->
-            NetworkClient.client.getTopicsForStream(input.first)
+            client.getTopicsForStream(input.first)
                 .map { topicsResponse ->
                     val topicsProcessed = topicsResponse.channelsList.map {
                         it.copy(
@@ -88,9 +92,9 @@ class ChannelsRepository(private val channelsDAO: ChannelsDAO) {
         Observable.fromIterable(allChannels.filter { it.parentChannel == ChannelEntity.NO_PARENT })
             .observeOn(Schedulers.io())
             .flatMapSingle { channel ->
-                NetworkClient.client.getSubscriptionStatus(
+                client.getSubscriptionStatus(
                     channel.streamID,
-                    NetworkClient.MY_USER_ID
+                    NetworkCommon.MY_USER_ID
                 )
                     .map { status ->
                         if (!status.isSubscribed)
@@ -108,7 +112,7 @@ class ChannelsRepository(private val channelsDAO: ChannelsDAO) {
 
     val getAllChannelsObservable: Observable<Disposable> = getChannelsObservable
         .switchMapSingle {
-            NetworkClient.client.getAllStreams()
+            client.getAllStreams()
                 .map { channels ->
                     allChannels.clear()
                     allChannels.addAll(channels.channelsList)
@@ -132,7 +136,7 @@ class ChannelsRepository(private val channelsDAO: ChannelsDAO) {
 
     val getMyChannelsObservable = getChannelsObservable
         .switchMapSingle {
-            NetworkClient.client.getAllStreams()
+            client.getAllStreams()
                 .map { channels ->
                     allChannels.clear()
                     allChannels.addAll(channels.channelsList)

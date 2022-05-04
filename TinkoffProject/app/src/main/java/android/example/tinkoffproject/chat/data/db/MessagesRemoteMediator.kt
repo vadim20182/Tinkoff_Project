@@ -1,9 +1,10 @@
 package android.example.tinkoffproject.chat.data.db
 
-import android.example.tinkoffproject.channels.data.db.ChannelEntity
 import android.example.tinkoffproject.chat.data.network.UserMessage
+import android.example.tinkoffproject.chat.di.Chat
 import android.example.tinkoffproject.database.AppDatabase
-import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.network.ApiService
+import android.example.tinkoffproject.network.NetworkCommon
 import android.example.tinkoffproject.utils.convertMessageFromNetworkToDb
 import android.example.tinkoffproject.utils.processMessagesFromNetwork
 import androidx.paging.LoadType
@@ -11,11 +12,14 @@ import androidx.paging.PagingState
 import androidx.paging.rxjava2.RxRemoteMediator
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
+import javax.inject.Inject
 
-class MessagesRemoteMediator(
+@Chat
+class MessagesRemoteMediator @Inject constructor(
     private val database: AppDatabase,
     val stream: String,
-    val topic: String
+    val topic: String,
+    private val client: ApiService
 ) : RxRemoteMediator<Int, MessageEntity>() {
 
     override fun loadSingle(
@@ -86,16 +90,16 @@ class MessagesRemoteMediator(
 
     private fun getResponseSingle(key: Int) = if (key !=
         NEWEST_MESSAGE
-    ) NetworkClient.client.getMessagesWithAnchor(
-        NetworkClient.makeJSONArray(
+    ) client.getMessagesWithAnchor(
+        NetworkCommon.makeJSONArray(
             listOf(
                 Pair("stream", stream),
                 Pair("topic", topic)
             )
         ), numBefore = PAGE_SIZE, anchor = key
     ) else
-        NetworkClient.client.getMessages(
-            NetworkClient.makeJSONArray(
+        client.getMessages(
+            NetworkCommon.makeJSONArray(
                 listOf(
                     Pair("stream", stream),
                     Pair("topic", topic)
@@ -112,6 +116,7 @@ class MessagesRemoteMediator(
         }
 
     companion object {
+        @Volatile
         var MESSAGE_ANCHOR_TO_UPDATE = 0
         const val PAGE_SIZE = 20
         const val PREFETCH_SIZE = 5

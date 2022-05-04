@@ -1,12 +1,12 @@
 package android.example.tinkoffproject.contacts.presentation
 
-import android.example.tinkoffproject.chat.presentation.SingleLiveEvent
 import android.example.tinkoffproject.contacts.data.ContactsRepository
-import android.example.tinkoffproject.utils.*
+import android.example.tinkoffproject.utils.SingleLiveEvent
+import android.example.tinkoffproject.utils.convertContactFromDbToNetwork
+import android.example.tinkoffproject.utils.makeSearchObservable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -15,8 +15,9 @@ import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
-class ContactsViewModel(val contactsRepository: ContactsRepository) : ViewModel() {
+class ContactsViewModel @Inject constructor(val contactsRepository: ContactsRepository) : ViewModel() {
     private val disposables = mutableMapOf<String, Disposable>()
     private val compositeDisposable = CompositeDisposable()
 
@@ -188,17 +189,5 @@ class ContactsViewModel(val contactsRepository: ContactsRepository) : ViewModel(
         private const val KEY_SEARCH = "search contact"
         private const val KEY_GET_USERS = "get users"
         private const val KEY_GET_PRESENCE = "get presence"
-    }
-}
-
-class ContactsViewModelFactory
-    (
-    private val contactsRepository: ContactsRepository
-) :
-    ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ContactsViewModel::class.java))
-            return ContactsViewModel(contactsRepository) as T
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

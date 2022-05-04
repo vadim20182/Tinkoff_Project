@@ -2,20 +2,22 @@ package android.example.tinkoffproject.chat.ui
 
 import android.app.Activity
 import android.app.DownloadManager
-import android.app.DownloadManager.Request.*
+import android.app.DownloadManager.Request.VISIBILITY_VISIBLE
+import android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
 import android.content.Context
 import android.content.Intent
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.chat.data.ChatRepository
 import android.example.tinkoffproject.chat.data.db.MessagesRemoteMediator
-import android.example.tinkoffproject.chat.presentation.ChatViewModel
-import android.example.tinkoffproject.chat.presentation.ChatViewModelFactory
-import android.example.tinkoffproject.chat.presentation.elm.*
-import android.example.tinkoffproject.database.AppDatabase
+import android.example.tinkoffproject.chat.di.DaggerChatComponent
+import android.example.tinkoffproject.chat.presentation.elm.ChatEffect
+import android.example.tinkoffproject.chat.presentation.elm.ChatEvent
+import android.example.tinkoffproject.chat.presentation.elm.ChatState
+import android.example.tinkoffproject.chat.presentation.elm.ChatStoreFactory
+import android.example.tinkoffproject.getComponent
 import android.example.tinkoffproject.message.customviews.FlexBoxLayout
 import android.example.tinkoffproject.message.customviews.MessageInputCustomViewGroup
 import android.example.tinkoffproject.message.customviews.ReactionCustomView
-import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.network.NetworkCommon
 import android.example.tinkoffproject.utils.EMOJI_MAP
 import android.graphics.Color
 import android.net.Uri
@@ -30,8 +32,6 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.net.toFile
 import androidx.core.view.children
 import androidx.core.view.isEmpty
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -45,38 +45,32 @@ import io.reactivex.rxkotlin.addTo
 import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import vivid.money.elmslie.android.base.ElmFragment
 import vivid.money.elmslie.core.store.Store
+import javax.inject.Inject
 
 
 class ChatFragment :
     ElmFragment<ChatEvent, ChatEffect, ChatState>(R.layout.topic_chat_layout),
     MessageAsyncAdapter.OnItemClickedListener {
-
-    private val chatRepository by lazy {
-        ChatRepository(
-            AppDatabase.getInstance(requireContext()).messagesDAO(),
-            MessagesRemoteMediator(
-                AppDatabase.getInstance(requireContext()), requireArguments().getString(
-                    ARG_CHANNEL_NAME
-                )!!, requireArguments().getString(ARG_TOPIC_NAME)!!
-            ), requireArguments().getString(
-                ARG_CHANNEL_NAME
-            )!!, requireArguments().getString(ARG_TOPIC_NAME)!!
-        )
-    }
+    @Inject
+    lateinit var chatStoreFactory: ChatStoreFactory
 
     private lateinit var shimmer: ShimmerFrameLayout
     private lateinit var recyclerView: RecyclerView
     private lateinit var inputViewGroup: MessageInputCustomViewGroup
 
+    private val messagesAdapter: MessageAsyncAdapter by lazy {
+        MessageAsyncAdapter(this)
+    }
+
+    private var messagePlaceholderIsSent = false
+
     override val initEvent: ChatEvent = ChatEvent.Ui.InitLoad
 
     override fun createStore(): Store<ChatEvent, ChatEffect, ChatState> =
-        ChatStoreFactory(ChatActor(chatRepository)).provide()
+        chatStoreFactory.provide()
 
     override fun render(state: ChatState) {
         if (state.isLoading) {
@@ -90,8 +84,14 @@ class ChatFragment :
 
     override fun handleEffect(effect: ChatEffect) {
         when (effect) {
+            is ChatEffect.AdapterUpdated -> {
+                effect.data
+                    .subscribe {
+                        messagesAdapter.submitData(lifecycle, it)
+                    }.addTo(compositeDisposable)
+            }
             is ChatEffect.MessagePlaceholderIsSent -> {
-                recyclerView.scrollToPosition(0)
+                messagePlaceholderIsSent = true
             }
             is ChatEffect.MessageIsSent -> {
                 MessagesRemoteMediator.MESSAGE_ANCHOR_TO_UPDATE =
@@ -116,20 +116,8 @@ class ChatFragment :
         }
     }
 
-    private val compositeDatabase = CompositeDisposable()
+    private val compositeDisposable = CompositeDisposable()
 
-    private val viewModel: ChatViewModel by viewModels {
-        ChatViewModelFactory(
-            requireArguments().getString(
-                ARG_CHANNEL_NAME
-            )!!,
-            requireArguments().getString(ARG_TOPIC_NAME)!!,
-            chatRepository
-        )
-    }
-    private val messagesAdapter: MessageAsyncAdapter by lazy {
-        MessageAsyncAdapter(this)
-    }
     private val pickFile =
         registerForActivityResult(OpenDoc()) { uri: Uri? ->
             if (uri != null) {
@@ -145,9 +133,25 @@ class ChatFragment :
             }
         }
 
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        DaggerChatComponent.factory().create(
+            requireArguments().getString(
+                ARG_CHANNEL_NAME
+            )!!, requireArguments().getString(ARG_TOPIC_NAME)!!,
+            this.requireActivity().getComponent()
+        ).inject(this)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        messagesAdapter.addOnPagesUpdatedListener {
+            if (messagePlaceholderIsSent) {
+                recyclerView.scrollToPosition(0)
+                messagePlaceholderIsSent = false
+            }
+        }
 
         val itemDecoration = MessageCustomItemDecoration(
             view.context
@@ -158,11 +162,6 @@ class ChatFragment :
             view.findViewById(R.id.message_input_custom_view_group)
         val inputButton: ShapeableImageView = view.findViewById(R.id.message_input_button)
 
-        with(viewModel) {
-            getMessages().subscribe {
-                messagesAdapter.submitData(lifecycle, it)
-            }.addTo(compositeDatabase)
-        }
         recyclerView.itemAnimator = null
         recyclerView.layoutManager = LinearLayoutManager(context).apply {
             stackFromEnd = false
@@ -251,7 +250,10 @@ class ChatFragment :
     }
 
     override fun onDestroyView() {
-        compositeDatabase.clear()
+        store.accept(
+            ChatEvent.Ui.ClearMessages
+        )
+        compositeDisposable.clear()
         super.onDestroyView()
     }
 
@@ -262,7 +264,7 @@ class ChatFragment :
             .setAllowedOverMetered(true)
             .addRequestHeader(
                 "Authorization",
-                Credentials.basic(NetworkClient.EMAIL, NetworkClient.API_KEY)
+                Credentials.basic(NetworkCommon.EMAIL, NetworkCommon.API_KEY)
             )
             .setDescription("Downloading")
             .setTitle("Zulip file")

@@ -2,7 +2,10 @@ package android.example.tinkoffproject.message.customviews
 
 import android.content.Context
 import android.example.tinkoffproject.R
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.ViewGroup
 

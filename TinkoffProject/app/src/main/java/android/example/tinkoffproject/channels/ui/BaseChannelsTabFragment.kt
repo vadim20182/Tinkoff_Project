@@ -1,6 +1,5 @@
 package android.example.tinkoffproject.channels.ui
 
-import androidx.fragment.app.Fragment
 import android.example.tinkoffproject.R
 import android.example.tinkoffproject.channels.data.network.ChannelItem
 import android.example.tinkoffproject.channels.presentation.BaseChannelsViewModel
@@ -9,9 +8,11 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.core.os.bundleOf
+import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -121,8 +122,9 @@ abstract class BaseChannelsTabFragment :
                     recyclerView.visibility = View.GONE
                 })
             Single.fromCallable {
-                Pair(
-                    it, channelsAdapter.update(viewModel.channelsRepository.currentChannels)
+                SearchResult(
+                    it,
+                    channelsAdapter.update(viewModel.channelsRepository.currentChannels)
                 )
             }
                 .subscribeOn(Schedulers.io())
@@ -134,9 +136,9 @@ abstract class BaseChannelsTabFragment :
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeBy(onNext = {
             channelsAdapter.data = viewModel.channelsRepository.currentChannels
-            it.second.dispatchUpdatesTo(channelsAdapter)
+           it.diffResult.dispatchUpdatesTo(channelsAdapter)
             recyclerView.scrollToPosition(0)
-            if (!it.first) {
+            if (!it.longLoadFlag) {
                 shimmer.visibility = View.GONE
                 recyclerView.visibility = View.VISIBLE
             } else {
@@ -144,4 +146,6 @@ abstract class BaseChannelsTabFragment :
                 recyclerView.visibility = View.GONE
             }
         })
+
+    private class SearchResult(val longLoadFlag: Boolean, val diffResult: DiffUtil.DiffResult)
 }

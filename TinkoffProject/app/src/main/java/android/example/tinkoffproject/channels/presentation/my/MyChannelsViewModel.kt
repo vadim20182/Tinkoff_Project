@@ -2,26 +2,17 @@ package android.example.tinkoffproject.channels.presentation.my
 
 import android.example.tinkoffproject.channels.data.ChannelsRepository
 import android.example.tinkoffproject.channels.data.db.ChannelEntity
-import android.example.tinkoffproject.channels.data.network.ChannelItem
 import android.example.tinkoffproject.channels.presentation.BaseChannelsViewModel
-import android.example.tinkoffproject.network.NetworkClient
-import android.example.tinkoffproject.network.NetworkClient.client
 import android.example.tinkoffproject.utils.convertChannelFromDbToNetwork
 import android.example.tinkoffproject.utils.convertChannelFromNetworkToDb
-import android.example.tinkoffproject.utils.makePublishSubject
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.PublishSubject
+import javax.inject.Inject
 
-class MyChannelsViewModel(channelsRepository: ChannelsRepository) :
+class MyChannelsViewModel @Inject constructor(channelsRepository: ChannelsRepository) :
     BaseChannelsViewModel(channelsRepository) {
-
     private val compositeDisposable = CompositeDisposable()
 
     init {
@@ -103,16 +94,14 @@ class MyChannelsViewModel(channelsRepository: ChannelsRepository) :
                 val dbResponse = dbList.map {
                     convertChannelFromDbToNetwork(it)
                 }
-                Pair(
-                    dbResponse,
-                    dbResponse.filter { !it.isTopic })
+                DbResult(dbResponse,dbResponse.filter { !it.isTopic })
             }
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onNext = { (all, current) ->
-                if (all.isNotEmpty()) {
+            .subscribeBy(onNext = {
+                if (it.all.isNotEmpty()) {
                     channelsRepository.allChannels.clear()
-                    channelsRepository.allChannels.addAll(current)
-                    channelsRepository.currentChannels = current
+                    channelsRepository.allChannels.addAll(it.channels)
+                    channelsRepository.currentChannels = it.channels
                     _isLoading.value = false
                 }
             }, onError = {
@@ -122,16 +111,5 @@ class MyChannelsViewModel(channelsRepository: ChannelsRepository) :
     override fun onCleared() {
         compositeDisposable.clear()
         super.onCleared()
-    }
-}
-
-class MyChannelViewModelFactory(
-    private val channelsRepository: ChannelsRepository
-) :
-    ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(MyChannelsViewModel::class.java))
-            return MyChannelsViewModel(channelsRepository) as T
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

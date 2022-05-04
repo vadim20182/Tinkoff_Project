@@ -1,13 +1,12 @@
 package android.example.tinkoffproject.channels.presentation
 
 import android.example.tinkoffproject.channels.data.ChannelsRepository
-import android.example.tinkoffproject.channels.ui.MainChannelsViewModel
-import android.example.tinkoffproject.chat.presentation.SingleLiveEvent
+import android.example.tinkoffproject.channels.data.network.ChannelItem
+import android.example.tinkoffproject.utils.SingleLiveEvent
 import android.example.tinkoffproject.utils.makeSearchObservable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -19,19 +18,20 @@ import java.util.concurrent.TimeUnit
 
 abstract class BaseChannelsViewModel(val channelsRepository: ChannelsRepository) :
     ViewModel() {
-
     private var compositeDisposable = CompositeDisposable()
-    protected val disposables = mutableMapOf<String, Disposable>().apply {
-        this[KEY_INPUT] = channelsRepository.searchObservable
-            .map { query -> query.trim() }
-            .distinctUntilChanged()
-            .filter { it.isNotBlank() }
-            .subscribeBy(onNext = {
-                if (this[KEY_SEARCH]?.isDisposed == true) {
-                    subscribeToSearch()
-                    compositeDisposable.clear()
-                }
-            })
+    protected val disposables by lazy {
+        mutableMapOf<String, Disposable>().apply {
+            this[KEY_INPUT] = channelsRepository.searchObservable
+                .map { query -> query.trim() }
+                .distinctUntilChanged()
+                .filter { it.isNotBlank() }
+                .subscribeBy(onNext = {
+                    if (this[KEY_SEARCH]?.isDisposed == true) {
+                        subscribeToSearch()
+                        compositeDisposable.clear()
+                    }
+                })
+        }
     }
 
     private val _isChannelClicked = SingleLiveEvent<Boolean>()
@@ -61,21 +61,22 @@ abstract class BaseChannelsViewModel(val channelsRepository: ChannelsRepository)
     protected abstract fun subscribeGetTopics()
 
     protected fun subscribeToSearch() {
-        disposables[KEY_SEARCH] = makeSearchObservable(channelsRepository.searchObservable) { resetSearch() }
-            .doOnNext { _isLoading.value = true }
-            .debounce(600, TimeUnit.MILLISECONDS)
-            .observeOn(Schedulers.io())
-            .switchMapSingle { input ->
-                Single.fromCallable { channelsRepository.filterChannels(input) }
-                    .subscribeOn(Schedulers.io())
-            }
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onNext = {
-                    channelsRepository.currentChannels = it
-                    _isLoading.value = false
-                }, onError = {
-                })
+        disposables[KEY_SEARCH] =
+            makeSearchObservable(channelsRepository.searchObservable) { resetSearch() }
+                .doOnNext { _isLoading.value = true }
+                .debounce(600, TimeUnit.MILLISECONDS)
+                .observeOn(Schedulers.io())
+                .switchMapSingle { input ->
+                    Single.fromCallable { channelsRepository.filterChannels(input) }
+                        .subscribeOn(Schedulers.io())
+                }
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onNext = {
+                        channelsRepository.currentChannels = it
+                        _isLoading.value = false
+                    }, onError = {
+                    })
     }
 
     private fun subscribeReset() {
@@ -125,4 +126,6 @@ abstract class BaseChannelsViewModel(val channelsRepository: ChannelsRepository)
         private const val KEY_SEARCH = "search"
         private const val KEY_INPUT = "input"
     }
+
+    protected class DbResult(val all: List<ChannelItem>, val channels: List<ChannelItem>)
 }

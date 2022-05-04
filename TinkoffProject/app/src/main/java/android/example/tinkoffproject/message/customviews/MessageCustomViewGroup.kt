@@ -3,14 +3,10 @@ package android.example.tinkoffproject.message.customviews
 import android.content.Context
 import android.example.tinkoffproject.R
 import android.graphics.*
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.graphics.drawable.RoundedBitmapDrawable
-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import androidx.core.graphics.drawable.toBitmap
 import com.google.android.material.imageview.ShapeableImageView
 

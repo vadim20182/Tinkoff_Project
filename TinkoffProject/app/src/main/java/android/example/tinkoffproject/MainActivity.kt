@@ -86,7 +86,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         if (SDK_INT >= Build.VERSION_CODES.R) {
             if (!Environment.isExternalStorageManager())
                 requestPermissionLauncher.launch(arrayOf(MANAGE_EXTERNAL_STORAGE))

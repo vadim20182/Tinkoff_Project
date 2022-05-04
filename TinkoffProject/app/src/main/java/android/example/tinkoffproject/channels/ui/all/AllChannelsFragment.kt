@@ -1,20 +1,20 @@
 package android.example.tinkoffproject.channels.ui.all
 
-import android.example.tinkoffproject.channels.data.ChannelsRepository
-import android.example.tinkoffproject.channels.data.db.ChannelEntity
+import android.content.Context
+import android.example.tinkoffproject.channels.presentation.all.AllChannelsViewModel
 import android.example.tinkoffproject.channels.ui.BaseChannelsTabFragment
-import android.example.tinkoffproject.channels.presentation.BaseChannelsViewModel
-import android.example.tinkoffproject.channels.presentation.all.AllChannelViewModelFactory
-import android.example.tinkoffproject.database.AppDatabase
-import androidx.core.content.ContentProviderCompat.requireContext
+import android.example.tinkoffproject.getComponent
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
+import javax.inject.Inject
 
 class AllChannelsFragment : BaseChannelsTabFragment() {
-    override val viewModel: BaseChannelsViewModel by viewModels {
-        AllChannelViewModelFactory(
-            ChannelsRepository(
-                AppDatabase.getInstance(requireContext()).channelsDAO()
-            )
-        )
+    @Inject
+    lateinit var viewModelFactory: ViewModelProvider.Factory
+
+    override val viewModel: AllChannelsViewModel by viewModels { viewModelFactory }
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        this.requireActivity().getComponent().allChannelsComponent().create().inject(this)
     }
 }

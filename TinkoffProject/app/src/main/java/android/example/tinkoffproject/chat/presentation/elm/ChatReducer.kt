@@ -1,8 +1,8 @@
 package android.example.tinkoffproject.chat.presentation.elm
 
-import vivid.money.elmslie.core.store.dsl_reducer.ScreenDslReducer
 import android.example.tinkoffproject.chat.presentation.elm.ChatEvent.Internal
 import android.example.tinkoffproject.chat.presentation.elm.ChatEvent.Ui
+import vivid.money.elmslie.core.store.dsl_reducer.ScreenDslReducer
 
 class ChatReducer :
     ScreenDslReducer<ChatEvent, Ui, Internal, ChatState,
@@ -12,8 +12,10 @@ class ChatReducer :
         is Internal.InitLoaded -> {
             state { copy(isLoading = false) }
         }
-        is Internal.InitLoading -> {
-            state { copy(isLoading = true) }
+        is Internal.InitLoading -> {}
+        is Internal.MessagesCleared -> {}
+        is Internal.AdapterUpdated -> {
+            effects { +ChatEffect.AdapterUpdated(event.data) }
         }
         is Internal.MessagePlaceholderIsSent -> {
             effects { +ChatEffect.MessagePlaceholderIsSent }
@@ -53,13 +55,20 @@ class ChatReducer :
             }
         }
         is Ui.InitLoad -> {
-            commands { +ChatCommand.InitLoad }
+            state { copy(isLoading = true) }
+            commands {
+                +ChatCommand.InitAdapter
+                +ChatCommand.InitLoad
+            }
         }
         is Ui.UploadFile -> {
             commands {
                 +ChatCommand.SendMessagePlaceholder(event.fileName)
                 +ChatCommand.UploadFile(event.fileName, event.file)
             }
+        }
+        is Ui.ClearMessages -> {
+            commands { +ChatCommand.ClearMessages }
         }
     }
 

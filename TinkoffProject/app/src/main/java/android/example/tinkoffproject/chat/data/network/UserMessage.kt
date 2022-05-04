@@ -1,6 +1,8 @@
 package android.example.tinkoffproject.chat.data.network
 
-import kotlinx.serialization.*
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlin.random.Random
 
 @Serializable

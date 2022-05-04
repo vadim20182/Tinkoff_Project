@@ -6,9 +6,8 @@ import android.graphics.*
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.view.ViewGroup
-import android.widget.*
-import androidx.core.graphics.drawable.RoundedBitmapDrawable
-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
+import android.widget.EditText
+import android.widget.ImageView
 import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.imageview.ShapeableImageView
 

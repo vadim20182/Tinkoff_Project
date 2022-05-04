@@ -29,7 +29,7 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
         freeCompilerArgs += ["-opt-in=androidx.paging.ExperimentalPagingApi",
-                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                             "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
                              "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"]
     }
 }
@@ -46,9 +46,10 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:${rootProject.navComponent}"
     implementation "androidx.navigation:navigation-ui-ktx:${rootProject.navComponent}"
     //RxJava
-    implementation "io.reactivex.rxjava2:rxjava:${rootProject.rxJava}"
+    implementation "io.reactivex.rxjava2:rxjava:${rootProject.rxJava2}"
     implementation "io.reactivex.rxjava2:rxandroid:${rootProject.rxAndroid}"
     implementation "io.reactivex.rxjava2:rxkotlin:${rootProject.rxKotlin}"
+    implementation "io.reactivex.rxjava3:rxjava:${rootProject.rxJava3}"
     //Shimmer
     implementation "com.facebook.shimmer:shimmer:${rootProject.shimmer}"
     //Retrofit
@@ -73,4 +74,7 @@ dependencies {
     implementation "com.github.vivid-money.elmslie:elmslie-core:${rootProject.elmslie}"
     implementation "com.github.vivid-money.elmslie:elmslie-android:${rootProject.elmslie}"
     implementation "com.github.vivid-money.elmslie:elmslie-rxjava-2:${rootProject.elmslie}"
+    //Dagger2
+    implementation "com.google.dagger:dagger:${rootProject.dagger}"
+    kapt "com.google.dagger:dagger-compiler:${rootProject.dagger}"
 }

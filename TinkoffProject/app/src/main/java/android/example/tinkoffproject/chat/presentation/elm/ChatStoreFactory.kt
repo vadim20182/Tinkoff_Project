@@ -1,8 +1,11 @@
 package android.example.tinkoffproject.chat.presentation.elm
 
+import android.example.tinkoffproject.chat.di.Chat
 import vivid.money.elmslie.core.ElmStoreCompat
+import javax.inject.Inject
 
-class ChatStoreFactory(
+@Chat
+class ChatStoreFactory @Inject constructor(
     private val actor: ChatActor
 ) {
 

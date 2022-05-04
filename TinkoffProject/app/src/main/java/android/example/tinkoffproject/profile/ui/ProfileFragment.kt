@@ -3,7 +3,10 @@ package android.example.tinkoffproject.profile.ui
 import android.content.Context
 import android.example.tinkoffproject.R
 import android.example.tinkoffproject.contacts.data.network.ContactItem
-import android.example.tinkoffproject.network.NetworkClient
+import android.example.tinkoffproject.getComponent
+import android.example.tinkoffproject.network.ApiService
+import android.example.tinkoffproject.network.NetworkCommon
+import android.example.tinkoffproject.profile.DaggerProfileComponent
 import android.example.tinkoffproject.utils.makePublishSubject
 import android.graphics.Color
 import android.os.Bundle
@@ -21,17 +24,27 @@ import com.google.android.material.snackbar.Snackbar
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
+import javax.inject.Inject
 
 
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
+    @Inject
+    lateinit var client: ApiService
     private val queryGetUser = makePublishSubject<Int>()
     private val queryGetUserPresence = makePublishSubject<ContactItem>()
-    private val getUserObservable =
-        NetworkClient.getUserObservable(queryGetUser)
-    private val getUserPresenceObservable =
-        NetworkClient.getUserPresenceForProfileObservable(queryGetUserPresence)
+    private val getUserObservable by lazy {
+        NetworkCommon.getUserObservable(queryGetUser, client)
+    }
+    private val getUserPresenceObservable by lazy {
+        NetworkCommon.getUserPresenceForProfileObservable(queryGetUserPresence, client)
+    }
     private var getUserDisposable: Disposable? = null
     private var getUserPresenceDisposable: Disposable? = null
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        DaggerProfileComponent.factory().create(this.requireActivity().getComponent()).inject(this)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -128,7 +141,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                     profileLayout.visibility = View.VISIBLE
                 }, onError = { })
 
-            queryGetUser.onNext(NetworkClient.MY_USER_ID)
+            queryGetUser.onNext(NetworkCommon.MY_USER_ID)
         }
     }
 
