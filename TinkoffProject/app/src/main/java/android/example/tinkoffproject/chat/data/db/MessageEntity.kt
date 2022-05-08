@@ -33,7 +33,9 @@ data class MessageEntity(
     @ColumnInfo(name = "message_is_sent")
     val isSent: Boolean = true,
     @ColumnInfo(name = "message_file_link")
-    val fileLink: String? = null
+    val fileLink: String? = null,
+    @ColumnInfo(name = "message_is_my")
+    val isMyMessage: Boolean = false
 ) {
     companion object {
         const val TABLE_NAME = "messages"

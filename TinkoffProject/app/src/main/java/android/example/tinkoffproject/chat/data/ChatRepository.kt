@@ -42,7 +42,6 @@ class ChatRepository @Inject constructor(
                     .messagesPagingSource(remoteMediator.stream, remoteMediator.topic)
             }
         ).flowable.share()
-
     }
 
     fun getAllMessagesFromDb(channel: String, topic: String) =
@@ -76,7 +75,8 @@ class ChatRepository @Inject constructor(
                 "Vadim",
                 messageText = messageText,
                 date = Date().time / 1000,
-                isSent = false
+                isSent = false,
+                isMyMessage = true
             )
         )
     )

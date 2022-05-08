@@ -29,10 +29,13 @@ import io.reactivex.subjects.SingleSubject
 import java.util.concurrent.TimeUnit
 
 abstract class BaseChannelsTabFragment :
-    Fragment(R.layout.base_fragment_channels),
+    Fragment(),
     ChannelsAdapter.OnItemClickedListener {
 
     protected abstract val viewModel: BaseChannelsViewModel
+    protected abstract val recyclerView: RecyclerView
+    protected abstract val shimmer: ShimmerFrameLayout
+
     private val channelsAdapter: ChannelsAdapter by lazy { ChannelsAdapter(this) }
     private val navController: NavController by lazy {
         var parent = parentFragment
@@ -48,8 +51,6 @@ abstract class BaseChannelsTabFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val recyclerView = view.findViewById<RecyclerView>(R.id.recycler_view_channels)
-        val shimmer = view.findViewById<ShimmerFrameLayout>(R.id.shimmer_channels_view)
         val queryUpdateChannels = PublishSubject.create<Boolean>()
 
         makeSearchDisposable(queryUpdateChannels, shimmer, recyclerView)
@@ -136,7 +137,7 @@ abstract class BaseChannelsTabFragment :
         .observeOn(AndroidSchedulers.mainThread())
         .subscribeBy(onNext = {
             channelsAdapter.data = viewModel.channelsRepository.currentChannels
-           it.diffResult.dispatchUpdatesTo(channelsAdapter)
+            it.diffResult.dispatchUpdatesTo(channelsAdapter)
             recyclerView.scrollToPosition(0)
             if (!it.longLoadFlag) {
                 shimmer.visibility = View.GONE

@@ -72,7 +72,8 @@ fun convertMessageFromNetworkToDb(
         messageText = userMessage.messageText,
         avatarUrl = userMessage.avatarUrl,
         userId = userMessage.userId,
-        fileLink = userMessage.fileLink
+        fileLink = userMessage.fileLink,
+        isMyMessage = userMessage.userId == NetworkCommon.MY_USER_ID
     )
 }
 

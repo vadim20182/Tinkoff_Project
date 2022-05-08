@@ -77,4 +77,9 @@ dependencies {
     //Dagger2
     implementation "com.google.dagger:dagger:${rootProject.dagger}"
     kapt "com.google.dagger:dagger-compiler:${rootProject.dagger}"
+    //Testing
+    testImplementation "junit:junit:${rootProject.junit}"
+    testImplementation "androidx.arch.core:core-testing:${rootProject.archCoreTesting}"
+    androidTestImplementation "androidx.test.ext:junit:${rootProject.androidXjunit}"
+    androidTestImplementation "com.kaspersky.android-components:kaspresso:${rootProject.kaspressoComponents}"
 }

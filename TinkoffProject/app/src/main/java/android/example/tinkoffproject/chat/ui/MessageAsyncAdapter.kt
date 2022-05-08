@@ -7,7 +7,6 @@ import android.example.tinkoffproject.message.customviews.FlexBoxLayout
 import android.example.tinkoffproject.message.customviews.MessageCustomViewGroup
 import android.example.tinkoffproject.message.customviews.MyMessageCustomViewGroup
 import android.example.tinkoffproject.message.customviews.ReactionCustomView
-import android.example.tinkoffproject.network.NetworkCommon
 import android.example.tinkoffproject.utils.EMOJI_MAP
 import android.graphics.Color
 import android.graphics.drawable.Drawable
@@ -32,11 +31,11 @@ class MessageAsyncAdapter(
 ) : PagingDataAdapter<MessageEntity, MessageBaseViewHolder>(DiffCallback) {
 
     override fun getItemViewType(position: Int): Int =
-        when (getItem(position)?.userId) {
+        when (getItem(position)?.isMyMessage) {
             null -> {
                 TYPE_PLACEHOLDER
             }
-            NetworkCommon.MY_USER_ID -> {
+            true -> {
                 TYPE_MY_MESSAGE
             }
             else -> TYPE_MESSAGE

@@ -37,4 +37,8 @@ ext {
     room = '2.4.2'
     elmslie = '1.4.0'
     dagger = '2.41'
+    junit = '4.13.2'
+    archCoreTesting = '2.1.0'
+    androidXjunit = '1.1.3'
+    kaspressoComponents = '1.2.1'
 }
