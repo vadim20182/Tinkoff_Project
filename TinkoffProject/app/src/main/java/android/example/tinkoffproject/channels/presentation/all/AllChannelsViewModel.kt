@@ -1,7 +1,7 @@
 package android.example.tinkoffproject.channels.presentation.all
 
-import android.example.tinkoffproject.channels.data.ChannelsRepository
 import android.example.tinkoffproject.channels.data.db.ChannelEntity
+import android.example.tinkoffproject.channels.data.repository.AllChannelsRepositoryImpl
 import android.example.tinkoffproject.channels.presentation.BaseChannelsViewModel
 import android.example.tinkoffproject.utils.convertChannelFromDbToNetwork
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -10,8 +10,8 @@ import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import javax.inject.Inject
 
-class AllChannelsViewModel @Inject constructor(channelsRepository: ChannelsRepository) :
-    BaseChannelsViewModel(channelsRepository) {
+class AllChannelsViewModel @Inject constructor(private val allChannelsRepository: AllChannelsRepositoryImpl) :
+    BaseChannelsViewModel(allChannelsRepository) {
     private val compositeDisposable = CompositeDisposable()
 
     init {
@@ -23,7 +23,7 @@ class AllChannelsViewModel @Inject constructor(channelsRepository: ChannelsRepos
     }
 
     override fun subscribeGetTopics() {
-        channelsRepository.getAllTopicsObservable
+        allChannelsRepository.getAllTopicsObservable
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onError = {
                 _errorMessage.value = "Ошибка при загрузке каналов"
@@ -32,7 +32,7 @@ class AllChannelsViewModel @Inject constructor(channelsRepository: ChannelsRepos
     }
 
     override fun loadChannels() {
-        channelsRepository.loadChannelsFromDb()
+        allChannelsRepository.loadChannelsFromDb()
             .map { dbList ->
                 Triple(dbList.map {
                     convertChannelFromDbToNetwork(it)
@@ -45,18 +45,18 @@ class AllChannelsViewModel @Inject constructor(channelsRepository: ChannelsRepos
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onSuccess = { (all, current, channelsProcessed) ->
                 if (all.isNotEmpty()) {
-                    channelsRepository.allChannels.clear()
-                    channelsRepository.allChannels.addAll(current)
+                    allChannelsRepository.allChannels.clear()
+                    allChannelsRepository.allChannels.addAll(current)
                     for (parent in channelsProcessed)
-                        channelsRepository.topics[parent.name] =
+                        allChannelsRepository.topics[parent.name] =
                             all.filter { it.parentChannel == parent.name }
-                    channelsRepository.currentChannels = current
+                    allChannelsRepository.currentChannels = current
                     _isLoading.value = false
                 } else {
                     _isLoading.value = true
                 }
                 if (isLoaded.value == false) {
-                    channelsRepository.queryGetChannels.onNext(Unit)
+                    allChannelsRepository.queryGetChannels.onNext(Unit)
                     _isLoaded.value = true
                 }
                 subscribeToDbUpdates()
@@ -65,7 +65,7 @@ class AllChannelsViewModel @Inject constructor(channelsRepository: ChannelsRepos
     }
 
     override fun subscribeGetChannels() {
-        channelsRepository.getAllChannelsObservable
+        allChannelsRepository.getAllChannelsObservable
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onError = {
                 _errorMessage.value = "Ошибка при загрузке каналов"
@@ -74,7 +74,7 @@ class AllChannelsViewModel @Inject constructor(channelsRepository: ChannelsRepos
     }
 
     private fun subscribeToDbUpdates() {
-        channelsRepository.getChannelsFromDb()
+        allChannelsRepository.getChannelsFromDb()
             .map { dbList ->
                 val dbResponse = dbList.map {
                     convertChannelFromDbToNetwork(it)
@@ -85,9 +85,9 @@ class AllChannelsViewModel @Inject constructor(channelsRepository: ChannelsRepos
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onNext = {
                 if (it.all.isNotEmpty()) {
-                    channelsRepository.allChannels.clear()
-                    channelsRepository.allChannels.addAll(it.channels)
-                    channelsRepository.currentChannels = it.channels
+                    allChannelsRepository.allChannels.clear()
+                    allChannelsRepository.allChannels.addAll(it.channels)
+                    allChannelsRepository.currentChannels = it.channels
                     _isLoading.value = false
                 }
             }, onError = {

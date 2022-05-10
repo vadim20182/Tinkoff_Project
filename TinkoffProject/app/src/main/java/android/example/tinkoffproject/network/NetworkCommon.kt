@@ -1,11 +1,5 @@
 package android.example.tinkoffproject.network
 
-import android.example.tinkoffproject.contacts.data.network.ContactItem
-import android.example.tinkoffproject.contacts.data.network.GetPresenceResponse
-import android.example.tinkoffproject.contacts.data.network.UserResponse
-import io.reactivex.Observable
-import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.PublishSubject
 import kotlinx.serialization.json.Json
 import okhttp3.Credentials
 import okhttp3.Interceptor
@@ -18,26 +12,6 @@ object NetworkCommon {
     const val MY_USER_ID = 491496
 
     val jsonParser = Json { ignoreUnknownKeys = true }
-
-    fun getUserObservable(
-        publishSubject: PublishSubject<Int>,
-        client: ApiService
-    ): Observable<UserResponse> =
-        publishSubject
-            .observeOn(Schedulers.io())
-            .flatMapSingle {
-                client.getUser(it)
-            }
-
-    fun getUserPresenceForProfileObservable(
-        publishSubject: PublishSubject<ContactItem>,
-        client: ApiService
-    ): Observable<GetPresenceResponse> =
-        publishSubject
-            .observeOn(Schedulers.io())
-            .flatMapSingle {
-                client.getUserPresence(it.email)
-            }
 
     fun makeJSONArray(list: List<Pair<String, String>>): JSONArray {
         var s = "["

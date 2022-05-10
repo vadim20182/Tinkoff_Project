@@ -32,6 +32,7 @@ android {
                              "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
                              "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"]
     }
+    namespace 'android.example.tinkoffproject'
 }
 
 dependencies {

@@ -15,11 +15,9 @@ interface ChatComponent {
     interface Factory {
         fun create(
             @BindsInstance
-            @Channel
-            channel: String,
+            @Channel channel: String,
             @BindsInstance
-            @Topic
-            topic: String,
+            @Topic topic: String,
             appComponent: AppComponent
         ): ChatComponent
     }

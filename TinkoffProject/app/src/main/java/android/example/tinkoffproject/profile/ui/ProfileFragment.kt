@@ -2,12 +2,10 @@ package android.example.tinkoffproject.profile.ui
 
 import android.content.Context
 import android.example.tinkoffproject.R
-import android.example.tinkoffproject.contacts.data.network.ContactItem
 import android.example.tinkoffproject.getComponent
-import android.example.tinkoffproject.network.ApiService
 import android.example.tinkoffproject.network.NetworkCommon
-import android.example.tinkoffproject.profile.DaggerProfileComponent
-import android.example.tinkoffproject.utils.makePublishSubject
+import android.example.tinkoffproject.profile.di.DaggerProfileComponent
+import android.example.tinkoffproject.profile.model.ProfileInteractor
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -29,15 +27,7 @@ import javax.inject.Inject
 
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
     @Inject
-    lateinit var client: ApiService
-    private val queryGetUser = makePublishSubject<Int>()
-    private val queryGetUserPresence = makePublishSubject<ContactItem>()
-    private val getUserObservable by lazy {
-        NetworkCommon.getUserObservable(queryGetUser, client)
-    }
-    private val getUserPresenceObservable by lazy {
-        NetworkCommon.getUserPresenceForProfileObservable(queryGetUserPresence, client)
-    }
+    lateinit var profileInteractor:ProfileInteractor
     private var getUserDisposable: Disposable? = null
     private var getUserPresenceDisposable: Disposable? = null
 
@@ -103,7 +93,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                     .error(R.mipmap.avatar)
                     .into(userAvatar)
             }
-            getUserDisposable = getUserObservable
+            getUserDisposable = profileInteractor.userObservable//getUserObservable
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(onNext = {
                     editor?.putString(KEY_NAME, it.user.name)
@@ -116,7 +106,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                         .placeholder(R.mipmap.ic_launcher_round)
                         .error(R.mipmap.avatar)
                         .into(userAvatar)
-                    queryGetUserPresence.onNext(it.user)
+                    profileInteractor.queryGetUserPresence.onNext(it.user)
                 }, onError = {
                     Snackbar.make(
                         view,
@@ -128,7 +118,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                     }.show()
                 })
 
-            getUserPresenceDisposable = getUserPresenceObservable
+            getUserPresenceDisposable = profileInteractor.userPresenceObservable//getUserPresenceObservable
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(onNext = {
                     when (it.presence.clientType.status) {
@@ -141,7 +131,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                     profileLayout.visibility = View.VISIBLE
                 }, onError = { })
 
-            queryGetUser.onNext(NetworkCommon.MY_USER_ID)
+            profileInteractor.queryGetUser.onNext(NetworkCommon.MY_USER_ID)
         }
     }
 

@@ -1,7 +1,7 @@
 package android.example.tinkoffproject.channels.presentation
 
-import android.example.tinkoffproject.channels.data.ChannelsRepository
 import android.example.tinkoffproject.channels.data.network.ChannelItem
+import android.example.tinkoffproject.channels.data.repository.ChannelsRepository
 import android.example.tinkoffproject.utils.SingleLiveEvent
 import android.example.tinkoffproject.utils.makeSearchObservable
 import androidx.lifecycle.LiveData

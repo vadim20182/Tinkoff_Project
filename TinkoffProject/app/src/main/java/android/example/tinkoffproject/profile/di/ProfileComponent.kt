@@ -1,4 +1,4 @@
-package android.example.tinkoffproject.profile
+package android.example.tinkoffproject.profile.di
 
 import android.example.tinkoffproject.di.AppComponent
 import android.example.tinkoffproject.profile.ui.ProfileFragment
@@ -6,7 +6,7 @@ import dagger.Component
 import javax.inject.Scope
 
 @Profile
-@Component(dependencies = [AppComponent::class])
+@Component(modules = [ProfileModule::class], dependencies = [AppComponent::class])
 interface ProfileComponent {
 
     fun inject(profileFragment: ProfileFragment)

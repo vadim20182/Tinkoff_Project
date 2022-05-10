@@ -13,7 +13,7 @@ import io.reactivex.Single
 import okhttp3.MultipartBody
 import org.json.JSONArray
 
-class ClientStub:ApiService {
+class ClientStub : ApiService {
     override fun getAllStreams(): Single<GetChannelsResponse> {
         TODO("Not yet implemented")
     }

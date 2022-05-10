@@ -1,6 +1,6 @@
 package android.example.tinkoffproject.contacts.presentation
 
-import android.example.tinkoffproject.contacts.data.ContactsRepository
+import android.example.tinkoffproject.contacts.data.repository.ContactsRepositoryImpl
 import android.example.tinkoffproject.contacts.data.db.ContactEntity
 import android.example.tinkoffproject.contacts.data.db.ContactsDAO
 import android.example.tinkoffproject.network.ApiService
@@ -27,19 +27,21 @@ class ContactsViewModelTest {
         val contactsRepository = createContactsRepository(contactsDAO = contactsDAOStub)
         val viewModel = createViewModel(contactsRepository)
 
+        assertEquals(false, viewModel.isLoaded.value)
+
         viewModel.loadContacts()
 
         assertEquals(true, viewModel.isLoaded.value)
     }
 
-    private fun createViewModel(contactsRepository: ContactsRepository) =
-        ContactsViewModel(contactsRepository)
+    private fun createViewModel(contactsRepositoryImpl: ContactsRepositoryImpl) =
+        ContactsViewModel(contactsRepositoryImpl)
 
     private fun createContactsRepository(
         client: ApiService = ClientStub(),
         contactsDAO: ContactsDAO
     ) =
-        ContactsRepository(contactsDAO, client)
+        ContactsRepositoryImpl(contactsDAO, client)
 
     private fun createContact(
         userId: Int = 1,

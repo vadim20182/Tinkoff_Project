@@ -1,29 +1,29 @@
 package android.example.tinkoffproject.chat.di
 
-import android.example.tinkoffproject.chat.data.ChatRepository
 import android.example.tinkoffproject.chat.data.db.MessagesDAO
 import android.example.tinkoffproject.chat.data.db.MessagesRemoteMediator
+import android.example.tinkoffproject.chat.data.repository.ChatRepository
+import android.example.tinkoffproject.chat.data.repository.ChatRepositoryImpl
 import android.example.tinkoffproject.database.AppDatabase
 import android.example.tinkoffproject.network.ApiService
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import javax.inject.Qualifier
 import javax.inject.Scope
 
-@Module
+@Module(includes = [ChatModule.Bind::class])
 class ChatModule {
     @Provides
     @Chat
     fun provideChatRepository(
         messagesDAO: MessagesDAO,
         remoteMediator: MessagesRemoteMediator,
-        @Channel
-        channel: String,
-        @Topic
-        topic: String,
+        @Channel channel: String,
+        @Topic topic: String,
         client: ApiService
-    ): ChatRepository =
-        ChatRepository(messagesDAO, remoteMediator, channel, topic, client)
+    ): ChatRepositoryImpl =
+        ChatRepositoryImpl(messagesDAO, remoteMediator, channel, topic, client)
 
     @Provides
     @Chat
@@ -38,6 +38,13 @@ class ChatModule {
         client: ApiService
     ) =
         MessagesRemoteMediator(database, channel, topic, client)
+
+    @Module
+    interface Bind {
+        @Binds
+        @Chat
+        fun bindChatRepository(impl: ChatRepositoryImpl): ChatRepository
+    }
 }
 
 @Qualifier

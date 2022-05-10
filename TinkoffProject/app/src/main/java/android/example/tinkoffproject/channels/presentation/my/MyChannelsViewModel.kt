@@ -1,7 +1,7 @@
 package android.example.tinkoffproject.channels.presentation.my
 
-import android.example.tinkoffproject.channels.data.ChannelsRepository
 import android.example.tinkoffproject.channels.data.db.ChannelEntity
+import android.example.tinkoffproject.channels.data.repository.MyChannelsRepositoryImpl
 import android.example.tinkoffproject.channels.presentation.BaseChannelsViewModel
 import android.example.tinkoffproject.utils.convertChannelFromDbToNetwork
 import android.example.tinkoffproject.utils.convertChannelFromNetworkToDb
@@ -11,8 +11,9 @@ import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import javax.inject.Inject
 
-class MyChannelsViewModel @Inject constructor(channelsRepository: ChannelsRepository) :
-    BaseChannelsViewModel(channelsRepository) {
+class MyChannelsViewModel @Inject constructor(
+    private val myChannelsRepository: MyChannelsRepositoryImpl) :
+    BaseChannelsViewModel(myChannelsRepository) {
     private val compositeDisposable = CompositeDisposable()
 
     init {
@@ -24,7 +25,7 @@ class MyChannelsViewModel @Inject constructor(channelsRepository: ChannelsReposi
     }
 
     override fun subscribeGetChannels() {
-        channelsRepository.getMyChannelsObservable
+        myChannelsRepository.getMyChannelsObservable
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onNext = { findMyChannels() }, onError = {
                 _errorMessage.value = "Ошибка при загрузке каналов"
@@ -33,7 +34,7 @@ class MyChannelsViewModel @Inject constructor(channelsRepository: ChannelsReposi
     }
 
     override fun subscribeGetTopics() {
-        channelsRepository.getMyTopicsObservable
+        myChannelsRepository.getMyTopicsObservable
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onNext = {}, onError = {
                 _errorMessage.value = "Ошибка при загрузке каналов"
@@ -41,10 +42,10 @@ class MyChannelsViewModel @Inject constructor(channelsRepository: ChannelsReposi
     }
 
     private fun findMyChannels() {
-        channelsRepository.getFindMyChannelsObservable()
+        myChannelsRepository.getFindMyChannelsObservable()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onComplete = {
-                channelsRepository.insertChannelsReplace(channelsRepository.allChannels.map {
+                myChannelsRepository.insertChannelsReplace(myChannelsRepository.allChannels.map {
                     convertChannelFromNetworkToDb(
                         it, true
                     )
@@ -57,7 +58,7 @@ class MyChannelsViewModel @Inject constructor(channelsRepository: ChannelsReposi
 
 
     override fun loadChannels() {
-        channelsRepository.loadMyChannelsFromDb()
+        myChannelsRepository.loadMyChannelsFromDb()
             .map { dbList ->
                 Triple(dbList.map {
                     convertChannelFromDbToNetwork(it)
@@ -70,18 +71,18 @@ class MyChannelsViewModel @Inject constructor(channelsRepository: ChannelsReposi
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onSuccess = { (all, current, channelsProcessed) ->
                 if (all.isNotEmpty()) {
-                    channelsRepository.allChannels.clear()
-                    channelsRepository.allChannels.addAll(current)
+                    myChannelsRepository.allChannels.clear()
+                    myChannelsRepository.allChannels.addAll(current)
                     for (parent in channelsProcessed)
-                        channelsRepository.topics[parent.name] =
+                        myChannelsRepository.topics[parent.name] =
                             all.filter { it.parentChannel == parent.name }
-                    channelsRepository.currentChannels = current
+                    myChannelsRepository.currentChannels = current
                     _isLoading.value = false
                 } else {
                     _isLoading.value = true
                 }
                 if (isLoaded.value == false) {
-                    channelsRepository.queryGetChannels.onNext(Unit)
+                    myChannelsRepository.queryGetChannels.onNext(Unit)
                     _isLoaded.value = true
                 }
                 subscribeToDbUpdates()
@@ -89,19 +90,19 @@ class MyChannelsViewModel @Inject constructor(channelsRepository: ChannelsReposi
     }
 
     private fun subscribeToDbUpdates() {
-        channelsRepository.getMyChannelsFromDb()
+        myChannelsRepository.getMyChannelsFromDb()
             .map { dbList ->
                 val dbResponse = dbList.map {
                     convertChannelFromDbToNetwork(it)
                 }
-                DbResult(dbResponse,dbResponse.filter { !it.isTopic })
+                DbResult(dbResponse, dbResponse.filter { !it.isTopic })
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onNext = {
                 if (it.all.isNotEmpty()) {
-                    channelsRepository.allChannels.clear()
-                    channelsRepository.allChannels.addAll(it.channels)
-                    channelsRepository.currentChannels = it.channels
+                    myChannelsRepository.allChannels.clear()
+                    myChannelsRepository.allChannels.addAll(it.channels)
+                    myChannelsRepository.currentChannels = it.channels
                     _isLoading.value = false
                 }
             }, onError = {

@@ -7,7 +7,7 @@ import org.junit.Test
 
 class MyChannelsListTest : TestCase() {
     @Test
-    fun showMyChannelsAfterClick_Expands() = run {
+    fun showMyChannelsAfterClick_Expands_and_3rd_position_has_correct_name() = run {
         ActivityScenario.launch(MainActivity::class.java)
         step("Отображается список каналов") {
             MyChannelsScreen.channelsList.hasSize(2)
@@ -17,6 +17,9 @@ class MyChannelsListTest : TestCase() {
                 click()
             }
             MyChannelsScreen.channelsList.hasSize(5)
+            MyChannelsScreen.channelsList.childAt<MyChannelsScreen.ChannelItem>(2){
+                name.hasText("(no topic)")
+            }
         }
     }
 }

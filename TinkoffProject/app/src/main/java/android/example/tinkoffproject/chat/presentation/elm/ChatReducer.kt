@@ -7,6 +7,7 @@ import vivid.money.elmslie.core.store.dsl_reducer.ScreenDslReducer
 class ChatReducer :
     ScreenDslReducer<ChatEvent, Ui, Internal, ChatState,
             ChatEffect, ChatCommand>(Ui::class, Internal::class) {
+    private var messagePlaceholderIsSent = false
 
     override fun Result.internal(event: Internal) = when (event) {
         is Internal.InitLoaded -> {
@@ -15,10 +16,10 @@ class ChatReducer :
         is Internal.InitLoading -> {}
         is Internal.MessagesCleared -> {}
         is Internal.AdapterUpdated -> {
-            effects { +ChatEffect.AdapterUpdated(event.data) }
+            effects { +ChatEffect.AdapterUpdated(event.pagingData/*data*/) }
         }
         is Internal.MessagePlaceholderIsSent -> {
-            effects { +ChatEffect.MessagePlaceholderIsSent }
+            messagePlaceholderIsSent = true
         }
         is Internal.MessageIsSent -> {
             effects { +ChatEffect.MessageIsSent }
@@ -32,6 +33,11 @@ class ChatReducer :
     }
 
     override fun Result.ui(event: Ui) = when (event) {
+        is Ui.AdapterUpdated -> {
+            if (messagePlaceholderIsSent)
+                effects { +ChatEffect.MessagePlaceholderIsSent }
+            messagePlaceholderIsSent = false
+        }
         is Ui.AddReaction -> {
             commands {
                 +ChatCommand.AddReaction(

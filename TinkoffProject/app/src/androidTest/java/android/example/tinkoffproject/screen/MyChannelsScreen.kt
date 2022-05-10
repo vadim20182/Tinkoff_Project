@@ -6,6 +6,7 @@ import android.view.View
 import com.kaspersky.kaspresso.screens.KScreen
 import io.github.kakaocup.kakao.recycler.KRecyclerItem
 import io.github.kakaocup.kakao.recycler.KRecyclerView
+import io.github.kakaocup.kakao.text.KTextView
 import org.hamcrest.Matcher
 
 object MyChannelsScreen : KScreen<MyChannelsScreen>() {
@@ -19,5 +20,7 @@ object MyChannelsScreen : KScreen<MyChannelsScreen>() {
             },
             { itemType { ChannelItem(it) } })
 
-    class ChannelItem(parent: Matcher<View>) : KRecyclerItem<ChannelItem>(parent)
+    class ChannelItem(parent: Matcher<View>) : KRecyclerItem<ChannelItem>(parent) {
+        val name = KTextView(parent){withId(R.id.topic_item_name)}
+    }
 }

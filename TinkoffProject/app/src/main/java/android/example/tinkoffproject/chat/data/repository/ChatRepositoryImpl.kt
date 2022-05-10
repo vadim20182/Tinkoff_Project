@@ -1,4 +1,4 @@
-package android.example.tinkoffproject.chat.data
+package android.example.tinkoffproject.chat.data.repository
 
 import android.example.tinkoffproject.chat.data.db.MessageEntity
 import android.example.tinkoffproject.chat.data.db.MessagesDAO
@@ -20,14 +20,14 @@ import javax.inject.Inject
 import kotlin.random.Random
 
 @Chat
-class ChatRepository @Inject constructor(
+class ChatRepositoryImpl @Inject constructor(
     private val messagesDAO: MessagesDAO,
     private val remoteMediator: MessagesRemoteMediator,
-    val channel: String,
-    val topic: String,
+    override val channel: String,
+    override val topic: String,
     private val client: ApiService
-) {
-    fun getMessages(): Flowable<PagingData<MessageEntity>> {
+) : ChatRepository {
+    override fun getMessages(): Flowable<PagingData<MessageEntity>> {
         return Pager(
             config = PagingConfig(
                 pageSize = MessagesRemoteMediator.PAGE_SIZE,
@@ -39,20 +39,20 @@ class ChatRepository @Inject constructor(
             remoteMediator = remoteMediator,
             pagingSourceFactory = {
                 messagesDAO
-                    .messagesPagingSource(remoteMediator.stream, remoteMediator.topic)
+                    .messagesPagingSource(channel, topic)
             }
         ).flowable.share()
     }
 
-    fun getAllMessagesFromDb(channel: String, topic: String) =
+    override fun getAllMessagesFromDb(channel: String, topic: String) =
         messagesDAO.getAllMessages(channel, topic)
             .subscribeOn(Schedulers.io())
 
-    fun clearMessagesOnExit(channel: String, topic: String): Completable =
+    override fun clearMessagesOnExit(channel: String, topic: String): Completable =
         messagesDAO.clearCachedMessages(channel, topic)
             .subscribeOn(Schedulers.io())
 
-    fun sendMessage(messageText: String): Flowable<String> =
+    override fun sendMessage(messageText: String): Flowable<String> =
         client.sendPublicMessage(messageText, channel, topic)
             .concatWith {
                 client.getMessages(
@@ -65,7 +65,7 @@ class ChatRepository @Inject constructor(
                 )
             }
 
-    fun sendMessagePlaceholder(messageText: String) = messagesDAO.insertMessages(
+    override fun sendMessagePlaceholder(messageText: String) = messagesDAO.insertMessages(
         listOf(
             MessageEntity(
                 Random.nextInt(-20, -1),
@@ -82,7 +82,7 @@ class ChatRepository @Inject constructor(
     )
         .subscribeOn(Schedulers.io())
 
-    fun uploadFile(fileName: String, file: MultipartBody.Part): Flowable<String> =
+    override fun uploadFile(fileName: String, file: MultipartBody.Part): Flowable<String> =
         client.uploadFile(file)
             .flatMap { response ->
                 client.sendPublicMessage(
@@ -102,7 +102,7 @@ class ChatRepository @Inject constructor(
                 )
             }
 
-    fun reactionClicked(
+    override fun reactionClicked(
         emoji_name: String,
         messageId: Int
     ) = messagesDAO.getMessage(messageId)
@@ -134,7 +134,7 @@ class ChatRepository @Inject constructor(
         .subscribeOn(Schedulers.io())
 
 
-    fun addReaction(emoji_name: String, messageId: Int): Flowable<String> =
+    override fun addReaction(emoji_name: String, messageId: Int): Flowable<String> =
         client.addReaction(
             messageId,
             emoji_name,

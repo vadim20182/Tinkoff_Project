@@ -1,6 +1,6 @@
 package android.example.tinkoffproject.contacts.presentation
 
-import android.example.tinkoffproject.contacts.data.ContactsRepository
+import android.example.tinkoffproject.contacts.data.repository.ContactsRepository
 import android.example.tinkoffproject.utils.SingleLiveEvent
 import android.example.tinkoffproject.utils.convertContactFromDbToNetwork
 import android.example.tinkoffproject.utils.makeSearchObservable
@@ -17,7 +17,8 @@ import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class ContactsViewModel @Inject constructor(val contactsRepository: ContactsRepository) : ViewModel() {
+class ContactsViewModel @Inject constructor(val contactsRepository: ContactsRepository) :
+    ViewModel() {
     private val disposables = mutableMapOf<String, Disposable>()
     private val compositeDisposable = CompositeDisposable()
 

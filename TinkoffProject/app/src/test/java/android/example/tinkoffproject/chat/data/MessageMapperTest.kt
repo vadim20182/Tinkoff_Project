@@ -3,8 +3,8 @@ package android.example.tinkoffproject.chat.data
 import android.example.tinkoffproject.chat.data.network.UserMessage
 import android.example.tinkoffproject.network.NetworkCommon
 import android.example.tinkoffproject.utils.convertMessageFromNetworkToDb
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.Assert.*
 
 class MessageMapperTest {
     @Test

@@ -1,6 +1,6 @@
 package android.example.tinkoffproject.chat.presentation.elm
 
-import android.example.tinkoffproject.chat.data.ChatRepository
+import android.example.tinkoffproject.chat.data.repository.ChatRepository
 import android.example.tinkoffproject.chat.di.Chat
 import android.example.tinkoffproject.chat.presentation.elm.ChatEvent.Internal
 import io.reactivex.Observable
@@ -45,9 +45,10 @@ class ChatActor @Inject constructor(private val chatRepository: ChatRepository) 
             .mapEvents({ Internal.MessageUpdated(command.messageId) },
                 { error -> Internal.SomeError(error) })
         is ChatCommand.InitAdapter -> {
-            Observable.just(Internal.AdapterUpdated(chatRepository.getMessages()))
+            chatRepository.getMessages()
+                .toObservable()
                 .mapSuccessEvent {
-                    it
+                    Internal.AdapterUpdated(it)
                 }
         }
         is ChatCommand.InitLoad -> {

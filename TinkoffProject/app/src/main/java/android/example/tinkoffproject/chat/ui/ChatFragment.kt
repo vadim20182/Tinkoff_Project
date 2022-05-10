@@ -9,6 +9,7 @@ import android.content.Intent
 import android.example.tinkoffproject.R
 import android.example.tinkoffproject.chat.data.db.MessagesRemoteMediator
 import android.example.tinkoffproject.chat.di.DaggerChatComponent
+import android.example.tinkoffproject.chat.presentation.ChatViewModel
 import android.example.tinkoffproject.chat.presentation.elm.ChatEffect
 import android.example.tinkoffproject.chat.presentation.elm.ChatEvent
 import android.example.tinkoffproject.chat.presentation.elm.ChatState
@@ -32,6 +33,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.net.toFile
 import androidx.core.view.children
 import androidx.core.view.isEmpty
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -41,7 +43,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.addTo
 import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -65,12 +66,11 @@ class ChatFragment :
         MessageAsyncAdapter(this)
     }
 
-    private var messagePlaceholderIsSent = false
-
     override val initEvent: ChatEvent = ChatEvent.Ui.InitLoad
 
-    override fun createStore(): Store<ChatEvent, ChatEffect, ChatState> =
-        chatStoreFactory.provide()
+    private val viewModel: ChatViewModel by viewModels()
+
+    override fun createStore(): Store<ChatEvent, ChatEffect, ChatState> = chatStoreFactory.provide()
 
     override fun render(state: ChatState) {
         if (state.isLoading) {
@@ -85,13 +85,10 @@ class ChatFragment :
     override fun handleEffect(effect: ChatEffect) {
         when (effect) {
             is ChatEffect.AdapterUpdated -> {
-                effect.data
-                    .subscribe {
-                        messagesAdapter.submitData(lifecycle, it)
-                    }.addTo(compositeDisposable)
+                messagesAdapter.submitData(lifecycle, effect.pagingData)
             }
             is ChatEffect.MessagePlaceholderIsSent -> {
-                messagePlaceholderIsSent = true
+                recyclerView.scrollToPosition(0)
             }
             is ChatEffect.MessageIsSent -> {
                 MessagesRemoteMediator.MESSAGE_ANCHOR_TO_UPDATE =
@@ -135,22 +132,21 @@ class ChatFragment :
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        DaggerChatComponent.factory().create(
-            requireArguments().getString(
-                ARG_CHANNEL_NAME
-            )!!, requireArguments().getString(ARG_TOPIC_NAME)!!,
-            this.requireActivity().getComponent()
-        ).inject(this)
+
+        if (viewModel.chatComponent == null) {
+            viewModel.chatComponent = DaggerChatComponent.factory().create(
+                requireStringArgs(ARG_CHANNEL_NAME),
+                requireStringArgs(ARG_TOPIC_NAME),
+                this.requireActivity().getComponent()
+            )
+        }
+        viewModel.chatComponent?.inject(this)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         messagesAdapter.addOnPagesUpdatedListener {
-            if (messagePlaceholderIsSent) {
-                recyclerView.scrollToPosition(0)
-                messagePlaceholderIsSent = false
-            }
+            store.accept(ChatEvent.Ui.AdapterUpdated)
         }
 
         val itemDecoration = MessageCustomItemDecoration(
@@ -212,6 +208,12 @@ class ChatFragment :
 
     override fun onLinkClicked(link: String) {
         downloadFile(link)
+    }
+
+    private fun requireStringArgs(argKey: String): String {
+        return requireArguments().getString(
+            argKey
+        ) ?: throw NullPointerException("No arguments with such name passed")
     }
 
     private fun showBottomSheetDialog(messageId: Int) {

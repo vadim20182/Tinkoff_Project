@@ -17,8 +17,8 @@ import javax.inject.Inject
 @Chat
 class MessagesRemoteMediator @Inject constructor(
     private val database: AppDatabase,
-    val stream: String,
-    val topic: String,
+    private val stream: String,
+    private val topic: String,
     private val client: ApiService
 ) : RxRemoteMediator<Int, MessageEntity>() {
 

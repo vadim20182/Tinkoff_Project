@@ -1,4 +1,4 @@
-package android.example.tinkoffproject.contacts.data
+package android.example.tinkoffproject.contacts.data.repository
 
 import android.example.tinkoffproject.contacts.data.db.ContactEntity
 import android.example.tinkoffproject.contacts.data.db.ContactsDAO
@@ -17,16 +17,16 @@ import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
 @Contacts
-class ContactsRepository @Inject constructor(
+class ContactsRepositoryImpl @Inject constructor(
     private val contactsDAO: ContactsDAO,
     private val client: ApiService
-) {
-    val queryGetUsers: PublishSubject<Unit> by lazy { makePublishSubject<Unit>() }
-    val queryGetUserPresence: PublishSubject<Pair<ContactItem, List<ContactItem>>> by lazy { makePublishSubject<Pair<ContactItem, List<ContactItem>>>() }
-    val querySearch = PublishSubject.create<String>()
-    val queryReset = PublishSubject.create<String>()
+) : ContactsRepository {
+    override val queryGetUsers: PublishSubject<Unit> by lazy { makePublishSubject<Unit>() }
+    override val queryGetUserPresence: PublishSubject<Pair<ContactItem, List<ContactItem>>> by lazy { makePublishSubject<Pair<ContactItem, List<ContactItem>>>() }
+    override val querySearch = PublishSubject.create<String>()
+    override val queryReset = PublishSubject.create<String>()
 
-    val getUsersObservable: Observable<List<ContactItem>> = queryGetUsers
+    override val getUsersObservable: Observable<List<ContactItem>> = queryGetUsers
         .observeOn(Schedulers.io())
         .switchMapSingle {
             client.getUsers()
@@ -45,7 +45,7 @@ class ContactsRepository @Inject constructor(
             contacts
         }
 
-    val getUsersPresenceObservable: Flowable<Int> = queryGetUserPresence
+    override val getUsersPresenceObservable: Flowable<Int> = queryGetUserPresence
         .observeOn(Schedulers.io())
         .toFlowable(BackpressureStrategy.BUFFER)
         .onBackpressureBuffer(3000)
@@ -60,42 +60,42 @@ class ContactsRepository @Inject constructor(
                 }
         }
 
-    val resetSearchObservable = queryReset
+    override val resetSearchObservable = queryReset
         .observeOn(Schedulers.io())
         .switchMapSingle { input ->
             Single.fromCallable { filterContacts(input) }
                 .subscribeOn(Schedulers.io())
         }
 
-    val allContacts = mutableListOf<ContactItem>()
+    override val allContacts = mutableListOf<ContactItem>()
 
-    var currentContacts: List<ContactItem> = emptyList()
+    override var currentContacts: List<ContactItem> = emptyList()
 
 
-    fun loadContactsFromDb() =
+    override fun loadContactsFromDb() =
         contactsDAO.loadAllContacts()
             .subscribeOn(Schedulers.io())
 
-    fun getContactsFromDb() =
+    override fun getContactsFromDb() =
         contactsDAO.getAllContacts()
             .subscribeOn(Schedulers.io())
 
-    private fun insertContactsReplace(contacts: List<ContactEntity>): Disposable =
+    override fun insertContactsReplace(contacts: List<ContactEntity>): Disposable =
         contactsDAO.insertContacts(contacts)
             .subscribeOn(Schedulers.io())
             .subscribe()
 
-    private fun updateContacts(contacts: List<ContactEntity>): Disposable =
+    override fun updateContacts(contacts: List<ContactEntity>): Disposable =
         contactsDAO.updateContacts(contacts)
             .subscribeOn(Schedulers.io())
             .subscribe()
 
-    fun removeStatusFromContacts(): Disposable =
+    override fun removeStatusFromContacts(): Disposable =
         contactsDAO.removeContactsStatus()
             .subscribeOn(Schedulers.io())
             .subscribe()
 
-    fun filterContacts(input: String) =
+    override fun filterContacts(input: String) =
         allContacts.filter {
             it.name.contains(
                 Regex(
