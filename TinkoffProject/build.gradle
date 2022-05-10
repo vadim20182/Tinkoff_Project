@@ -41,4 +41,6 @@ ext {
     archCoreTesting = '2.1.0'
     androidXjunit = '1.1.3'
     kaspressoComponents = '1.2.1'
+    mockito = '4.5.1'
+    mockitoKotlin = '4.0.0'
 }

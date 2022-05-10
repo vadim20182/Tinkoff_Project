@@ -10,7 +10,7 @@ import io.reactivex.schedulers.Schedulers
 import okhttp3.MultipartBody
 
 class ChatRepositoryStub(
-    private val messagesDAO: MessagesDAO,
+    private val messagesDAO: MessagesDAO
 ) : ChatRepository {
     override val channel: String = "default"
     override val topic: String = "default"

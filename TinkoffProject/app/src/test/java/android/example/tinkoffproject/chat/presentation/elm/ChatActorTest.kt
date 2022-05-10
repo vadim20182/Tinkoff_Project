@@ -8,6 +8,10 @@ import android.example.tinkoffproject.utils.RxRule
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.spy
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 
 class ChatActorTest {
     @get:Rule
@@ -18,15 +22,16 @@ class ChatActorTest {
 
     @Test
     fun `command{ClearMessages} successfully completes`() {
-        val messagesDAOStub = MessagesDAOStub()
 
-        val chatRepository = createChatRepository(messagesDAO = messagesDAOStub)
-        val chatActor = createChatActor(chatRepository)
+        val spyChatRepository = spy(createChatRepository(messagesDAO = MessagesDAOStub()))
+        val chatActor = createChatActor(spyChatRepository)
 
         chatActor.execute(ChatCommand.ClearMessages)
             .test()
             .assertResult(ChatEvent.Internal.MessagesCleared)
             .dispose()
+
+        verify(spyChatRepository, times(1)).clearMessagesOnExit("default", "default")
     }
 
     private fun createChatRepository(

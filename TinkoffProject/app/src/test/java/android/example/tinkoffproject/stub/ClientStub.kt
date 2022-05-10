@@ -14,6 +14,10 @@ import okhttp3.MultipartBody
 import org.json.JSONArray
 
 class ClientStub : ApiService {
+    override fun createChannel(filter: JSONArray): Single<String> {
+        TODO("Not yet implemented")
+    }
+
     override fun getAllStreams(): Single<GetChannelsResponse> {
         TODO("Not yet implemented")
     }
