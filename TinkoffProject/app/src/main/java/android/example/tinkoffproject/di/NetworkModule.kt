@@ -15,7 +15,7 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 import javax.inject.Singleton
 
 @Module
-class NetworkModule {
+object NetworkModule {
 
     @Singleton
     @Provides

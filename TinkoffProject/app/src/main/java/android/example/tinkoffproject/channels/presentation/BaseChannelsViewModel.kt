@@ -1,8 +1,9 @@
 package android.example.tinkoffproject.channels.presentation
 
 import android.example.tinkoffproject.channels.data.network.ChannelItem
-import android.example.tinkoffproject.channels.data.repository.ChannelsRepository
+import android.example.tinkoffproject.channels.data.repository.tabs.ChannelsRepository
 import android.example.tinkoffproject.utils.SingleLiveEvent
+import android.example.tinkoffproject.utils.displayErrorMessage
 import android.example.tinkoffproject.utils.makeSearchObservable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -60,6 +61,31 @@ abstract class BaseChannelsViewModel(val channelsRepository: ChannelsRepository)
 
     protected abstract fun subscribeGetTopics()
 
+    protected fun subscribeAddChannel() {
+        disposables[KEY_ADD_CHANNEL]?.dispose()
+        disposables[KEY_ADD_CHANNEL] = channelsRepository.addChannelObservable
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onNext = {
+                _isLoaded.value = false
+                loadChannels()
+            })
+    }
+
+    protected fun subscribeRefresh() {
+        disposables[KEY_REFRESH]?.dispose()
+        disposables[KEY_REFRESH] = channelsRepository.refreshObservable
+            .throttleFirst(4000, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onNext = {
+                subscribeGetChannels()
+                subscribeGetTopics()
+                _isLoaded.value = false
+                loadChannels()
+            }, onError = {
+                _errorMessage.value = displayErrorMessage(it, "Ошибка при обновлении списка")
+            })
+    }
+
     protected fun subscribeToSearch() {
         disposables[KEY_SEARCH] =
             makeSearchObservable(channelsRepository.searchObservable) { resetSearch() }
@@ -75,8 +101,7 @@ abstract class BaseChannelsViewModel(val channelsRepository: ChannelsRepository)
                     onNext = {
                         channelsRepository.currentChannels = it
                         _isLoading.value = false
-                    }, onError = {
-                    })
+                    }, onError = {})
     }
 
     private fun subscribeReset() {
@@ -88,8 +113,7 @@ abstract class BaseChannelsViewModel(val channelsRepository: ChannelsRepository)
                     _isLoading.value = false
                     subscribeToSearch()
                     compositeDisposable.clear()
-                }, onError = {
-                })
+                }, onError = {})
             .addTo(compositeDisposable)
     }
 
@@ -125,6 +149,16 @@ abstract class BaseChannelsViewModel(val channelsRepository: ChannelsRepository)
         private const val KEY_CLICK_CHANNEL = "channel_click"
         private const val KEY_SEARCH = "search"
         private const val KEY_INPUT = "input"
+        private const val KEY_ADD_CHANNEL = "add_channel"
+        private const val KEY_REFRESH = "refresh"
+        const val KEY_GET_MY_TOPICS = "get my topics"
+        const val KEY_GET_MY_CHANNELS = "get my channels"
+        const val KEY_LOAD_MY_CHANNELS = "load my channels"
+        const val KEY_LOAD_ALL_CHANNELS = "load all channels"
+        const val KEY_GET_ALL_TOPICS = "get all topics"
+        const val KEY_GET_ALL_CHANNELS = "get all channels"
+        const val KEY_ALL_SUBSCRIBE_TO_DB = "subscribe to db all"
+        const val KEY_MY_SUBSCRIBE_TO_DB = "subscribe to db my"
     }
 
     protected class DbResult(val all: List<ChannelItem>, val channels: List<ChannelItem>)

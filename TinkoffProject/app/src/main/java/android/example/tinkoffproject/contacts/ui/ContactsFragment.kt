@@ -21,6 +21,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.Single
@@ -41,7 +42,11 @@ class ContactsFragment : Fragment(R.layout.fragment_contacts),
 
     private val viewModel: ContactsViewModel by viewModels { viewModelFactory }
 
-    private val contactsAdapter: ContactsAdapter by lazy { ContactsAdapter(this) }
+    private val contactsAdapter: ContactsAdapter by lazy {
+        ContactsAdapter(this).apply {
+            stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+        }
+    }
     private val navController: NavController by lazy {
         var parent = parentFragment
         var navController = findNavController()
@@ -66,6 +71,13 @@ class ContactsFragment : Fragment(R.layout.fragment_contacts),
         val recyclerView = view.findViewById<RecyclerView>(R.id.recycler_view_contacts)
         val shimmer = view.findViewById<ShimmerFrameLayout>(R.id.shimmer_contacts_view)
         val queryUpdateItems = PublishSubject.create<Boolean>()
+        val swipeRefresh = view.findViewById<SwipeRefreshLayout>(R.id.contacts_swipe_refresh)
+
+        swipeRefresh.setOnRefreshListener {
+            if (searchText.text.isBlank())
+                viewModel.refresh()
+            swipeRefresh.isRefreshing = false
+        }
 
         makeSearchDisposable(queryUpdateItems, shimmer, recyclerView)
             .addTo(compositeDisposable)

@@ -2,8 +2,10 @@ package android.example.tinkoffproject.utils
 
 import android.example.tinkoffproject.channels.data.db.ChannelEntity
 import android.example.tinkoffproject.channels.data.network.ChannelItem
-import android.example.tinkoffproject.chat.data.db.MessageEntity
-import android.example.tinkoffproject.chat.data.network.UserMessage
+import android.example.tinkoffproject.chat.channel.data.db.ChannelMessageEntity
+import android.example.tinkoffproject.chat.common.data.network.UserMessage
+import android.example.tinkoffproject.chat.common.ui.UiModel
+import android.example.tinkoffproject.chat.topic.data.db.TopicMessageEntity
 import android.example.tinkoffproject.contacts.data.db.ContactEntity
 import android.example.tinkoffproject.contacts.data.network.ContactItem
 import android.example.tinkoffproject.network.NetworkCommon
@@ -12,8 +14,10 @@ import androidx.core.text.HtmlCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.paging.PagingData
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
+import retrofit2.HttpException
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -32,6 +36,15 @@ fun makeSearchObservable(
 
 fun <T> makePublishSubject() = PublishSubject.create<T>()
 
+fun displayErrorMessage(error: Throwable, defaultMessage: String? = null): String =
+    if (error is HttpException)
+        when (error.code()) {
+            400 -> "Reaction already exists"
+            429 -> "Too many requests"
+            else -> defaultMessage ?: error.localizedMessage
+        }
+    else defaultMessage ?: error.localizedMessage
+
 fun convertChannelFromNetworkToDb(
     channelItem: ChannelItem, isMy: Boolean = false
 ): ChannelEntity {
@@ -45,6 +58,7 @@ fun convertChannelFromNetworkToDb(
     )
 }
 
+
 fun convertChannelFromDbToNetwork(channelEntity: ChannelEntity): ChannelItem {
     return ChannelItem(
         streamID = channelEntity.streamID,
@@ -55,15 +69,13 @@ fun convertChannelFromDbToNetwork(channelEntity: ChannelEntity): ChannelItem {
     )
 }
 
-fun convertMessageFromNetworkToDb(
-    userMessage: UserMessage,
-    topic: String,
-    channel: String
-): MessageEntity {
-    return MessageEntity(
+fun convertMessageFromNetworkToTopicChatDb(
+    userMessage: UserMessage
+): TopicMessageEntity {
+    return TopicMessageEntity(
         name = userMessage.name,
-        topicName = topic,
-        channelName = channel,
+        topicName = userMessage.topic,
+        channelName = userMessage.channel,
         selectedReactions = userMessage.selectedReactions,
         reactions = userMessage.reactions,
         isSent = userMessage.isSent,
@@ -77,20 +89,59 @@ fun convertMessageFromNetworkToDb(
     )
 }
 
-fun convertMessageFromDbToNetwork(
-    messageEntity: MessageEntity
-): UserMessage {
-    return UserMessage(
-        name = messageEntity.name,
-        selectedReactions = messageEntity.selectedReactions,
-        reactions = messageEntity.reactions,
-        isSent = messageEntity.isSent,
-        messageId = messageEntity.messageId,
-        date = messageEntity.date,
-        messageText = messageEntity.messageText,
-        avatarUrl = messageEntity.avatarUrl,
-        userId = messageEntity.userId,
-        fileLink = messageEntity.fileLink
+fun convertMessageFromNetworkToChannelChatDb(
+    userMessage: UserMessage
+): ChannelMessageEntity {
+    return ChannelMessageEntity(
+        name = userMessage.name,
+        topicName = userMessage.topic,
+        channelName = userMessage.channel,
+        selectedReactions = userMessage.selectedReactions,
+        reactions = userMessage.reactions,
+        isSent = userMessage.isSent,
+        messageId = userMessage.messageId,
+        date = userMessage.date,
+        messageText = userMessage.messageText,
+        avatarUrl = userMessage.avatarUrl,
+        userId = userMessage.userId,
+        fileLink = userMessage.fileLink,
+        isMyMessage = userMessage.userId == NetworkCommon.MY_USER_ID
+    )
+}
+
+fun convertChannelMessageFromDbToUi(channelMessageEntity: ChannelMessageEntity): UiModel.MessageItem {
+    return UiModel.MessageItem(
+        name = channelMessageEntity.name,
+        topicName = channelMessageEntity.topicName,
+        channelName = channelMessageEntity.channelName,
+        selectedReactions = channelMessageEntity.selectedReactions,
+        reactions = channelMessageEntity.reactions,
+        isSent = channelMessageEntity.isSent,
+        messageId = channelMessageEntity.messageId,
+        date = channelMessageEntity.date,
+        messageText = channelMessageEntity.messageText,
+        avatarUrl = channelMessageEntity.avatarUrl,
+        userId = channelMessageEntity.userId,
+        fileLink = channelMessageEntity.fileLink,
+        isMyMessage = channelMessageEntity.isMyMessage
+    )
+}
+
+fun convertTopicMessageFromDbToUi(topicMessageEntity: TopicMessageEntity): UiModel {
+    return UiModel.MessageItem(
+        name = topicMessageEntity.name,
+        topicName = topicMessageEntity.topicName,
+        channelName = topicMessageEntity.channelName,
+        selectedReactions = topicMessageEntity.selectedReactions,
+        reactions = topicMessageEntity.reactions,
+        isSent = topicMessageEntity.isSent,
+        messageId = topicMessageEntity.messageId,
+        date = topicMessageEntity.date,
+        messageText = topicMessageEntity.messageText,
+        avatarUrl = topicMessageEntity.avatarUrl,
+        userId = topicMessageEntity.userId,
+        fileLink = topicMessageEntity.fileLink,
+        isMyMessage = topicMessageEntity.isMyMessage
     )
 }
 
@@ -156,6 +207,8 @@ fun processMessagesFromNetwork(messagesResponse: List<UserMessage>): List<UserMe
     }
     return messagesProcessed
 }
+
+class MessagesFromDbInitLoad(val isNotEmpty: Boolean, val pagingData: PagingData<UiModel>)
 
 /**
  * A lifecycle-aware observable that sends only new updates after subscription, used for events like

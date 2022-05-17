@@ -11,7 +11,7 @@ class RxRule(
     private val scheduler: Scheduler = Schedulers.trampoline()
 ) : TestWatcher() {
 
-    override fun starting(description: Description?) {
+    override fun starting(description: Description) {
         super.starting(description)
 
         RxAndroidPlugins.setInitMainThreadSchedulerHandler { scheduler }
@@ -21,7 +21,7 @@ class RxRule(
         RxJavaPlugins.setNewThreadSchedulerHandler { scheduler }
     }
 
-    override fun finished(description: Description?) {
+    override fun finished(description: Description) {
         super.finished(description)
 
         RxJavaPlugins.reset()

@@ -29,7 +29,7 @@ interface ContactsRepository {
 
     fun getContactsFromDb(): Flowable<List<ContactEntity>>
 
-    fun insertContactsReplace(contacts: List<ContactEntity>): Disposable
+    fun insertAndRemoveOldContacts(contacts: List<ContactEntity>)
 
     fun updateContacts(contacts: List<ContactEntity>): Disposable
 

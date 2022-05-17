@@ -14,6 +14,14 @@ interface ContactsDAO {
     @Update
     fun updateContacts(contacts: List<ContactEntity>): Completable
 
+    @Transaction
+    fun insertAndRemoveInTransaction(contacts: List<ContactEntity>) {
+        clearOldContacts(contacts.map {
+            it.userId
+        }).subscribe()
+        insertContacts(contacts).subscribe()
+    }
+
     @Query("SELECT * FROM ${ContactEntity.TABLE_NAME} ORDER BY contact_name ASC")
     fun loadAllContacts(): Single<List<ContactEntity>>
 
@@ -22,4 +30,7 @@ interface ContactsDAO {
 
     @Query("UPDATE ${ContactEntity.TABLE_NAME} SET contact_status=:status")
     fun removeContactsStatus(status: String = "offline"): Completable
+
+    @Query("DELETE FROM ${ContactEntity.TABLE_NAME} WHERE contact_id NOT IN (:contactsIds)")
+    fun clearOldContacts(contactsIds: List<Int>): Completable
 }

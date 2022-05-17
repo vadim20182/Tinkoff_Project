@@ -93,7 +93,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                     .error(R.mipmap.avatar)
                     .into(userAvatar)
             }
-            getUserDisposable = profileInteractor.userObservable//getUserObservable
+            getUserDisposable = profileInteractor.userObservable
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(onNext = {
                     editor?.putString(KEY_NAME, it.user.name)
@@ -118,7 +118,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                     }.show()
                 })
 
-            getUserPresenceDisposable = profileInteractor.userPresenceObservable//getUserPresenceObservable
+            getUserPresenceDisposable = profileInteractor.userPresenceObservable
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(onNext = {
                     when (it.presence.clientType.status) {

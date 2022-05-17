@@ -5,8 +5,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_centerHorizontal="true"
     android:id="@+id/channel_item_layout"
-    android:clickable="true"
-    android:focusable="true"
     android:layout_height="wrap_content"
     android:orientation="horizontal">
 
@@ -20,6 +18,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:id="@+id/channel_item_clickable_layout"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/channel_item_name"
+        app:layout_constraintTop_toTopOf="parent">
+
     <ImageSwitcher
         android:id="@+id/channel_item_arrow"
         android:layout_marginEnd="@dimen/default_padding"
@@ -32,13 +41,13 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@android:drawable/arrow_down_float" />
+            android:src="@drawable/ic_channel_arrow" />
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@android:drawable/arrow_up_float" />
+            android:src="@drawable/ic_channel_arrow_expanded" />
     </ImageSwitcher>
-
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

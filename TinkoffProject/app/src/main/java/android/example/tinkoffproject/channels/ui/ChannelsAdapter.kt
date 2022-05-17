@@ -1,5 +1,9 @@
 package android.example.tinkoffproject.channels.ui
 
+import android.app.Application
+import android.content.res.Resources
+import android.example.tinkoffproject.App
+import android.example.tinkoffproject.R
 import android.example.tinkoffproject.channels.data.network.ChannelItem
 import android.example.tinkoffproject.databinding.ChannelItemBinding
 import android.example.tinkoffproject.databinding.TopicItemBinding
@@ -58,7 +62,7 @@ class ChannelsAdapter(
 
 
     interface OnItemClickedListener {
-        fun onItemClicked(position: Int, item: ChannelItem)
+        fun onItemClicked(position: Int, item: ChannelItem, view: View)
     }
 
     inner class DiffCallback(
@@ -94,7 +98,8 @@ private class ChildViewHolder(
         binding.topicItemLayout.setOnClickListener {
             onItemClickedListener.onItemClicked(
                 absoluteAdapterPosition,
-                item
+                item,
+                it
             )
         }
     }
@@ -105,16 +110,25 @@ private class HeaderViewHolder(
     private val onItemClickedListener: ChannelsAdapter.OnItemClickedListener
 ) : ChannelsBaseViewHolder(binding.root) {
     fun bind(item: ChannelItem) {
-        binding.channelItemName.text = item.name
+        binding.channelItemName.text =
+            App.appContext.getString(R.string.channel_name_item, item.name)
         if (item.isExpanded)
-            binding.channelItemArrow.setImageResource(android.R.drawable.arrow_up_float)
+            binding.channelItemArrow.setImageResource(R.drawable.ic_channel_arrow_expanded)
         else
-            binding.channelItemArrow.setImageResource(android.R.drawable.arrow_down_float)
-        binding.channelItemLayout.setOnClickListener {
+            binding.channelItemArrow.setImageResource(R.drawable.ic_channel_arrow)
+        binding.channelItemClickableLayout.setOnClickListener {
             binding.channelItemArrow.showNext()
             onItemClickedListener.onItemClicked(
                 absoluteAdapterPosition,
-                item
+                item,
+                it
+            )
+        }
+        binding.channelItemName.setOnClickListener {
+            onItemClickedListener.onItemClicked(
+                absoluteAdapterPosition,
+                item,
+                it
             )
         }
     }

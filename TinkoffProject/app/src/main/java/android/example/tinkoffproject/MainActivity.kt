@@ -15,6 +15,7 @@ import android.os.Environment
 import android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
 import android.view.Gravity
 import android.view.View
+import android.view.Window
 import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
@@ -119,6 +120,11 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
         connectivityManager.unregisterNetworkCallback(networkCallback)
     }
+}
+
+fun Activity.changeStatusBarColor(color: Int) {
+    val window: Window = this.window
+    window.statusBarColor = color
 }
 
 private class RequestReadAllFiles :

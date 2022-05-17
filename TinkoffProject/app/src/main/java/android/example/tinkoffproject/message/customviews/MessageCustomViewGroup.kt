@@ -23,7 +23,6 @@ class MessageCustomViewGroup @JvmOverloads constructor(
     private val innerPadding: Int
     private val messageInnerPadding: Int
 
-
     init {
         inflate(context, R.layout.message_custom_view_group_layout, this)
         with(context.obtainStyledAttributes(attrs, R.styleable.MessageCustomViewGroup))
@@ -154,7 +153,7 @@ class MessageCustomViewGroup @JvmOverloads constructor(
     override fun dispatchDraw(canvas: Canvas) {
         canvas.drawRoundRect(backgroundRect, 40f, 40f, Paint().apply {
             isAntiAlias = true
-            color = Color.parseColor("#2A3136")
+            color = resources.getColor(R.color.default_background_color, null)
 
         })
         super.dispatchDraw(canvas)

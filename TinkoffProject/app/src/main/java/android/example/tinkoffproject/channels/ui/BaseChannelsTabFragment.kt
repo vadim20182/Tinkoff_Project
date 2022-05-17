@@ -3,10 +3,12 @@ package android.example.tinkoffproject.channels.ui
 import android.example.tinkoffproject.R
 import android.example.tinkoffproject.channels.data.network.ChannelItem
 import android.example.tinkoffproject.channels.presentation.BaseChannelsViewModel
-import android.example.tinkoffproject.chat.ui.ChatFragment
+import android.example.tinkoffproject.chat.channel.ui.ChannelChatFragment
+import android.example.tinkoffproject.chat.topic.ui.TopicChatFragment
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
@@ -36,7 +38,11 @@ abstract class BaseChannelsTabFragment :
     protected abstract val recyclerView: RecyclerView
     protected abstract val shimmer: ShimmerFrameLayout
 
-    private val channelsAdapter: ChannelsAdapter by lazy { ChannelsAdapter(this) }
+    private val channelsAdapter: ChannelsAdapter by lazy {
+        ChannelsAdapter(this).apply {
+            stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+        }
+    }
     private val navController: NavController by lazy {
         var parent = parentFragment
         var navController = findNavController()
@@ -70,7 +76,7 @@ abstract class BaseChannelsTabFragment :
             }
             errorMessage.observe(viewLifecycleOwner) {
                 Snackbar.make(
-                    view,
+                    requireParentFragment().requireView(),
                     it,
                     Snackbar.LENGTH_SHORT
                 ).apply {
@@ -88,16 +94,25 @@ abstract class BaseChannelsTabFragment :
         recyclerView.addItemDecoration(DividerItemDecoration(context, RecyclerView.VERTICAL))
     }
 
-    override fun onItemClicked(position: Int, item: ChannelItem) {
-        if (item.isTopic) {
+    override fun onItemClicked(position: Int, item: ChannelItem, view: View) {
+        if (view !is TextView) {
+            if (item.isTopic) {
+                val bundle =
+                    bundleOf(
+                        TopicChatFragment.ARG_CHANNEL_NAME to item.parentChannel,
+                        TopicChatFragment.ARG_TOPIC_NAME to item.name
+                    )
+                navController.navigate(R.id.action_channelsFragment_to_topicChatFragment, bundle)
+            } else
+                viewModel.clickChannel(position)
+        } else {
             val bundle =
                 bundleOf(
-                    ChatFragment.ARG_CHANNEL_NAME to item.parentChannel,
-                    ChatFragment.ARG_TOPIC_NAME to item.name
+                    ChannelChatFragment.ARG_CHANNEL_NAME to item.name,
+                    ChannelChatFragment.ARG_CHANNEL_ID to item.streamID
                 )
-            navController.navigate(R.id.action_channelsFragment_to_chatFragment, bundle)
-        } else
-            viewModel.clickChannel(position)
+            navController.navigate(R.id.action_channelsFragment_to_channelChatFragment, bundle)
+        }
     }
 
     override fun onDestroyView() {
@@ -138,7 +153,6 @@ abstract class BaseChannelsTabFragment :
         .subscribeBy(onNext = {
             channelsAdapter.data = viewModel.channelsRepository.currentChannels
             it.diffResult.dispatchUpdatesTo(channelsAdapter)
-            recyclerView.scrollToPosition(0)
             if (!it.longLoadFlag) {
                 shimmer.visibility = View.GONE
                 recyclerView.visibility = View.VISIBLE

@@ -12,6 +12,9 @@ class MainFragment : Fragment(R.layout.fragment_main) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        this.requireActivity().changeStatusBarColor(
+            resources.getColor(R.color.default_dark_color, null)
+        )
 
         val bottomNavigationView = view.findViewById<BottomNavigationView>(R.id.bottomNavigation)
         val navController =

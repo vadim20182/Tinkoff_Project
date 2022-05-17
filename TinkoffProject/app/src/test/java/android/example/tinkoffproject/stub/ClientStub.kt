@@ -1,10 +1,12 @@
 package android.example.tinkoffproject.stub
 
 import android.example.tinkoffproject.channels.data.network.GetChannelsResponse
+import android.example.tinkoffproject.channels.data.network.GetSubscribedChannelsResponse
 import android.example.tinkoffproject.channels.data.network.GetTopicsResponse
 import android.example.tinkoffproject.channels.data.network.SubscriptionStatus
-import android.example.tinkoffproject.chat.data.network.FileResponse
-import android.example.tinkoffproject.chat.data.network.GetMessagesResponse
+import android.example.tinkoffproject.chat.common.data.network.FileResponse
+import android.example.tinkoffproject.chat.common.data.network.GetMessagesResponse
+import android.example.tinkoffproject.chat.common.data.network.GetSingleMessageResponse
 import android.example.tinkoffproject.contacts.data.network.GetPresenceResponse
 import android.example.tinkoffproject.contacts.data.network.GetUsersResponse
 import android.example.tinkoffproject.contacts.data.network.UserResponse
@@ -14,6 +16,18 @@ import okhttp3.MultipartBody
 import org.json.JSONArray
 
 class ClientStub : ApiService {
+    override fun editMessageText(msgID: Int, messageText: String): Single<String> {
+        TODO("Not yet implemented")
+    }
+
+    override fun changeMessageTopic(msgID: Int, topic: String): Single<String> {
+        TODO("Not yet implemented")
+    }
+
+    override fun deleteMessage(msgID: Int): Single<String> {
+        TODO("Not yet implemented")
+    }
+
     override fun createChannel(filter: JSONArray): Single<String> {
         TODO("Not yet implemented")
     }
@@ -26,11 +40,7 @@ class ClientStub : ApiService {
         TODO("Not yet implemented")
     }
 
-    override fun getSubscribedStreams(): Single<GetChannelsResponse> {
-        TODO("Not yet implemented")
-    }
-
-    override fun getStreamID(stream: String): Single<String> {
+    override fun getSubscribedStreams(): Single<GetSubscribedChannelsResponse> {
         TODO("Not yet implemented")
     }
 
@@ -60,7 +70,7 @@ class ClientStub : ApiService {
     }
 
     override fun getMessagesWithAnchor(
-        filter: JSONArray,
+        filter: JSONArray?,
         numBefore: Int,
         numAfter: Int,
         anchor: Int
@@ -68,7 +78,7 @@ class ClientStub : ApiService {
         TODO("Not yet implemented")
     }
 
-    override fun getSingleMessage(msgID: Int): Single<String> {
+    override fun getSingleMessage(msgID: Int): Single<GetSingleMessageResponse> {
         TODO("Not yet implemented")
     }
 
@@ -78,10 +88,6 @@ class ClientStub : ApiService {
         topic: String,
         type: String
     ): Single<String> {
-        TODO("Not yet implemented")
-    }
-
-    override fun sendPrivateMessage(message: String, to: String, type: String): Single<String> {
         TODO("Not yet implemented")
     }
 

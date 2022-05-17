@@ -26,4 +26,8 @@
     <declare-styleable name="MessageInputCustomViewGroup">
         <attr name="messageInputCustomViewGroupInnerPadding" format="dimension" />
     </declare-styleable>
+
+    <declare-styleable name="TopicInputCustomViewGroup">
+        <attr name="topicInputCustomViewGroupInnerPadding" format="dimension" />
+    </declare-styleable>
 </resources>

@@ -1,8 +1,8 @@
 package android.example.tinkoffproject.channels.di.my
 
 import android.example.tinkoffproject.channels.data.db.ChannelsDAO
-import android.example.tinkoffproject.channels.data.repository.ChannelsRepository
-import android.example.tinkoffproject.channels.data.repository.MyChannelsRepositoryImpl
+import android.example.tinkoffproject.channels.data.repository.tabs.ChannelsRepository
+import android.example.tinkoffproject.channels.data.repository.tabs.MyChannelsRepositoryImpl
 import android.example.tinkoffproject.channels.presentation.my.MyChannelsViewModel
 import android.example.tinkoffproject.database.AppDatabase
 import android.example.tinkoffproject.di.ViewModelKey

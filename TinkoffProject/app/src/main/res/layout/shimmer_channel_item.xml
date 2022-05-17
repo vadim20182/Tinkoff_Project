@@ -12,7 +12,7 @@
         android:layout_marginTop="@dimen/default_padding"
         android:layout_marginBottom="@dimen/default_padding"
         android:layout_width="match_parent"
-        android:layout_height="25sp"
+        android:layout_height="@dimen/default_text_size_search_and_tabs"
         android:background="@color/default_dark_color"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

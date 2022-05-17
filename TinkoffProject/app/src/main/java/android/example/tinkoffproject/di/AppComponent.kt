@@ -3,6 +3,7 @@ package android.example.tinkoffproject.di
 import android.content.Context
 import android.example.tinkoffproject.MainActivity
 import android.example.tinkoffproject.channels.di.all.AllChannelsComponent
+import android.example.tinkoffproject.channels.di.main.MainChannelsComponent
 import android.example.tinkoffproject.channels.di.my.MyChannelsComponent
 import android.example.tinkoffproject.contacts.di.ContactsComponent
 import android.example.tinkoffproject.database.AppDatabase
@@ -27,6 +28,7 @@ interface AppComponent {
     fun myChannelsComponent(): MyChannelsComponent.Factory
     fun allChannelsComponent(): AllChannelsComponent.Factory
     fun contactsComponent(): ContactsComponent.Factory
+    fun mainChannelsComponent(): MainChannelsComponent.Factory
 
     @Component.Factory
     interface Factory {
@@ -41,7 +43,8 @@ interface AppComponent {
     subcomponents = [
         MyChannelsComponent::class,
         AllChannelsComponent::class,
-        ContactsComponent::class
+        ContactsComponent::class,
+        MainChannelsComponent::class
     ]
 )
 object SubcomponentsModule

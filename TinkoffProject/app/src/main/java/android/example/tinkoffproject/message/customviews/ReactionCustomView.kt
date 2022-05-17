@@ -93,7 +93,7 @@ class ReactionCustomView @JvmOverloads constructor(
             textPaint.getTextBounds(text, 0, text.length, tempBounds)
             addEmojiBitmap =
                 Bitmap.createScaledBitmap(src, tempBounds.height(), tempBounds.height(), false)
-            backgroundRectPaint.color = Color.parseColor("#2A3136")
+            backgroundRectPaint.color = resources.getColor(R.color.default_background_color, null)
         }
 
         val contentWidth = tempBounds.width()

@@ -3,6 +3,7 @@ package android.example.tinkoffproject.contacts.presentation
 import android.example.tinkoffproject.contacts.data.repository.ContactsRepository
 import android.example.tinkoffproject.utils.SingleLiveEvent
 import android.example.tinkoffproject.utils.convertContactFromDbToNetwork
+import android.example.tinkoffproject.utils.displayErrorMessage
 import android.example.tinkoffproject.utils.makeSearchObservable
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -14,6 +15,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -42,6 +44,7 @@ class ContactsViewModel @Inject constructor(val contactsRepository: ContactsRepo
         subscribeSearch()
         subscribeGetUsers()
         subscribeGetUserPresence()
+        subscribeRefresh()
         _isLoaded.value = false
     }
 
@@ -59,7 +62,7 @@ class ContactsViewModel @Inject constructor(val contactsRepository: ContactsRepo
                 for (user in tempContacts)
                     contactsRepository.queryGetUserPresence.onNext(Pair(user, tempContacts))
             }, onError = {
-                _errorMessage.value = "Ошибка при загрузке пользователей"
+                _errorMessage.value = displayErrorMessage(it, "Ошибка при загрузке пользователей")
                 subscribeGetUsers()
             })
     }
@@ -76,7 +79,7 @@ class ContactsViewModel @Inject constructor(val contactsRepository: ContactsRepo
                 },
                 onError = {
                     _errorMessage.value =
-                        "Ошибка при загрузке пользователей"
+                        displayErrorMessage(it, "Ошибка при загрузке статуса пользователей")
                     subscribeGetUserPresence()
                 })
     }
@@ -134,33 +137,36 @@ class ContactsViewModel @Inject constructor(val contactsRepository: ContactsRepo
     }
 
     fun loadContacts() {
-        contactsRepository.loadContactsFromDb()
-            .map { dbList ->
-                dbList.map {
-                    convertContactFromDbToNetwork(it)
+        disposables[KEY_LOAD_CONTACTS]?.dispose()
+        disposables[KEY_LOAD_CONTACTS] =
+            contactsRepository.loadContactsFromDb()
+                .map { dbList ->
+                    dbList.map {
+                        convertContactFromDbToNetwork(it)
+                    }
                 }
-            }
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onSuccess = { all ->
-                if (all.isNotEmpty()) {
-                    contactsRepository.allContacts.clear()
-                    contactsRepository.allContacts.addAll(all)
-                    contactsRepository.currentContacts = all
-                    _isLoading.value = false
-                } else {
-                    _isLoading.value = true
-                }
-                if (isLoaded.value == false) {
-                    contactsRepository.queryGetUsers.onNext(Unit)
-                    _isLoaded.value = true
-                }
-                subscribeToDbUpdates()
-            }, onError = {
-            }).addTo(compositeDisposable)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(onSuccess = { all ->
+                    if (all.isNotEmpty()) {
+                        contactsRepository.allContacts.clear()
+                        contactsRepository.allContacts.addAll(all)
+                        contactsRepository.currentContacts = all
+                        _isLoading.value = false
+                    } else {
+                        _isLoading.value = true
+                    }
+                    if (isLoaded.value == false) {
+                        contactsRepository.queryGetUsers.onNext(Unit)
+                        _isLoaded.value = true
+                    }
+                    subscribeToDbUpdates()
+                }, onError = {
+                }).addTo(compositeDisposable)
     }
 
     private fun subscribeToDbUpdates() {
-        contactsRepository.getContactsFromDb()
+        disposables[KEY_SUBSCRIBE_TO_DB]?.dispose()
+        disposables[KEY_SUBSCRIBE_TO_DB] = contactsRepository.getContactsFromDb()
             .map { dbList ->
                 val dbResponse = dbList.map {
                     convertContactFromDbToNetwork(it)
@@ -179,6 +185,26 @@ class ContactsViewModel @Inject constructor(val contactsRepository: ContactsRepo
             }).addTo(compositeDisposable)
     }
 
+    private fun subscribeRefresh() {
+        disposables[KEY_REFRESH]?.dispose()
+        disposables[KEY_REFRESH] = queryRefresh
+            .throttleFirst(4000, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onNext = {
+                subscribeGetUsers()
+                subscribeGetUserPresence()
+                _isLoaded.value = false
+                loadContacts()
+            }, onError = {
+                _errorMessage.value =
+                    displayErrorMessage(it, "Ошибка при обновлении списка контактов")
+            })
+    }
+
+    fun refresh() {
+        queryRefresh.onNext(Unit)
+    }
+
     override fun onCleared() {
         contactsRepository.removeStatusFromContacts()
         for (key in disposables.keys)
@@ -190,5 +216,9 @@ class ContactsViewModel @Inject constructor(val contactsRepository: ContactsRepo
         private const val KEY_SEARCH = "search contact"
         private const val KEY_GET_USERS = "get users"
         private const val KEY_GET_PRESENCE = "get presence"
+        private const val KEY_LOAD_CONTACTS = "load contacts"
+        private const val KEY_REFRESH = "refresh contacts"
+        private const val KEY_SUBSCRIBE_TO_DB = "subscribe to db"
+        val queryRefresh = PublishSubject.create<Unit>()
     }
 }

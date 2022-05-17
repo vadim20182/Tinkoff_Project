@@ -1,8 +1,8 @@
 package android.example.tinkoffproject.chat.data
 
-import android.example.tinkoffproject.chat.data.network.UserMessage
+import android.example.tinkoffproject.chat.common.data.network.UserMessage
 import android.example.tinkoffproject.network.NetworkCommon
-import android.example.tinkoffproject.utils.convertMessageFromNetworkToDb
+import android.example.tinkoffproject.utils.convertMessageFromNetworkToTopicChatDb
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -10,7 +10,7 @@ class MessageMapperTest {
     @Test
     fun `networkToDb by default return messageEntity`() {
         val networkMessage = createUserMessage()
-        val messageDb = convertMessageFromNetworkToDb(networkMessage, "default", "default")
+        val messageDb = convertMessageFromNetworkToTopicChatDb(networkMessage)
 
         assertEquals(1, messageDb.userId)
         assertEquals("Ivan", messageDb.name)
@@ -22,7 +22,7 @@ class MessageMapperTest {
     @Test
     fun `networkToDb for userId MY_USER_ID returns isMyMessage true`() {
         val networkMessage = createUserMessage(userId = NetworkCommon.MY_USER_ID)
-        val messageDb = convertMessageFromNetworkToDb(networkMessage, "default", "default")
+        val messageDb = convertMessageFromNetworkToTopicChatDb(networkMessage)
 
         assertEquals(true, messageDb.isMyMessage)
     }
@@ -31,7 +31,7 @@ class MessageMapperTest {
     fun `networkToDb for 2 different reactions returns map of reactions size 2`() {
         val networkMessage =
             createUserMessage(reactions = mutableMapOf(Pair("grinning", 1), Pair("smiley", 2)))
-        val messageDb = convertMessageFromNetworkToDb(networkMessage, "default", "default")
+        val messageDb = convertMessageFromNetworkToTopicChatDb(networkMessage)
 
         assertEquals(2, messageDb.reactions.size)
     }
@@ -39,7 +39,7 @@ class MessageMapperTest {
     @Test
     fun `networkToDb by default returns empty map of reactions`() {
         val networkMessage = createUserMessage()
-        val messageDb = convertMessageFromNetworkToDb(networkMessage, "default", "default")
+        val messageDb = convertMessageFromNetworkToTopicChatDb(networkMessage)
 
         assertEquals(true, messageDb.reactions.isEmpty())
     }
@@ -57,6 +57,8 @@ class MessageMapperTest {
         messageText = messageText,
         date = date,
         messageId = messageId,
-        reactions = reactions
+        reactions = reactions,
+        topic = "default",
+        channel = "default"
     )
 }

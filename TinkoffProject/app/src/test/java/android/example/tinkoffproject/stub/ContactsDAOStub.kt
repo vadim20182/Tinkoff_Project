@@ -26,4 +26,8 @@ class ContactsDAOStub(private val contact: ContactEntity) : ContactsDAO {
     override fun removeContactsStatus(status: String): Completable {
         TODO("Not yet implemented")
     }
+
+    override fun clearOldContacts(contactsIds: List<Int>): Completable {
+        TODO("Not yet implemented")
+    }
 }

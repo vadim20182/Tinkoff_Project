@@ -6,7 +6,15 @@
     <dimen name="message_big_margin">140dp</dimen>
     <dimen name="message_small_margin">10dp</dimen>
     <dimen name="default_text_size_small">14sp</dimen>
+    <dimen name="default_text_size_search_and_tabs">25sp</dimen>
     <dimen name="contact_item_avatar_size">70dp</dimen>
-    <dimen name="profile_avatar_size">100dp</dimen>
+    <dimen name="profile_avatar_size">150dp</dimen>
     <dimen name="message_loading_item_height">50dp</dimen>
+    <dimen name="contact_search_default_padding">10dp</dimen>
+    <dimen name="channel_chat_separator_label_padding">5dp</dimen>
+    <dimen name="default_message_bottom_sheet_padding">5dp</dimen>
+    <dimen name="default_message_bottom_sheet_icon_size">75dp</dimen>
+
+
+
 </resources>

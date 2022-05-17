@@ -2,7 +2,9 @@
     <string name="app_name">Tinkoff Project</string>
     <string name="message_input_hint">Написать...</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="topic_name">Topic: %1$s</string>
+    <string name="topic_name">Topic: #%1$s</string>
+    <string name="channel_name_item">#%1$s</string>
+    <string name="toolbar_chat_title">#%1$s</string>
     <string name="log_out">Log out</string>
     <string name="users_input_hint">Users...</string>
     <string name="search_input_hint">Search...</string>
@@ -16,4 +18,22 @@
     <string name="network_is_lost">Network is lost</string>
     <string name="network_is_unavailable">Network is unavailable</string>
     <string name="message_loading_item_text">Сообщение загружается...</string>
+    <string name="add_channel_dialog_title">Create new channel</string>
+    <string name="edit_message_dialog_title">Edit message</string>
+    <string name="change_topic_for_message_dialog_title">Change topic</string>
+    <string name="change_topic_for_message_confirm">Confirm</string>
+    <string name="edit_message_dialog_confirm">Edit</string>
+    <string name="delete_message_dialog_title">Delete message?</string>
+    <string name="delete_message_dialog_confirm">Yes</string>
+    <string name="delete_message_dialog_decline">No</string>
+    <string name="create_channel_button">Create</string>
+    <string name="cancel_dialog_button">Cancel</string>
+    <string name="input_channel_name_hint">Channel name...</string>
+    <string name="input_channel_description_hint">Description...</string>
+    <string name="input_topic_hint">Topic...</string>
+    <string name="edit_message_hint">Edit...</string>
+    <string name="change_topic_hint">Topic...</string>
+
+
+
 </resources>

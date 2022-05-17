@@ -16,8 +16,23 @@ interface ChannelsDAO {
     @Update
     fun updateChannels(channels: List<ChannelEntity>): Completable
 
-    @Query("DELETE FROM ${ChannelEntity.TABLE_NAME}")
-    fun clearChannels(): Completable
+    @Transaction
+    fun insertAndRemoveInTransactionAll(channels: List<ChannelEntity>) {
+        clearAllChannels().subscribe()
+        insertChannelsIgnore(channels).subscribe()
+    }
+
+    @Transaction
+    fun insertAndRemoveInTransactionMy(channels: List<ChannelEntity>) {
+        clearMyChannels().subscribe()
+        insertChannelsReplace(channels).subscribe()
+    }
+
+    @Query("DELETE FROM ${ChannelEntity.TABLE_NAME} WHERE NOT channel_is_my")
+    fun clearAllChannels(): Completable
+
+    @Query("DELETE FROM ${ChannelEntity.TABLE_NAME} WHERE channel_is_my")
+    fun clearMyChannels(): Completable
 
     @Query("SELECT * FROM ${ChannelEntity.TABLE_NAME} WHERE NOT channel_is_my ORDER BY channel_name ASC")
     fun getAllChannels(): Flowable<List<ChannelEntity>>

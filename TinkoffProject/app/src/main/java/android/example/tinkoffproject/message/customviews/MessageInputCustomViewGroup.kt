@@ -2,7 +2,10 @@ package android.example.tinkoffproject.message.customviews
 
 import android.content.Context
 import android.example.tinkoffproject.R
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.view.ViewGroup
@@ -18,8 +21,6 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
 
     private var tempBounds = Rect()
     private val backgroundRect = RectF()
-    private var sendTextBitmap: Bitmap? = null
-    private var sendOtherBitmap: Bitmap? = null
     private val innerPadding: Int
     private var sendButtonSize: Int = 0
     private val messageTextInput: EditText
@@ -76,23 +77,6 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
                 innerPadding * VERTICAL_INNER_PADDING_COUNT
             )
             sendButtonSize = messageTextInput.measuredHeight + innerPadding
-            sendOtherBitmap =
-                Bitmap.createScaledBitmap(
-                        BitmapFactory.decodeResource(
-                            resources,
-                            R.drawable.add_btn
-                        ), sendButtonSize, sendButtonSize, false
-                    )
-
-
-            sendTextBitmap =
-                Bitmap.createScaledBitmap(
-                        BitmapFactory.decodeResource(
-                            resources,
-                            R.drawable.send_btn
-                        ), sendButtonSize, sendButtonSize, false
-                    )
-
         }
 
         measureChildWithMargins(
@@ -153,13 +137,13 @@ class MessageInputCustomViewGroup @JvmOverloads constructor(
 
     override fun dispatchDraw(canvas: Canvas) {
         if (messageTextInput.text.isEmpty())
-            sendImageView.setImageBitmap(sendOtherBitmap)
+            sendImageView.setImageResource(R.drawable.ic_add_button)
         else
-            sendImageView.setImageBitmap(sendTextBitmap)
+            sendImageView.setImageResource(R.drawable.ic_send_button)
 
         canvas.drawRoundRect(backgroundRect, 60f, 60f, Paint().apply {
             isAntiAlias = true
-            color = Color.parseColor("#2A3136")
+            color = resources.getColor(R.color.default_background_color, null)
         })
         super.dispatchDraw(canvas)
     }

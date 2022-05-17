@@ -4,9 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/mainFragment">
+
     <fragment
-        android:id="@+id/chatFragment"
-        android:name="android.example.tinkoffproject.chat.ui.ChatFragment"
+        android:id="@+id/topicChatFragment"
+        android:name="android.example.tinkoffproject.chat.topic.ui.TopicChatFragment"
         android:label="topic_chat_layout"
         tools:layout="@layout/topic_chat_layout" />
     <fragment
@@ -15,12 +16,16 @@
         android:label="fragment_main"
         tools:layout="@layout/fragment_main">
         <action
-            android:id="@+id/action_channelsFragment_to_chatFragment"
-            app:destination="@id/chatFragment"
+            android:id="@+id/action_channelsFragment_to_topicChatFragment"
+            app:destination="@id/topicChatFragment"
             app:popExitAnim="@android:anim/slide_out_right" />
         <action
             android:id="@+id/action_contactsFragment_to_userProfileFragment"
             app:destination="@id/userProfileFragment"
+            app:popExitAnim="@android:anim/slide_out_right" />
+        <action
+            android:id="@+id/action_channelsFragment_to_channelChatFragment"
+            app:destination="@id/channelChatFragment"
             app:popExitAnim="@android:anim/slide_out_right" />
     </fragment>
     <fragment
@@ -28,4 +33,16 @@
         android:name="android.example.tinkoffproject.profile.ui.ProfileFragment"
         android:label="fragment_profile"
         tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/channelChatFragment"
+        android:name="android.example.tinkoffproject.chat.channel.ui.ChannelChatFragment"
+        android:label="channel_chat_layout"
+        tools:layout="@layout/channel_chat_layout">
+        <action
+            android:id="@+id/action_channelChatFragment_to_chatFragment"
+            app:destination="@id/topicChatFragment"
+            app:popExitAnim="@android:anim/slide_out_right" />
+    </fragment>
+
+
 </navigation>

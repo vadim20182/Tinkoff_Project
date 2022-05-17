@@ -1,12 +1,12 @@
 package android.example.tinkoffproject.channels.presentation.all
 
 import android.example.tinkoffproject.channels.data.db.ChannelEntity
-import android.example.tinkoffproject.channels.data.repository.AllChannelsRepositoryImpl
+import android.example.tinkoffproject.channels.data.repository.tabs.AllChannelsRepositoryImpl
 import android.example.tinkoffproject.channels.presentation.BaseChannelsViewModel
 import android.example.tinkoffproject.utils.convertChannelFromDbToNetwork
+import android.example.tinkoffproject.utils.displayErrorMessage
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.addTo
 import io.reactivex.rxkotlin.subscribeBy
 import javax.inject.Inject
 
@@ -19,20 +19,14 @@ class AllChannelsViewModel @Inject constructor(private val allChannelsRepository
         subscribeGetChannels()
         subscribeToSearch()
         subscribeChannelClick()
+        subscribeAddChannel()
+        subscribeRefresh()
         _isLoaded.value = false
     }
 
-    override fun subscribeGetTopics() {
-        allChannelsRepository.getAllTopicsObservable
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(onError = {
-                _errorMessage.value = "Ошибка при загрузке каналов"
-            })
-            .addTo(compositeDisposable)
-    }
-
     override fun loadChannels() {
-        allChannelsRepository.loadChannelsFromDb()
+        disposables[KEY_LOAD_ALL_CHANNELS]?.dispose()
+        disposables[KEY_LOAD_ALL_CHANNELS] = allChannelsRepository.loadChannelsFromDb()
             .map { dbList ->
                 Triple(dbList.map {
                     convertChannelFromDbToNetwork(it)
@@ -61,20 +55,31 @@ class AllChannelsViewModel @Inject constructor(private val allChannelsRepository
                 }
                 subscribeToDbUpdates()
             }, onError = {
-            }).addTo(compositeDisposable)
+            })
     }
 
     override fun subscribeGetChannels() {
-        allChannelsRepository.getAllChannelsObservable
+        disposables[KEY_GET_ALL_CHANNELS]?.dispose()
+        disposables[KEY_GET_ALL_CHANNELS]=allChannelsRepository.getAllChannelsObservable
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(onNext = {
+            }, onError = {
+                _errorMessage.value = displayErrorMessage(it,"Ошибка при загрузке каналов")
+            })
+    }
+
+    override fun subscribeGetTopics() {
+        disposables[KEY_GET_ALL_TOPICS]?.dispose()
+        disposables[KEY_GET_ALL_TOPICS]=allChannelsRepository.getAllTopicsObservable
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(onError = {
-                _errorMessage.value = "Ошибка при загрузке каналов"
+                _errorMessage.value = displayErrorMessage(it,"Ошибка при загрузке топиков")
             })
-            .addTo(compositeDisposable)
     }
 
     private fun subscribeToDbUpdates() {
-        allChannelsRepository.getChannelsFromDb()
+        disposables[KEY_ALL_SUBSCRIBE_TO_DB]?.dispose()
+        disposables[KEY_ALL_SUBSCRIBE_TO_DB] = allChannelsRepository.getChannelsFromDb()
             .map { dbList ->
                 val dbResponse = dbList.map {
                     convertChannelFromDbToNetwork(it)
@@ -91,7 +96,7 @@ class AllChannelsViewModel @Inject constructor(private val allChannelsRepository
                     _isLoading.value = false
                 }
             }, onError = {
-            }).addTo(compositeDisposable)
+            })
     }
 
     override fun onCleared() {

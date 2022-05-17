@@ -22,6 +22,13 @@ object NetworkCommon {
         return JSONArray(s)
     }
 
+    fun makeCreateChannelJSONArray(channelName: String, description: String?): JSONArray {
+        return JSONArray(
+            if (description != null) "[{name: \"${channelName}\", description: \"${description}\"}]"
+            else "[{name: \"${channelName}\"}]"
+        )
+    }
+
     class BasicAuthInterceptor(email: String, apiKey: String) : Interceptor {
         private var credentials: String = Credentials.basic(email, apiKey)
 

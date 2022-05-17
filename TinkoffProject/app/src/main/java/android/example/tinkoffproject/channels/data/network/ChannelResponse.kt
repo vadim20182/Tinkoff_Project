@@ -13,6 +13,12 @@ data class GetChannelsResponse(
 )
 
 @Serializable
+data class GetSubscribedChannelsResponse(
+    @SerialName("subscriptions")
+    val channelsList: List<ChannelItem>
+)
+
+@Serializable
 data class GetTopicsResponse(
     @SerialName("topics")
     val channelsList: List<ChannelItem>

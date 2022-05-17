@@ -14,6 +14,7 @@ import io.reactivex.Single
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @Contacts
@@ -28,7 +29,7 @@ class ContactsRepositoryImpl @Inject constructor(
 
     override val getUsersObservable: Observable<List<ContactItem>> = queryGetUsers
         .observeOn(Schedulers.io())
-        .switchMapSingle {
+        .flatMapSingle {
             client.getUsers()
                 .map { rawResponse ->
                     val usersWithoutBots = rawResponse.users.filter { user ->
@@ -37,7 +38,7 @@ class ContactsRepositoryImpl @Inject constructor(
                     usersWithoutBots
                 }
         }.map { contacts ->
-            insertContactsReplace(contacts.map {
+            insertAndRemoveOldContacts(contacts.map {
                 convertContactFromNetworkToDb(
                     it
                 )
@@ -47,9 +48,12 @@ class ContactsRepositoryImpl @Inject constructor(
 
     override val getUsersPresenceObservable: Flowable<Int> = queryGetUserPresence
         .observeOn(Schedulers.io())
+        .concatMap {
+            Observable.just(it).delay(10, TimeUnit.MILLISECONDS)
+        }
         .toFlowable(BackpressureStrategy.BUFFER)
         .onBackpressureBuffer(3000)
-        .concatMapSingle { (user, list) ->
+        .flatMapSingle { (user, list) ->
             client.getUserPresence(user.email)
                 .map { presenceResponse ->
                     val index = list.indexOf(user)
@@ -80,10 +84,8 @@ class ContactsRepositoryImpl @Inject constructor(
         contactsDAO.getAllContacts()
             .subscribeOn(Schedulers.io())
 
-    override fun insertContactsReplace(contacts: List<ContactEntity>): Disposable =
-        contactsDAO.insertContacts(contacts)
-            .subscribeOn(Schedulers.io())
-            .subscribe()
+    override fun insertAndRemoveOldContacts(contacts: List<ContactEntity>) =
+        contactsDAO.insertAndRemoveInTransaction(contacts)
 
     override fun updateContacts(contacts: List<ContactEntity>): Disposable =
         contactsDAO.updateContacts(contacts)

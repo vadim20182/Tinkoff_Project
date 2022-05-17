@@ -3,7 +3,6 @@ package android.example.tinkoffproject.message.customviews
 import android.content.Context
 import android.example.tinkoffproject.R
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
@@ -32,7 +31,7 @@ class FlexBoxLayout @JvmOverloads constructor(
     override fun dispatchDraw(canvas: Canvas) {
         canvas.drawRoundRect(lastRect, 25f, 25f, Paint().apply {
             isAntiAlias = true
-            color = Color.parseColor("#2A3136")
+            color = resources.getColor(R.color.default_background_color, null)
         })
         super.dispatchDraw(canvas)
     }

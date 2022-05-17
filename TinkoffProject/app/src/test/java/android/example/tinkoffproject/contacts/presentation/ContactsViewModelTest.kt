@@ -1,8 +1,8 @@
 package android.example.tinkoffproject.contacts.presentation
 
-import android.example.tinkoffproject.contacts.data.repository.ContactsRepositoryImpl
 import android.example.tinkoffproject.contacts.data.db.ContactEntity
 import android.example.tinkoffproject.contacts.data.db.ContactsDAO
+import android.example.tinkoffproject.contacts.data.repository.ContactsRepositoryImpl
 import android.example.tinkoffproject.network.ApiService
 import android.example.tinkoffproject.stub.ClientStub
 import android.example.tinkoffproject.stub.ContactsDAOStub
@@ -21,7 +21,7 @@ class ContactsViewModelTest {
     val rxRule = RxRule()
 
     @Test
-    fun `contactsViewModel after loading for isLoaded return true`() {
+    fun `contactsViewModel after loading for isLoaded equals true`() {
         val contactsDAOStub = ContactsDAOStub(createContact())
 
         val contactsRepository = createContactsRepository(contactsDAO = contactsDAOStub)
