@@ -6,10 +6,12 @@ import android.example.tinkoffproject.R
 import android.example.tinkoffproject.chat.channel.ui.ChannelChatFragment
 import android.example.tinkoffproject.chat.common.ui.requireIntArgs
 import android.example.tinkoffproject.chat.common.ui.requireStringArgs
+import android.example.tinkoffproject.chat.common.ui.requireStringArrayArgs
 import android.example.tinkoffproject.chat.topic.ui.TopicChatFragment
 import android.graphics.Color
 import android.os.Bundle
-import android.widget.EditText
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.snackbar.Snackbar
 
@@ -17,7 +19,16 @@ class ChangeTopicForMessageDialogFragment : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialogView =
             requireActivity().layoutInflater.inflate(R.layout.change_topic_dialog, null)
-        val topicInput = dialogView.findViewById<EditText>(R.id.change_topic)
+        val topicInput = dialogView.findViewById<AutoCompleteTextView>(R.id.change_topic).apply {
+            setAdapter(
+                ArrayAdapter(
+                    context,
+                    android.R.layout.simple_dropdown_item_1line,
+                    requireStringArrayArgs(ARG_TOPICS, this@ChangeTopicForMessageDialogFragment)
+                )
+            )
+            threshold = 1
+        }
         return AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.change_topic_for_message_dialog_title))
             .setView(dialogView)
@@ -57,5 +68,6 @@ class ChangeTopicForMessageDialogFragment : DialogFragment() {
     companion object {
         const val ARG_OLD_TOPIC = "old topic"
         const val ARG_MSG_ID = "message id"
+        const val ARG_TOPICS = "topics"
     }
 }

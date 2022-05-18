@@ -1,9 +1,6 @@
 package android.example.tinkoffproject.network
 
-import android.example.tinkoffproject.channels.data.network.GetChannelsResponse
-import android.example.tinkoffproject.channels.data.network.GetSubscribedChannelsResponse
-import android.example.tinkoffproject.channels.data.network.GetTopicsResponse
-import android.example.tinkoffproject.channels.data.network.SubscriptionStatus
+import android.example.tinkoffproject.channels.data.network.*
 import android.example.tinkoffproject.chat.common.data.network.FileResponse
 import android.example.tinkoffproject.chat.common.data.network.GetMessagesResponse
 import android.example.tinkoffproject.chat.common.data.network.GetSingleMessageResponse
@@ -25,6 +22,9 @@ interface ApiService {
         @Path("stream_id") streamId: Int,
         @Path("user_id") userID: Int
     ): Single<SubscriptionStatus>
+
+    @GET("get_stream_id")
+    fun getStreamId(@Query("stream") channelName: String): Single<GetStreamIdResponse>
 
     @GET("users/me/subscriptions")
     fun getSubscribedStreams(): Single<GetSubscribedChannelsResponse>

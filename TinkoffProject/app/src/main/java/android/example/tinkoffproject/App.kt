@@ -3,7 +3,6 @@ package android.example.tinkoffproject
 import android.app.Activity
 import android.app.Application
 import android.content.Context
-import android.example.tinkoffproject.channels.ui.ChannelsAdapter
 import android.example.tinkoffproject.di.AppComponent
 import android.example.tinkoffproject.di.DaggerAppComponent
 import android.util.Log

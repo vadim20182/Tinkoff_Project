@@ -29,7 +29,6 @@ class ChannelChatRepositoryImpl @Inject constructor(
     private val channelMessagesDAO: ChannelMessagesDAO,
     private val remoteMediator: ChannelMessagesRemoteMediator,
     override val channel: String,
-    override val channelId: Int,
     private val client: ApiService
 ) : ChannelChatRepository {
 
@@ -74,8 +73,11 @@ class ChannelChatRepositoryImpl @Inject constructor(
                         .subscribe()
             }
 
-    override fun getTopicsForChannel(channelId: Int): Single<List<ChannelItem>> =
-        client.getTopicsForStream(channelId)
+    override fun getTopicsForChannel(channel:String): Single<List<ChannelItem>> =
+        client.getStreamId(channel)
+            .flatMap {
+                client.getTopicsForStream(it.channelId)
+            }
             .map { topicsResponse ->
                 topicsResponse.channelsList
             }

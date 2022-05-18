@@ -14,6 +14,8 @@ sealed class ChatEffect {
 
     object MessagePlaceholderIsSent : ChatEffect()
 
+    data class TopicsLoaded(val topics: List<String>) : ChatEffect()
+
     data class SomeError(val error: Throwable) : ChatEffect()
 }
 
@@ -33,6 +35,8 @@ sealed class ChatCommand {
     ) : ChatCommand()
 
     object InitLoad : ChatCommand()
+
+    object InitTopics : ChatCommand()
 
     object InitNetwork : ChatCommand()
 
@@ -63,6 +67,8 @@ sealed class ChatEvent {
         object MessageIsDeleted : Internal()
 
         object MessageIsMoved : Internal()
+
+        data class InitTopics(val topics: List<String>) : Internal()
 
         object MessagesCleared : Internal()
 

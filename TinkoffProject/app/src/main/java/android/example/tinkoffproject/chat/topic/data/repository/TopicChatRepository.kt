@@ -1,5 +1,6 @@
 package android.example.tinkoffproject.chat.topic.data.repository
 
+import android.example.tinkoffproject.channels.data.network.ChannelItem
 import android.example.tinkoffproject.chat.topic.data.db.TopicMessageEntity
 import androidx.paging.PagingData
 import io.reactivex.Completable
@@ -21,6 +22,8 @@ interface TopicChatRepository {
     ): Single<List<TopicMessageEntity>>
 
     fun loadFromNetwork(): Single<Unit>
+
+    fun getTopicsForChannel(channel: String = this.channel): Single<List<ChannelItem>>
 
     fun clearMessagesOnExit(channel: String = this.channel, topic: String = this.topic): Completable
 

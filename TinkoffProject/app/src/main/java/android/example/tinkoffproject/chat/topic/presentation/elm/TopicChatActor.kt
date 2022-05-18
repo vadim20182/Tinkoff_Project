@@ -99,6 +99,14 @@ class TopicChatActor @Inject constructor(
                 Internal.NetworkLoaded
             }
 
+        is ChatCommand.InitTopics -> topicChatRepository.getTopicsForChannel()
+            .mapEvents({ topics ->
+                val topicNames = mutableListOf<String>()
+                for (item in topics)
+                    topicNames.add(item.name)
+                Internal.InitTopics(topicNames)
+            }, { error -> Internal.SomeError(error) })
+
         is ChatCommand.ClearMessages -> topicChatRepository.clearMessagesOnExit()
             .mapSuccessEvent(Internal.MessagesCleared)
 

@@ -11,7 +11,6 @@ import okhttp3.MultipartBody
 
 interface ChannelChatRepository {
     val channel: String
-    val channelId: Int
     val disposables: MutableMap<String, Disposable>
 
     fun getMessages(): Flowable<PagingData<ChannelMessageEntity>>
@@ -22,7 +21,7 @@ interface ChannelChatRepository {
 
     fun loadFromNetwork(): Single<Unit>
 
-    fun getTopicsForChannel(channelId: Int = this.channelId): Single<List<ChannelItem>>
+    fun getTopicsForChannel(channel: String = this.channel): Single<List<ChannelItem>>
 
     fun clearMessagesOnExit(channel: String = this.channel): Completable
 

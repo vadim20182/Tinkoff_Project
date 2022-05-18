@@ -19,6 +19,12 @@ data class GetSubscribedChannelsResponse(
 )
 
 @Serializable
+data class GetStreamIdResponse(
+    @SerialName("stream_id")
+    val channelId: Int
+)
+
+@Serializable
 data class GetTopicsResponse(
     @SerialName("topics")
     val channelsList: List<ChannelItem>

@@ -138,7 +138,6 @@ class ChannelChatFragment : ElmFragment<ChannelChatEvent, ChannelChatEffect, Cha
         if (viewModel.channelChatComponent == null) {
             viewModel.channelChatComponent = DaggerChannelChatComponent.factory().create(
                 requireStringArgs(ARG_CHANNEL_NAME, this),
-                requireIntArgs(ARG_CHANNEL_ID, this),
                 this.requireActivity().getComponent()
             )
         }
@@ -231,7 +230,10 @@ class ChannelChatFragment : ElmFragment<ChannelChatEvent, ChannelChatEffect, Cha
                 }
             }
             is TextView -> {
-                showMessageBottomSheetDialog(message, this)
+                showMessageBottomSheetDialog(
+                    message, this,
+                    channelChatStoreFactory.topics?.toTypedArray() ?: emptyArray()
+                )
             }
         }
     }
@@ -244,7 +246,7 @@ class ChannelChatFragment : ElmFragment<ChannelChatEvent, ChannelChatEffect, Cha
         val bundle =
             bundleOf(
                 TopicChatFragment.ARG_CHANNEL_NAME to requireStringArgs(ARG_CHANNEL_NAME, this),
-                TopicChatFragment.ARG_TOPIC_NAME to topic
+                TopicChatFragment.ARG_TOPIC_NAME to topic,
             )
         navController.navigate(R.id.action_channelChatFragment_to_chatFragment, bundle)
     }
@@ -263,6 +265,5 @@ class ChannelChatFragment : ElmFragment<ChannelChatEvent, ChannelChatEffect, Cha
 
     companion object {
         const val ARG_CHANNEL_NAME = "channel_name"
-        const val ARG_CHANNEL_ID = "channel_id"
     }
 }

@@ -29,10 +29,9 @@ class ChannelChatModule {
         messagesDAO: ChannelMessagesDAO,
         remoteMediator: ChannelMessagesRemoteMediator,
         @Stream channel: String,
-        @StreamId channelId: Int,
         client: ApiService
     ): ChannelChatRepositoryImpl =
-        ChannelChatRepositoryImpl(messagesDAO, remoteMediator, channel, channelId, client)
+        ChannelChatRepositoryImpl(messagesDAO, remoteMediator, channel, client)
 
     @Provides
     @ChannelChat

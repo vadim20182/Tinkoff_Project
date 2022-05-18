@@ -39,6 +39,12 @@ fun requireStringArgs(argKey: String, fragment: Fragment): String {
     ) ?: throw NullPointerException("No arguments with such key passed")
 }
 
+fun requireStringArrayArgs(argKey: String, fragment: Fragment): Array<out String> {
+    return fragment.requireArguments().getStringArray(
+        argKey
+    ) ?: throw NullPointerException("No arguments with such key passed")
+}
+
 fun requireIntArgs(argKey: String, fragment: Fragment): Int {
     return fragment.requireArguments().getInt(
         argKey
@@ -65,7 +71,11 @@ fun downloadFile(link: String, context: Context) {
     downloadManager.enqueue(request)
 }
 
-fun showMessageBottomSheetDialog(message: UiModel.MessageItem, fragment: Fragment) {
+fun showMessageBottomSheetDialog(
+    message: UiModel.MessageItem,
+    fragment: Fragment,
+    topicsForChannel: Array<String>
+) {
     object : BottomSheetDialog(fragment.requireContext()) {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
@@ -121,6 +131,10 @@ fun showMessageBottomSheetDialog(message: UiModel.MessageItem, fragment: Fragmen
                             ChangeTopicForMessageDialogFragment.ARG_MSG_ID,
                             message.messageId
                         )
+                        putStringArray(
+                            ChangeTopicForMessageDialogFragment.ARG_TOPICS,
+                            topicsForChannel
+                        )
                     }
                     changeTopicDialog.arguments = arguments
 
@@ -134,6 +148,7 @@ fun showMessageBottomSheetDialog(message: UiModel.MessageItem, fragment: Fragmen
                     Toast.LENGTH_SHORT
                 ).show()
             }
+
             copyMessageButton.setOnClickListener {
                 val clipboard =
                     ContextCompat.getSystemService(context, ClipboardManager::class.java)
@@ -142,6 +157,7 @@ fun showMessageBottomSheetDialog(message: UiModel.MessageItem, fragment: Fragmen
                 Toast.makeText(fragment.context, "Copied", Toast.LENGTH_SHORT).show()
                 cancel()
             }
+
             deleteMessageButton.setOnClickListener {
                 if (message.isMyMessage) {
                     val deleteMessageDialog by lazy { DeleteMessageDialogFragment() }

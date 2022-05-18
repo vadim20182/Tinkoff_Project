@@ -9,6 +9,7 @@ class TopicChatStoreFactory @Inject constructor(
     private val actor: TopicChatActor
 ) {
 
+    var topics: List<String>? = null
     private val store: ElmStoreCompat<ChatEvent, ChatState, ChatEffect, ChatCommand> by lazy {
         ElmStoreCompat(
             initialState = ChatState(),

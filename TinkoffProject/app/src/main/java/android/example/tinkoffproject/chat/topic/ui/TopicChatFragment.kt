@@ -3,7 +3,6 @@ package android.example.tinkoffproject.chat.topic.ui
 import android.content.Context
 import android.example.tinkoffproject.R
 import android.example.tinkoffproject.changeStatusBarColor
-import android.example.tinkoffproject.chat.channel.ui.ChannelChatFragment
 import android.example.tinkoffproject.chat.common.ui.*
 import android.example.tinkoffproject.chat.topic.di.DaggerTopicChatComponent
 import android.example.tinkoffproject.chat.topic.presentation.TopicChatViewModel
@@ -78,6 +77,9 @@ class TopicChatFragment : ElmFragment<ChatEvent, ChatEffect, ChatState>(R.layout
         when (effect) {
             is ChatEffect.MessagePlaceholderIsSent -> {
                 recyclerView.scrollToPosition(0)
+            }
+            is ChatEffect.TopicsLoaded -> {
+                topicChatStoreFactory.topics = effect.topics
             }
             is ChatEffect.SomeError -> {
                 Snackbar.make(
@@ -193,7 +195,11 @@ class TopicChatFragment : ElmFragment<ChatEvent, ChatEffect, ChatState>(R.layout
                 }
             }
             is TextView -> {
-                showMessageBottomSheetDialog(message, this)
+                showMessageBottomSheetDialog(
+                    message,
+                    this,
+                    topicChatStoreFactory.topics?.toTypedArray() ?: emptyArray()
+                )
             }
         }
     }

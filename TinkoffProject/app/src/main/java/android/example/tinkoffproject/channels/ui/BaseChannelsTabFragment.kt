@@ -109,7 +109,6 @@ abstract class BaseChannelsTabFragment :
             val bundle =
                 bundleOf(
                     ChannelChatFragment.ARG_CHANNEL_NAME to item.name,
-                    ChannelChatFragment.ARG_CHANNEL_ID to item.streamID
                 )
             navController.navigate(R.id.action_channelsFragment_to_channelChatFragment, bundle)
         }

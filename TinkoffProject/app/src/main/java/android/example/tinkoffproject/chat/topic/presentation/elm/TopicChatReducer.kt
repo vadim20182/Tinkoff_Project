@@ -21,6 +21,9 @@ class TopicChatReducer :
                 +ChatCommand.InitAdapter
             }
         }
+        is Internal.InitTopics -> {
+            effects { +ChatEffect.TopicsLoaded(event.topics) }
+        }
         is Internal.MessagesCleared -> {}
         is Internal.AdapterUpdated -> {
             state { copy(isLoading = false, pagingData = event.pagingData) }
@@ -80,6 +83,7 @@ class TopicChatReducer :
                 if (state.pagingData == null)
                     +ChatCommand.InitLoad
                 else +ChatCommand.InitAdapter
+                +ChatCommand.InitTopics
             }
         }
         is Ui.UploadFile -> {

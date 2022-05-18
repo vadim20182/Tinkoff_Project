@@ -1,5 +1,6 @@
 package android.example.tinkoffproject.chat.topic.data.repository
 
+import android.example.tinkoffproject.channels.data.network.ChannelItem
 import android.example.tinkoffproject.chat.topic.data.TopicMessagesRemoteMediator
 import android.example.tinkoffproject.chat.topic.data.db.TopicMessageEntity
 import android.example.tinkoffproject.chat.topic.data.db.TopicMessagesDAO
@@ -70,6 +71,15 @@ class TopicChatRepositoryImpl @Inject constructor(
                         topic
                     )
                         .subscribe()
+            }
+
+    override fun getTopicsForChannel(channel: String): Single<List<ChannelItem>> =
+        client.getStreamId(channel)
+            .flatMap {
+                client.getTopicsForStream(it.channelId)
+            }
+            .map { topicsResponse ->
+                topicsResponse.channelsList
             }
 
     override fun getAllMessagesFromDb(channel: String, topic: String) =

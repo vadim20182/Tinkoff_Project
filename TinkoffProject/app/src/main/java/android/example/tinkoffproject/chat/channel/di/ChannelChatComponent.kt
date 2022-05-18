@@ -24,8 +24,6 @@ interface ChannelChatComponent {
         fun create(
             @BindsInstance
             @Stream channel: String,
-            @BindsInstance
-            @StreamId channelId: Int,
             appComponent: AppComponent
         ): ChannelChatComponent
     }
